@@ -1,0 +1,32 @@
+{
+  "name": "sdu-memory-miniprogram",
+  "version": "0.1.0",
+  "private": true,
+  "description": "山大迹忆：基于校园地图的个人空间日记微信小程序",
+  "license": "UNLICENSED",
+  "packageManager": "npm@11.13.0",
+  "engines": {
+    "node": "^22.13.0 || >=24",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"miniprogram/**/*.ts\"",
+    "format:check": "npm run format:check:base && npm run format:check:wxml && npm run format:check:wxss",
+    "format:check:base": "prettier --check package.json package-lock.json tsconfig.json project.config.json .prettierrc.json eslint.config.mjs \"miniprogram/**/*.ts\" \"miniprogram/**/*.json\" AGENTS.md README.md docs/MANUAL_SETUP.md docs/STATUS.md docs/THIRD_PARTY_NOTICES.md",
+    "format:check:wxml": "prettier --check \"miniprogram/**/*.wxml\" --parser html",
+    "format:check:wxss": "prettier --check \"miniprogram/**/*.wxss\" --parser css",
+    "check": "npm run typecheck && npm run lint && npm run format:check"
+  },
+  "dependencies": {
+    "tdesign-miniprogram": "1.15.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.8.0",
+    "miniprogram-api-typings": "5.2.2",
+    "prettier": "3.9.6",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.65.0"
+  }
+}

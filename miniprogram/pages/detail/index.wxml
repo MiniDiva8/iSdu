@@ -1,0 +1,13 @@
+<view class="page-shell">
+  <view class="paper-card">
+    <text class="eyebrow">详情页占位</text>
+    <text class="page-title">一段记忆的详情</text>
+    <text class="page-subtitle">本阶段只验证页面可进入，不读取、编辑或删除日记。</text>
+    <view class="component-space">
+      <t-empty description="详情内容将在本地闭环里程碑实现" />
+    </view>
+    <view class="button-stack">
+      <t-button theme="primary" variant="outline" block bind:tap="returnToMap"> 返回地图 </t-button>
+    </view>
+  </view>
+</view>

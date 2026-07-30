@@ -6,17 +6,17 @@
 
 | 决策项 | 选择 | 本轮是否实施 |
 |---|---|---|
-| 目标平台 | 微信原生小程序 | 否；下一里程碑建骨架 |
-| 语言 | TypeScript | 否；下一里程碑配置 |
-| 模板与样式 | WXML + WXSS | 否 |
-| 渲染器 | WebView | 否；骨架中明确，不启用 Skyline |
-| 主 UI | `tdesign-miniprogram` | 否；下一里程碑按需安装 |
+| 目标平台 | 微信原生小程序 | 是；已建立最小骨架 |
+| 语言 | TypeScript | 是；命令行类型检查已通过 |
+| 模板与样式 | WXML + WXSS | 是；当前仅占位页面 |
+| 渲染器 | WebView | 是；工程配置明确不启用 Skyline |
+| 主 UI | `tdesign-miniprogram` | 是；锁定 `1.15.3`，仅 Button / Empty |
 | Vant / WeUI | 不作为正式依赖 | 无需安装 |
 | 云端 | 微信云开发 CloudBase 文档数据库 + 云存储 | 否；P0 云端里程碑再接入 |
 | CloudBase Skills | 当前不安装；云端里程碑再做项目级评估 | 否 |
 | 地图 | 自研插画地图画布与比例坐标 | 否；地图里程碑实施 |
-| 本地 Demo | Repository 接口 + `wx` 本地存储/本地文件 | 否 |
-| 质量工具 | TypeScript、ESLint、Prettier、单元测试、开发者工具/真机检查 | 否 |
+| 本地 Demo | Repository 接口 + `wx` 本地存储/本地文件 | 部分；仅模式入口和健康状态占位 |
+| 质量工具 | TypeScript、ESLint、Prettier、单元测试、开发者工具/真机检查 | 部分；静态工具已配置，真机待人工 |
 
 ## 2. 为什么使用微信原生小程序
 
@@ -272,7 +272,7 @@ yRatio = clamp((screenY - viewportTop  - translateY) / (scale × mapRenderHeight
 
 ## 9. 测试与格式化工具
 
-### 下一里程碑引入
+### 骨架里程碑已引入
 
 - TypeScript 与小程序 API 类型。
 - ESLint：检查 TS/JS、未使用变量、Promise 和危险类型逃逸。

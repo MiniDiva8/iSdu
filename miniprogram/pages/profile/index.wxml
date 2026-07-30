@@ -1,0 +1,13 @@
+<view class="page-shell">
+  <view class="paper-card">
+    <text class="eyebrow">个人页占位</text>
+    <text class="page-title">我的校园记忆</text>
+    <text class="page-subtitle">本阶段不计算日记总数、地点数或其他统计。</text>
+    <view class="component-space">
+      <t-empty description="个人统计将在本地闭环里程碑实现" />
+    </view>
+    <view class="button-stack">
+      <t-button theme="primary" variant="outline" block bind:tap="returnToMap"> 返回地图 </t-button>
+    </view>
+  </view>
+</view>

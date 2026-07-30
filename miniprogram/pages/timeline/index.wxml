@@ -1,0 +1,10 @@
+<view class="page-shell">
+  <view class="paper-card">
+    <text class="eyebrow">时光页占位</text>
+    <text class="page-title">以后在这里回看</text>
+    <text class="page-subtitle">本阶段不读取日记，也不生成时间轴数据。</text>
+    <view class="component-space">
+      <t-empty description="时间轴将在本地闭环里程碑实现" />
+    </view>
+  </view>
+</view>

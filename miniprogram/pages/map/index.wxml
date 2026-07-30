@@ -1,0 +1,33 @@
+<view class="page-shell">
+  <view class="paper-card">
+    <text class="eyebrow">工程骨架验证中</text>
+    <text class="page-title">山大迹忆</text>
+    <text class="page-subtitle">基于校园地图的个人空间日记</text>
+    <text class="supporting-copy map-stage-copy">
+      当前仅验证原生小程序结构、TypeScript、页面导航和少量组件，不包含正式校园地图。
+    </text>
+  </view>
+
+  <view class="paper-card">
+    <text class="section-title">本地 Demo 模式</text>
+    <text class="supporting-copy">运行模式：{{repositoryMode}}</text>
+    <text class="repository-status">{{repositoryStatus}}</text>
+    <view class="component-space">
+      <t-empty description="正式校园地图将在后续里程碑实现" />
+    </view>
+  </view>
+
+  <view class="paper-card">
+    <text class="section-title">工程交互验证</text>
+    <text class="supporting-copy">{{interactionMessage}}</text>
+    <view class="button-stack">
+      <t-button theme="primary" block bind:tap="handleLocalInteraction">验证本地状态</t-button>
+      <t-button theme="default" variant="outline" block bind:tap="goToDetail">
+        打开详情占位页
+      </t-button>
+      <t-button theme="default" variant="text" block bind:tap="goToProfile">
+        打开个人占位页
+      </t-button>
+    </view>
+  </view>
+</view>

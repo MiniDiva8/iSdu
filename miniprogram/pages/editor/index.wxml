@@ -1,0 +1,15 @@
+<view class="page-shell">
+  <view class="paper-card">
+    <text class="eyebrow">记录页占位</text>
+    <text class="page-title">写下一段校园记忆</text>
+    <text class="page-subtitle">{{interactionMessage}}</text>
+    <view class="component-space">
+      <t-empty description="日记编辑与图片功能尚未实现" />
+    </view>
+    <view class="button-stack">
+      <t-button theme="primary" variant="outline" block bind:tap="handleLocalInteraction">
+        验证记录页交互
+      </t-button>
+    </view>
+  </view>
+</view>

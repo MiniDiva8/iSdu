@@ -24,15 +24,18 @@
 
 ## 当前阶段
 
-当前处于“开源评估与技术决策”里程碑：
+当前处于“最小微信原生 TypeScript 小程序骨架”里程碑：
 
 - 已建立项目执行规则。
 - 已完成候选仓库、许可证、维护状态和兼容风险评估。
 - 已确定技术栈和集成边界。
-- 尚未创建微信小程序业务骨架。
-- 尚未安装 npm 依赖。
+- 已创建五个占位页面和地图、记录、时光三个底部 Tab。
+- 已建立本地 Demo 模式配置与最小 Repository 占位接口。
+- 已精确安装 `tdesign-miniprogram@1.15.3`，只使用 Button 和 Empty。
+- 命令行 TypeScript、ESLint 检查已通过。
+- 尚待在微信开发者工具中构建 npm、编译、预览并完成真机冒烟测试。
 - 尚未配置 AppID 或 CloudBase 环境。
-- 尚未开发地图、日记、时间轴或统计页面。
+- 尚未开发正式地图、日记、时间轴数据或统计功能。
 
 ## 已确定的技术路线
 
@@ -47,12 +50,16 @@
 
 完整理由与风险见 [技术栈决策](docs/TECH_STACK_DECISION.md)。
 
-## 计划目录
+## 当前目录
 
 ```text
 .
 ├── AGENTS.md
 ├── README.md
+├── package.json
+├── package-lock.json
+├── project.config.json
+├── tsconfig.json
 ├── docs/
 │   ├── OPEN_SOURCE_EVALUATION.md
 │   ├── TECH_STACK_DECISION.md
@@ -60,8 +67,14 @@
 │   ├── THIRD_PARTY_NOTICES.md
 │   ├── RISK_REGISTER.md
 │   ├── STATUS.md
+│   ├── MANUAL_SETUP.md
 │   └── NEXT_TASK_PROMPT.md
-└── miniprogram/                 # 下一里程碑创建
+└── miniprogram/
+    ├── config/
+    ├── services/repository/
+    ├── components/
+    ├── assets/
+    └── pages/
 ```
 
 ## 关键设计约束
@@ -81,16 +94,17 @@
 - [第三方声明](docs/THIRD_PARTY_NOTICES.md)
 - [风险登记册](docs/RISK_REGISTER.md)
 - [项目状态](docs/STATUS.md)
-- [下一轮任务提示词](docs/NEXT_TASK_PROMPT.md)
+- [开发者工具与真机手册](docs/MANUAL_SETUP.md)
+- [骨架任务基线（已执行）](docs/NEXT_TASK_PROMPT.md)
 
-## 下一里程碑
+## 当前验收
 
-初始化最小可运行的微信原生小程序 TypeScript 骨架，只集成经过评估的 TDesign 基础组件，并完成开发者工具与一台真机的最小冒烟测试。下一轮不得提前实现正式地图、CloudBase、日记编辑器、时间轴或统计。
+请先按 [人工配置与测试手册](docs/MANUAL_SETUP.md) 在微信开发者工具完成构建 npm、模拟器编译和至少一台真机冒烟测试。本轮通过人工验收前，不进入地图技术原型。
 
-执行边界与验收步骤见 [下一轮任务提示词](docs/NEXT_TASK_PROMPT.md)。
+当前仓库不提交 `node_modules`、`miniprogram_npm`、真实 AppID 或开发者工具私有配置。
 
 ## 许可证与原创性
 
 项目仓库暂时保持私有，当前不添加 MIT 或其他项目自身的开源许可证；不对仓库自有内容作额外授权推断。
 
-第三方候选不等于已经使用。正式引入前必须更新 [第三方声明](docs/THIRD_PARTY_NOTICES.md)，并遵守对应许可证。校园插画、空间坐标系统、空间日记交互和时光回放将作为本项目原创核心实现。
+TDesign 已成为精确锁定的正式运行时依赖；其他候选仍不等于已经使用。依赖版本、许可证和使用范围见 [第三方声明](docs/THIRD_PARTY_NOTICES.md)。校园插画、空间坐标系统、空间日记交互和时光回放将作为本项目原创核心实现。

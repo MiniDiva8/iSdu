@@ -1,0 +1,90 @@
+page {
+  --sdu-color-background: #f6f0e6;
+  --sdu-color-paper: #fffdf8;
+  --sdu-color-text-primary: #2f332f;
+  --sdu-color-text-secondary: #777269;
+  --sdu-color-accent: #3f745f;
+  --sdu-color-accent-soft: #dfeae3;
+  --sdu-card-radius: 28rpx;
+  --sdu-page-spacing: 32rpx;
+  --sdu-safe-area-bottom: env(safe-area-inset-bottom);
+  --td-brand-color: var(--sdu-color-accent);
+  --td-brand-color-active: #315e4d;
+  --td-brand-color-disabled: #a6c1b5;
+  --td-radius-default: 20rpx;
+
+  min-height: 100%;
+  color: var(--sdu-color-text-primary);
+  background: var(--sdu-color-background);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.page-shell {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: var(--sdu-page-spacing);
+  padding-bottom: calc(var(--sdu-page-spacing) + constant(safe-area-inset-bottom));
+  padding-bottom: calc(var(--sdu-page-spacing) + var(--sdu-safe-area-bottom));
+}
+
+.paper-card {
+  padding: 36rpx;
+  background: var(--sdu-color-paper);
+  border: 1rpx solid rgba(63, 116, 95, 0.12);
+  border-radius: var(--sdu-card-radius);
+  box-shadow: 0 12rpx 32rpx rgba(64, 57, 45, 0.06);
+}
+
+.paper-card + .paper-card {
+  margin-top: 24rpx;
+}
+
+.eyebrow {
+  display: block;
+  margin-bottom: 12rpx;
+  color: var(--sdu-color-accent);
+  font-size: 24rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
+
+.page-title {
+  display: block;
+  color: var(--sdu-color-text-primary);
+  font-size: 52rpx;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.page-subtitle {
+  display: block;
+  margin-top: 14rpx;
+  color: var(--sdu-color-text-secondary);
+  font-size: 28rpx;
+  line-height: 1.65;
+}
+
+.section-title {
+  display: block;
+  margin-bottom: 12rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.supporting-copy {
+  display: block;
+  color: var(--sdu-color-text-secondary);
+  font-size: 26rpx;
+  line-height: 1.65;
+}
+
+.component-space {
+  margin-top: 28rpx;
+}
+
+.button-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  margin-top: 28rpx;
+}

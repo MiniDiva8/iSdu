@@ -69,8 +69,8 @@ P1 中优先级最高的是“时光回放”，但它不能挤占 P0 的测试�
 miniprogram/
   pages/
     map/index            # 校园地图主页
-    diary-edit/index     # 新建/编辑日记
-    diary-detail/index   # 日记详情
+    editor/index         # 新建/编辑日记
+    detail/index         # 日记详情
     timeline/index       # 时间轴
     profile/index        # 个人记忆概览
   components/            # 项目自研业务组件

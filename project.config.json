@@ -1,0 +1,48 @@
+{
+  "description": "山大迹忆微信原生 TypeScript 小程序公共工程配置",
+  "miniprogramRoot": "miniprogram/",
+  "srcMiniprogramRoot": "miniprogram/",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "nodeModules": true,
+    "packNpmManually": true,
+    "packNpmRelationList": [
+      {
+        "packageJsonPath": "./package.json",
+        "miniprogramNpmDistDir": "./miniprogram/"
+      }
+    ],
+    "useCompilerPlugins": ["typescript"],
+    "skylineRenderEnable": false,
+    "uploadWithSourceMap": true
+  },
+  "compileType": "miniprogram",
+  "simulatorType": "wechat",
+  "appid": "touristappid",
+  "projectname": "sdu-memory",
+  "libVersion": "3.7.6",
+  "packOptions": {
+    "ignore": [
+      {
+        "type": "file",
+        "value": "assets/README.md"
+      },
+      {
+        "type": "file",
+        "value": "components/README.md"
+      }
+    ],
+    "include": []
+  },
+  "condition": {
+    "miniprogram": {
+      "list": []
+    }
+  }
+}
