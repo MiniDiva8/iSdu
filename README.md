@@ -1,8 +1,8 @@
-# 山大迹忆
+# iSdu
 
 > 基于校园地图的个人空间日记
 
-“山大迹忆”是一款面向山东大学校园生活的微信小程序。它把一张二维校园插画地图变成个人日记：用户在校园位置上留下照片、文字、地点、心情和时间，之后既可以回答“我在哪里留下过记忆”，也可以按时间轴回答“那是什么时候”。
+“iSdu”是一款面向山东大学校园生活的微信小程序。它把一张二维校园插画地图变成个人日记：用户在校园位置上留下照片、文字、地点、心情和时间，之后既可以回答“我在哪里留下过记忆”，也可以按时间轴回答“那是什么时候”。
 
 ## 比赛版定位
 
@@ -24,18 +24,20 @@
 
 ## 当前阶段
 
-当前处于“最小微信原生 TypeScript 小程序骨架”里程碑：
+当前处于“基于本地数据的校园地图日记完整闭环”人工验收阶段：
 
 - 已建立项目执行规则。
 - 已完成候选仓库、许可证、维护状态和兼容风险评估。
 - 已确定技术栈和集成边界。
-- 已创建五个占位页面和地图、记录、时光三个底部 Tab。
-- 已建立本地 Demo 模式配置与最小 Repository 占位接口。
+- 已完成 `1280 × 960` 二维插画地图、拖动、缩放、复位和中心准星比例选点。
+- 已建立 Memory 模型、版本化本地 Repository、首次 Demo Seed 和损坏数据处理。
+- 已实现 1—3 张照片选择与用户目录持久化，新建、编辑和删除都有文件回滚或清理规则。
+- 已打通地图选点 → 保存 → 星点 → 详情 → 编辑 / 删除 → 重启读取的本地闭环。
+- 已创建地图、记录、时光三个底部 Tab；时间轴与个人页仍是当前范围外的占位页面。
 - 已精确安装 `tdesign-miniprogram@1.15.3`，只使用 Button 和 Empty。
-- 命令行 TypeScript、ESLint 检查已通过。
-- 尚待在微信开发者工具中构建 npm、编译、预览并完成真机冒烟测试。
-- 尚未配置 AppID 或 CloudBase 环境。
-- 尚未开发正式地图、日记、时间轴数据或统计功能。
+- 37 项坐标、Memory、Repository 和本地图片自动测试以及 TypeScript、ESLint、Prettier 检查已通过。
+- 尚待在微信开发者工具中重新构建 npm、编译并完成完整闭环与真机冒烟测试。
+- 尚未接入 CloudBase、GPS、登录、社交、正式时间轴或个人统计。
 
 ## 已确定的技术路线
 
@@ -68,10 +70,16 @@
 │   ├── RISK_REGISTER.md
 │   ├── STATUS.md
 │   ├── MANUAL_SETUP.md
+│   ├── MANUAL_TEST_CHECKLIST.md
+│   ├── MAP_COORDINATE_SYSTEM.md
+│   ├── LOCAL_DATA_DESIGN.md
 │   └── NEXT_TASK_PROMPT.md
 └── miniprogram/
     ├── config/
-    ├── services/repository/
+    ├── data/
+    ├── models/
+    ├── services/
+    ├── utils/
     ├── components/
     ├── assets/
     └── pages/
@@ -94,12 +102,15 @@
 - [第三方声明](docs/THIRD_PARTY_NOTICES.md)
 - [风险登记册](docs/RISK_REGISTER.md)
 - [项目状态](docs/STATUS.md)
+- [地图比例坐标系统](docs/MAP_COORDINATE_SYSTEM.md)
+- [本地数据与图片设计](docs/LOCAL_DATA_DESIGN.md)
 - [开发者工具与真机手册](docs/MANUAL_SETUP.md)
+- [本地闭环人工测试清单](docs/MANUAL_TEST_CHECKLIST.md)
 - [骨架任务基线（已执行）](docs/NEXT_TASK_PROMPT.md)
 
 ## 当前验收
 
-请先按 [人工配置与测试手册](docs/MANUAL_SETUP.md) 在微信开发者工具完成构建 npm、模拟器编译和至少一台真机冒烟测试。本轮通过人工验收前，不进入地图技术原型。
+请先按 [人工配置与测试手册](docs/MANUAL_SETUP.md) 导入并构建，再逐项执行 [本地闭环人工测试清单](docs/MANUAL_TEST_CHECKLIST.md)。当前完整闭环通过开发者工具和至少一台真机验收前，不进入 CloudBase、正式时间轴、地图聚合或正式素材阶段。
 
 当前仓库不提交 `node_modules`、`miniprogram_npm`、真实 AppID 或开发者工具私有配置。
 

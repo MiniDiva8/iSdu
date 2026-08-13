@@ -4,7 +4,7 @@ import tseslint from 'typescript-eslint';
 
 export default defineConfig(
   {
-    ignores: ['node_modules/**', 'miniprogram_npm/**', 'dist/**', 'coverage/**'],
+    ignores: ['node_modules/**', '**/miniprogram_npm/**', 'dist/**', 'coverage/**'],
   },
   {
     files: ['miniprogram/**/*.ts'],
@@ -35,6 +35,18 @@ export default defineConfig(
         },
       ],
       'no-console': 'error',
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: String.raw`(?:^|/)services/repository$`,
+              message:
+                '微信小程序真机不会把目录导入解析到 index.ts，请显式导入 services/repository/index。',
+            },
+          ],
+        },
+      ],
     },
   },
 );

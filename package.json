@@ -1,22 +1,27 @@
 {
-  "name": "sdu-memory-miniprogram",
+  "name": "isdu-miniprogram",
   "version": "0.1.0",
   "private": true,
-  "description": "山大迹忆：基于校园地图的个人空间日记微信小程序",
+  "description": "iSdu：基于校园地图的个人空间日记微信小程序",
   "license": "UNLICENSED",
+  "type": "module",
   "packageManager": "npm@11.13.0",
   "engines": {
-    "node": "^22.13.0 || >=24",
+    "node": "^22.15.0 || >=24",
     "npm": ">=10"
   },
   "scripts": {
+    "test:coordinates": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/map-coordinates.test.mjs",
+    "test:memory": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/models/memory.test.mjs miniprogram/services/repository/local-memory-repository.test.mjs miniprogram/services/repository/local-user-profile-repository.test.mjs miniprogram/utils/memory-filters.test.mjs miniprogram/utils/memory-insights.test.mjs",
+    "test:image": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/services/local-image-service.test.mjs",
+    "test": "npm run test:coordinates && npm run test:memory && npm run test:image",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"miniprogram/**/*.ts\"",
     "format:check": "npm run format:check:base && npm run format:check:wxml && npm run format:check:wxss",
-    "format:check:base": "prettier --check package.json package-lock.json tsconfig.json project.config.json .prettierrc.json eslint.config.mjs \"miniprogram/**/*.ts\" \"miniprogram/**/*.json\" AGENTS.md README.md docs/MANUAL_SETUP.md docs/STATUS.md docs/THIRD_PARTY_NOTICES.md",
+    "format:check:base": "prettier --check package.json package-lock.json tsconfig.json project.config.json .prettierrc.json eslint.config.mjs \"scripts/**/*.mjs\" \"miniprogram/**/*.ts\" \"miniprogram/**/*.mjs\" \"miniprogram/**/*.json\" AGENTS.md README.md docs/LOCAL_DATA_DESIGN.md docs/MANUAL_SETUP.md docs/MANUAL_TEST_CHECKLIST.md docs/MAP_COORDINATE_SYSTEM.md docs/RISK_REGISTER.md docs/STATUS.md docs/THIRD_PARTY_NOTICES.md",
     "format:check:wxml": "prettier --check \"miniprogram/**/*.wxml\" --parser html",
     "format:check:wxss": "prettier --check \"miniprogram/**/*.wxss\" --parser css",
-    "check": "npm run typecheck && npm run lint && npm run format:check"
+    "check": "npm run test && npm run typecheck && npm run lint && npm run format:check"
   },
   "dependencies": {
     "tdesign-miniprogram": "1.15.3"

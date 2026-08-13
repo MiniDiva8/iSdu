@@ -1,5 +1,5 @@
 {
-  "description": "山大迹忆微信原生 TypeScript 小程序公共工程配置",
+  "description": "iSdu 微信原生 TypeScript 小程序公共工程配置",
   "miniprogramRoot": "miniprogram/",
   "srcMiniprogramRoot": "miniprogram/",
   "setting": {
@@ -20,22 +20,34 @@
     ],
     "useCompilerPlugins": ["typescript"],
     "skylineRenderEnable": false,
-    "uploadWithSourceMap": true
+    "uploadWithSourceMap": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
   },
   "compileType": "miniprogram",
   "simulatorType": "wechat",
   "appid": "touristappid",
-  "projectname": "sdu-memory",
+  "projectname": "iSdu",
   "libVersion": "3.7.6",
   "packOptions": {
     "ignore": [
       {
-        "type": "file",
-        "value": "assets/README.md"
+        "value": "assets/README.md",
+        "type": "file"
       },
       {
-        "type": "file",
-        "value": "components/README.md"
+        "value": "components/README.md",
+        "type": "file"
       }
     ],
     "include": []
@@ -44,5 +56,7 @@
     "miniprogram": {
       "list": []
     }
-  }
+  },
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {}
 }

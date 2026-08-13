@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/map/index",
+    "pages/record/index",
     "pages/editor/index",
     "pages/timeline/index",
     "pages/detail/index",
@@ -9,7 +10,7 @@
   "window": {
     "navigationBarBackgroundColor": "#fbf7ef",
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "山大迹忆",
+    "navigationBarTitleText": "iSdu",
     "backgroundColor": "#f6f0e6",
     "backgroundTextStyle": "light"
   },
@@ -24,7 +25,7 @@
         "text": "地图"
       },
       {
-        "pagePath": "pages/editor/index",
+        "pagePath": "pages/record/index",
         "text": "记录"
       },
       {

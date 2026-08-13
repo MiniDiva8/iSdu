@@ -1,0 +1,48 @@
+.record-page {
+  display: flex;
+  align-items: center;
+}
+
+.record-intro {
+  width: 100%;
+}
+
+.record-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  margin-top: 40rpx;
+  padding: 28rpx;
+  background: var(--sdu-color-accent-soft);
+  border-radius: 22rpx;
+}
+
+.record-step {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.record-step__number {
+  display: flex;
+  flex: 0 0 46rpx;
+  align-items: center;
+  justify-content: center;
+  width: 46rpx;
+  height: 46rpx;
+  color: var(--sdu-color-paper);
+  font-size: 22rpx;
+  font-weight: 700;
+  background: var(--sdu-color-accent);
+  border-radius: 50%;
+}
+
+.record-step__copy {
+  color: var(--sdu-color-text-primary);
+  font-size: 26rpx;
+  line-height: 1.55;
+}
+
+.record-action {
+  margin-top: 34rpx;
+}

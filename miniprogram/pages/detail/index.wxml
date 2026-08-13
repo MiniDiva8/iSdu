@@ -1,13 +1,108 @@
-<view class="page-shell">
-  <view class="paper-card">
-    <text class="eyebrow">详情页占位</text>
-    <text class="page-title">一段记忆的详情</text>
-    <text class="page-subtitle">本阶段只验证页面可进入，不读取、编辑或删除日记。</text>
-    <view class="component-space">
-      <t-empty description="详情内容将在本地闭环里程碑实现" />
-    </view>
-    <view class="button-stack">
-      <t-button theme="primary" variant="outline" block bind:tap="returnToMap"> 返回地图 </t-button>
+<view class="page-shell detail-page">
+  <view wx:if="{{isLoading}}" class="paper-card detail-state">
+    <view class="detail-spinner"></view>
+    <text class="detail-state__title">正在打开这段记忆</text>
+    <text class="supporting-copy">从本地日记中读取照片与文字…</text>
+  </view>
+
+  <view wx:elif="{{loadError}}" class="paper-card detail-state">
+    <t-empty description="{{loadError}}" />
+    <text class="detail-state__title">{{loadErrorTitle}}</text>
+    <view class="button-stack detail-state__actions">
+      <t-button wx:if="{{memoryId}}" theme="primary" variant="outline" block bind:tap="loadMemory">
+        重新读取
+      </t-button>
+      <t-button theme="default" variant="text" block bind:tap="returnToMap">返回地图</t-button>
     </view>
   </view>
+
+  <block wx:elif="{{memory}}">
+    <view class="detail-heading">
+      <text class="eyebrow">我的校园记忆</text>
+      <text class="page-title">{{displayPlaceName}}</text>
+      <text class="page-subtitle">{{formattedRecordedAt}}</text>
+    </view>
+
+    <view wx:if="{{photoItems.length}}" class="photo-grid photo-grid--{{photoItems.length}}">
+      <view wx:for="{{photoItems}}" wx:key="path" class="photo-frame">
+        <image
+          wx:if="{{!item.isMissing}}"
+          class="memory-photo"
+          src="{{item.path}}"
+          mode="aspectFill"
+          data-index="{{index}}"
+          binderror="handleImageError"
+        />
+        <view wx:else class="missing-photo">
+          <text class="missing-photo__symbol">◇</text>
+          <text class="missing-photo__title">照片无法显示</text>
+          <text class="missing-photo__copy">本地文件可能已丢失</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="paper-card text-memory-cover">
+      <text class="text-memory-cover__symbol">记</text>
+      <text class="supporting-copy">这是一段没有添加照片的文字记忆</text>
+    </view>
+
+    <view class="paper-card memory-content-card">
+      <text class="section-title">那天留下的话</text>
+      <text wx:if="{{hasText}}" class="memory-text">{{memory.text}}</text>
+      <text wx:else class="supporting-copy">这段记忆只留下了照片。</text>
+    </view>
+
+    <view class="paper-card memory-meta-card">
+      <view class="meta-row">
+        <text class="meta-row__label">记录时间</text>
+        <text class="meta-row__value">{{formattedRecordedAt}}</text>
+      </view>
+      <view class="meta-row">
+        <text class="meta-row__label">地点</text>
+        <text class="meta-row__value">{{displayPlaceName}}</text>
+      </view>
+      <view class="meta-row">
+        <text class="meta-row__label">心情</text>
+        <text class="memory-tag memory-tag--mood">{{moodLabel}}</text>
+      </view>
+      <view class="meta-row">
+        <text class="meta-row__label">分类</text>
+        <text class="memory-tag">{{categoryLabel}}</text>
+      </view>
+      <view class="meta-row meta-row--coordinate">
+        <text class="meta-row__label">地图位置</text>
+        <view class="coordinate-copy">
+          <text class="meta-row__value">{{coordinateLabel}}</text>
+          <text class="meta-row__hint">比例坐标以校园地图左上角为原点</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:if="{{actionMessage}}" class="action-message">{{actionMessage}}</view>
+
+    <view class="detail-actions">
+      <t-button theme="primary" block disabled="{{isDeleting}}" bind:tap="editMemory">
+        编辑这段记忆
+      </t-button>
+      <t-button
+        theme="danger"
+        variant="outline"
+        block
+        loading="{{isDeleting}}"
+        disabled="{{isDeleting}}"
+        bind:tap="deleteMemory"
+      >
+        {{isDeleting ? '正在删除' : '删除记忆'}}
+      </t-button>
+      <t-button
+        theme="default"
+        variant="text"
+        block
+        disabled="{{isDeleting}}"
+        bind:tap="returnToMap"
+      >
+        返回地图
+      </t-button>
+    </view>
+  </block>
 </view>

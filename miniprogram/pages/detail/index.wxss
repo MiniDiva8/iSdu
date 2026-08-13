@@ -1,3 +1,226 @@
-.page-title {
-  font-size: 44rpx;
+.detail-page {
+  padding-bottom: calc(52rpx + constant(safe-area-inset-bottom));
+  padding-bottom: calc(52rpx + var(--sdu-safe-area-bottom));
+}
+
+.detail-heading {
+  padding: 12rpx 4rpx 28rpx;
+}
+
+.detail-heading .page-title {
+  font-size: 48rpx;
+}
+
+.detail-state {
+  display: flex;
+  min-height: 520rpx;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.detail-state__title {
+  margin: 22rpx 0 10rpx;
+  font-size: 31rpx;
+  font-weight: 700;
+}
+
+.detail-state__actions {
+  width: 100%;
+}
+
+.detail-spinner {
+  width: 52rpx;
+  height: 52rpx;
+  margin-bottom: 26rpx;
+  border: 6rpx solid rgba(63, 116, 95, 0.18);
+  border-top-color: var(--sdu-color-accent);
+  border-radius: 50%;
+  animation: detail-spin 0.9s linear infinite;
+}
+
+@keyframes detail-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14rpx;
+  margin-bottom: 24rpx;
+}
+
+.photo-grid--1 {
+  grid-template-columns: 1fr;
+}
+
+.photo-grid--3 .photo-frame:first-child {
+  grid-column: 1 / -1;
+  height: 440rpx;
+}
+
+.photo-frame {
+  height: 300rpx;
+  overflow: hidden;
+  background: #e8e5dd;
+  border: 1rpx solid rgba(63, 116, 95, 0.12);
+  border-radius: 24rpx;
+  box-shadow: 0 12rpx 30rpx rgba(64, 57, 45, 0.08);
+}
+
+.photo-grid--1 .photo-frame {
+  height: 500rpx;
+}
+
+.memory-photo,
+.missing-photo {
+  width: 100%;
+  height: 100%;
+}
+
+.missing-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--sdu-color-text-secondary);
+  background: linear-gradient(145deg, #eeebe3, #dfddd4);
+}
+
+.missing-photo__symbol {
+  color: #a85f62;
+  font-size: 52rpx;
+}
+
+.missing-photo__title {
+  margin-top: 10rpx;
+  color: var(--sdu-color-text-primary);
+  font-size: 25rpx;
+  font-weight: 600;
+}
+
+.missing-photo__copy {
+  margin-top: 6rpx;
+  font-size: 21rpx;
+}
+
+.text-memory-cover {
+  display: flex;
+  min-height: 260rpx;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24rpx;
+  background: linear-gradient(145deg, #fffdf8, #edf3ee);
+}
+
+.text-memory-cover__symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 86rpx;
+  height: 86rpx;
+  margin-bottom: 18rpx;
+  color: var(--sdu-color-paper);
+  font-family: serif;
+  font-size: 40rpx;
+  font-weight: 700;
+  background: var(--sdu-color-accent);
+  border-radius: 50%;
+  box-shadow: 0 12rpx 28rpx rgba(63, 116, 95, 0.2);
+}
+
+.memory-content-card,
+.memory-meta-card {
+  margin-top: 24rpx;
+}
+
+.memory-text {
+  display: block;
+  font-size: 29rpx;
+  line-height: 1.85;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 22rpx 0;
+  border-bottom: 1rpx solid rgba(63, 116, 95, 0.1);
+}
+
+.meta-row:first-child {
+  padding-top: 0;
+}
+
+.meta-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.meta-row--coordinate {
+  align-items: flex-start;
+}
+
+.meta-row__label {
+  flex: 0 0 132rpx;
+  color: var(--sdu-color-text-secondary);
+  font-size: 25rpx;
+}
+
+.meta-row__value {
+  font-size: 26rpx;
+  text-align: right;
+}
+
+.coordinate-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.meta-row__hint {
+  margin-top: 6rpx;
+  color: var(--sdu-color-text-secondary);
+  font-size: 20rpx;
+  text-align: right;
+}
+
+.memory-tag {
+  padding: 10rpx 18rpx;
+  color: #476756;
+  font-size: 23rpx;
+  background: #e4eee7;
+  border-radius: 999rpx;
+}
+
+.memory-tag--mood {
+  color: #825c35;
+  background: #f5ead8;
+}
+
+.action-message {
+  box-sizing: border-box;
+  margin-top: 22rpx;
+  padding: 18rpx 22rpx;
+  color: #825335;
+  font-size: 24rpx;
+  line-height: 1.55;
+  background: #f8ead9;
+  border-radius: 18rpx;
+}
+
+.detail-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 18rpx;
+  margin-top: 28rpx;
 }

@@ -1,15 +1,200 @@
-<view class="page-shell">
-  <view class="paper-card">
-    <text class="eyebrow">记录页占位</text>
-    <text class="page-title">写下一段校园记忆</text>
-    <text class="page-subtitle">{{interactionMessage}}</text>
-    <view class="component-space">
-      <t-empty description="日记编辑与图片功能尚未实现" />
-    </view>
-    <view class="button-stack">
-      <t-button theme="primary" variant="outline" block bind:tap="handleLocalInteraction">
-        验证记录页交互
-      </t-button>
+<view class="editor-page">
+  <view class="editor-header">
+    <text class="eyebrow">本地校园日记</text>
+    <text class="editor-title">{{pageTitle}}</text>
+    <text class="editor-subtitle">{{pageSubtitle}}</text>
+  </view>
+
+  <view wx:if="{{isLoading}}" class="editor-state-card">
+    <text class="editor-state-card__title">正在读取回忆…</text>
+  </view>
+
+  <view wx:elif="{{!isFormReady}}" class="editor-state-card editor-state-card--error">
+    <t-empty description="{{formError || '记录页暂时无法使用'}}" />
+    <view class="editor-state-card__action">
+      <t-button theme="primary" variant="outline" block bind:tap="cancelEditing">返回地图</t-button>
     </view>
   </view>
+
+  <block wx:else>
+    <view class="editor-context-card">
+      <view class="editor-context-row">
+        <text class="editor-context-label">地图位置</text>
+        <text class="editor-context-value">{{coordinateLabel}}</text>
+      </view>
+      <view class="editor-context-row">
+        <text class="editor-context-label">记录时间</text>
+        <text class="editor-context-value">{{recordedAtLabel}}</text>
+      </view>
+    </view>
+
+    <view class="editor-section">
+      <view class="editor-section__heading">
+        <view>
+          <text class="editor-section__title">照片</text>
+          <text class="editor-section__hint">
+            选择 1—3 张；优先压缩，单张不超过 {{imageMaxSizeLabel}}；也可以只写文字。
+          </text>
+        </view>
+        <text class="editor-section__counter">{{images.length}} / {{imageLimit}}</text>
+      </view>
+
+      <view class="photo-grid">
+        <view wx:for="{{images}}" wx:key="id" class="photo-item">
+          <image
+            wx:if="{{!item.loadFailed}}"
+            class="photo-item__image"
+            src="{{item.path}}"
+            mode="aspectFill"
+            data-index="{{index}}"
+            data-path="{{item.path}}"
+            bindtap="previewImage"
+            binderror="handleImageError"
+          />
+          <view wx:else class="photo-item__missing">
+            <text>照片无法读取</text>
+          </view>
+          <button
+            class="photo-item__remove"
+            aria-label="移除这张照片"
+            data-index="{{index}}"
+            disabled="{{isSaving || hasSaved}}"
+            bindtap="removeImage"
+          >
+            ×
+          </button>
+        </view>
+
+        <button
+          wx:if="{{images.length < imageLimit}}"
+          class="photo-add"
+          disabled="{{isSaving || hasSaved}}"
+          bindtap="chooseImages"
+        >
+          <text class="photo-add__symbol">＋</text>
+          <text>添加照片</text>
+        </button>
+      </view>
+    </view>
+
+    <view class="editor-section">
+      <view class="editor-section__heading">
+        <view>
+          <text class="editor-section__title">回忆正文</text>
+          <text class="editor-section__hint">照片和文字至少填写一项。</text>
+        </view>
+        <text class="editor-section__counter">剩余 {{textRemaining}} 字</text>
+      </view>
+      <textarea
+        class="memory-textarea"
+        value="{{text}}"
+        maxlength="{{textMaxLength}}"
+        placeholder="例如：那天下课后，我们在这里看见了很漂亮的晚霞……"
+        auto-height="{{false}}"
+        disabled="{{isSaving || hasSaved}}"
+        bindinput="handleTextInput"
+      />
+    </view>
+
+    <view class="editor-section">
+      <text class="editor-section__title">地点名称</text>
+      <text class="editor-section__hint">可以为空，也可以写“图书馆前”“操场看台”等。</text>
+      <input
+        class="memory-input"
+        value="{{placeName}}"
+        maxlength="{{placeMaxLength}}"
+        placeholder="给这个校园地点起个名字"
+        disabled="{{isSaving || hasSaved}}"
+        bindinput="handlePlaceInput"
+      />
+    </view>
+
+    <view class="editor-section">
+      <text class="editor-section__title">心情</text>
+      <view class="option-grid">
+        <button
+          wx:for="{{moodOptions}}"
+          wx:key="value"
+          class="option-chip {{mood === item.value ? 'option-chip--selected' : ''}}"
+          data-value="{{item.value}}"
+          disabled="{{isSaving || hasSaved}}"
+          bindtap="selectMood"
+        >
+          {{item.label}}
+        </button>
+      </view>
+      <view wx:if="{{mood === 'custom'}}" class="custom-option-field">
+        <input
+          class="memory-input custom-option-input"
+          value="{{customMood}}"
+          maxlength="{{customLabelMaxLength}}"
+          placeholder="写下你的心情，例如：松了一口气"
+          disabled="{{isSaving || hasSaved}}"
+          focus="{{true}}"
+          bindinput="handleCustomMoodInput"
+        />
+        <text class="custom-option-counter">
+          {{customMood.length}} / {{customLabelMaxLength}}
+        </text>
+      </view>
+    </view>
+
+    <view class="editor-section">
+      <text class="editor-section__title">回忆分类</text>
+      <text class="editor-section__hint">不同分类会在地图上显示不同颜色的星点。</text>
+      <view class="option-grid">
+        <button
+          wx:for="{{categoryOptions}}"
+          wx:key="value"
+          class="option-chip option-chip--{{item.value}} {{category === item.value ? 'option-chip--selected' : ''}}"
+          data-value="{{item.value}}"
+          disabled="{{isSaving || hasSaved}}"
+          bindtap="selectCategory"
+        >
+          {{item.label}}
+        </button>
+      </view>
+      <view wx:if="{{category === 'custom'}}" class="custom-option-field">
+        <input
+          class="memory-input custom-option-input"
+          value="{{customCategory}}"
+          maxlength="{{customLabelMaxLength}}"
+          placeholder="填写分类名称，例如：志愿服务"
+          disabled="{{isSaving || hasSaved}}"
+          focus="{{true}}"
+          bindinput="handleCustomCategoryInput"
+        />
+        <text class="custom-option-counter">
+          {{customCategory.length}} / {{customLabelMaxLength}}
+        </text>
+      </view>
+    </view>
+
+    <view wx:if="{{formError}}" class="editor-error">{{formError}}</view>
+
+    <view class="editor-actions">
+      <t-button
+        theme="primary"
+        block
+        loading="{{isSaving}}"
+        disabled="{{isSaving || hasSaved}}"
+        bind:tap="saveMemory"
+      >
+        {{isEditMode ? '保存修改' : '保存回忆'}}
+      </t-button>
+      <t-button
+        theme="default"
+        variant="outline"
+        block
+        disabled="{{isSaving}}"
+        bind:tap="cancelEditing"
+      >
+        取消并返回
+      </t-button>
+    </view>
+
+    <text class="editor-storage-note">
+      照片会复制到小程序本地用户目录，日记保存在本机 Storage；卸载或清理小程序数据后可能丢失。
+    </text>
+  </block>
 </view>

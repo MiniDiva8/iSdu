@@ -1,10 +1,209 @@
-<view class="page-shell">
-  <view class="paper-card">
-    <text class="eyebrow">时光页占位</text>
-    <text class="page-title">以后在这里回看</text>
-    <text class="page-subtitle">本阶段不读取日记，也不生成时间轴数据。</text>
-    <view class="component-space">
-      <t-empty description="时间轴将在本地闭环里程碑实现" />
+<view class="page-shell timeline-page">
+  <view class="timeline-heading">
+    <text class="eyebrow">{{campusName}} · 私人记忆册</text>
+    <text class="page-title">{{timelineTitle}}</text>
+    <text class="page-subtitle">日记按记录月份排列，也可以回到地图上的原位置。</text>
+  </view>
+
+  <view class="timeline-profile-card">
+    <view class="timeline-profile-card__avatar">{{profileInitial}}</view>
+    <view class="timeline-profile-card__body">
+      <text class="timeline-profile-card__name"> {{profileDisplayName || '给自己取个名字'}} </text>
+      <text class="timeline-profile-card__campus">{{campusName}}</text>
+      <text class="timeline-profile-card__signature">
+        {{profileSignature || '写下一句属于你的校园签名'}}
+      </text>
+    </view>
+    <button
+      class="timeline-profile-card__edit"
+      disabled="{{isProfileLoading}}"
+      bindtap="openProfileEditor"
+    >
+      {{isProfileLoading ? '读取中' : profileButtonLabel}}
+    </button>
+  </view>
+
+  <view wx:if="{{isProfileEditorOpen}}" class="timeline-profile-editor">
+    <view class="timeline-profile-editor__heading">
+      <view>
+        <text class="timeline-profile-editor__title">编辑个人资料</text>
+        <text class="timeline-profile-editor__hint">资料只保存在这台设备，不需要登录。</text>
+      </view>
+      <button
+        class="timeline-profile-editor__close"
+        disabled="{{isProfileSaving}}"
+        bindtap="cancelProfileEditor"
+      >
+        ×
+      </button>
+    </view>
+
+    <text class="timeline-profile-editor__label">名字</text>
+    <input
+      class="timeline-profile-editor__input"
+      value="{{profileDraftName}}"
+      maxlength="{{profileNameMaxLength}}"
+      placeholder="例如：小忆"
+      disabled="{{isProfileSaving}}"
+      bindinput="handleProfileNameInput"
+    />
+    <text class="timeline-profile-editor__counter">
+      {{profileDraftName.length}} / {{profileNameMaxLength}}
+    </text>
+
+    <text class="timeline-profile-editor__label timeline-profile-editor__label--signature">
+      个性签名
+    </text>
+    <textarea
+      class="timeline-profile-editor__textarea"
+      value="{{profileDraftSignature}}"
+      maxlength="{{profileSignatureMaxLength}}"
+      placeholder="例如：把校园里的每一天，好好收起来。"
+      auto-height="{{false}}"
+      disabled="{{isProfileSaving}}"
+      bindinput="handleProfileSignatureInput"
+    />
+    <text class="timeline-profile-editor__counter">
+      {{profileDraftSignature.length}} / {{profileSignatureMaxLength}}
+    </text>
+
+    <text wx:if="{{profileErrorMessage}}" class="timeline-profile-editor__error">
+      {{profileErrorMessage}}
+    </text>
+    <view class="timeline-profile-editor__actions">
+      <t-button
+        theme="default"
+        variant="outline"
+        block
+        disabled="{{isProfileSaving}}"
+        bind:tap="cancelProfileEditor"
+      >
+        取消
+      </t-button>
+      <t-button theme="primary" block loading="{{isProfileSaving}}" bind:tap="saveProfile">
+        保存资料
+      </t-button>
     </view>
   </view>
+
+  <view wx:if="{{profileErrorMessage && !isProfileEditorOpen}}" class="timeline-profile-warning">
+    <text>{{profileErrorMessage}}</text>
+    <button bindtap="openProfileEditor">重新设置</button>
+  </view>
+
+  <view wx:if="{{!isLoading && !errorMessage && !isEmpty}}" class="timeline-search">
+    <view class="timeline-search__field">
+      <text class="timeline-search__icon">⌕</text>
+      <input
+        class="timeline-search__input"
+        value="{{keyword}}"
+        maxlength="50"
+        confirm-type="search"
+        placeholder="搜索正文、地点、心情或内容主题"
+        bindinput="handleKeywordInput"
+      />
+      <button wx:if="{{keyword}}" class="timeline-search__clear" bindtap="clearKeyword">×</button>
+    </view>
+    <text wx:if="{{keyword}}" class="timeline-search__result">找到 {{resultCount}} 条回忆</text>
+    <text wx:else class="timeline-search__result">共 {{resultCount}} 条回忆</text>
+  </view>
+
+  <view wx:if="{{isLoading}}" class="paper-card timeline-state">
+    <view class="timeline-spinner"></view>
+    <text class="timeline-state__title">正在整理时光</text>
+    <text class="supporting-copy">从本机读取你的校园回忆…</text>
+  </view>
+
+  <view wx:elif="{{errorMessage}}" class="paper-card timeline-state">
+    <view class="timeline-state__symbol timeline-state__symbol--error">!</view>
+    <text class="timeline-state__title">时光读取失败</text>
+    <text class="supporting-copy">{{errorMessage}}</text>
+    <view class="timeline-state__action">
+      <t-button theme="primary" variant="outline" block bind:tap="loadTimeline">重新读取</t-button>
+    </view>
+  </view>
+
+  <view wx:elif="{{isEmpty}}" class="paper-card timeline-state">
+    <view class="timeline-state__symbol">✦</view>
+    <text class="timeline-state__title">还没有自己的校园回忆</text>
+    <text class="supporting-copy">从地图选择一个位置，留下第一张照片或第一段文字。</text>
+    <view class="timeline-state__action">
+      <t-button theme="primary" block bind:tap="goToRecord">去记录</t-button>
+    </view>
+  </view>
+
+  <view wx:elif="{{isSearchEmpty}}" class="paper-card timeline-state timeline-state--search">
+    <view class="timeline-state__symbol">⌕</view>
+    <text class="timeline-state__title">没有找到相关回忆</text>
+    <text class="supporting-copy">可以换一个关键词，或清除搜索查看全部内容。</text>
+    <view class="timeline-state__action">
+      <t-button theme="primary" variant="outline" block bind:tap="clearKeyword">
+        清除搜索
+      </t-button>
+    </view>
+  </view>
+
+  <block wx:else>
+    <view wx:for="{{groups}}" wx:key="key" class="timeline-month">
+      <view class="timeline-month__heading">
+        <text class="timeline-month__title">{{item.title}}</text>
+        <text class="timeline-month__count">{{item.countLabel}}</text>
+      </view>
+
+      <view class="timeline-list">
+        <view
+          wx:for="{{item.items}}"
+          wx:for-item="memory"
+          wx:for-index="memoryIndex"
+          wx:key="id"
+          class="timeline-card"
+        >
+          <image
+            wx:if="{{memory.hasImage && !memory.imageFailed}}"
+            class="timeline-card__image"
+            src="{{memory.imagePath}}"
+            mode="aspectFill"
+            data-memory-id="{{memory.id}}"
+            binderror="handleImageError"
+          />
+          <view wx:else class="timeline-card__placeholder"><text>✦</text></view>
+
+          <view class="timeline-card__body">
+            <view class="timeline-card__topline">
+              <text class="timeline-card__date">{{memory.dateLabel}}</text>
+              <text wx:if="{{memory.isDemo}}" class="timeline-card__demo">演示</text>
+            </view>
+            <text class="timeline-card__place">{{memory.placeLabel}}</text>
+            <text class="timeline-card__summary">{{memory.summary}}</text>
+            <view class="timeline-card__tags">
+              <text>{{memory.categoryLabel}}</text>
+              <text>{{memory.moodLabel}}</text>
+            </view>
+            <view class="timeline-card__actions">
+              <t-button
+                size="small"
+                theme="primary"
+                variant="outline"
+                data-memory-id="{{memory.id}}"
+                bind:tap="openDetail"
+              >
+                查看详情
+              </t-button>
+              <t-button
+                size="small"
+                theme="default"
+                variant="text"
+                data-memory-id="{{memory.id}}"
+                bind:tap="showOnMap"
+              >
+                在地图查看
+              </t-button>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </block>
+
+  <view wx:if="{{actionMessage}}" class="timeline-message">{{actionMessage}}</view>
 </view>
