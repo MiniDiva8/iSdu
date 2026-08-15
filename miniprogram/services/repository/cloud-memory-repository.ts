@@ -5,6 +5,7 @@ import {
   type CloudMemory,
   type MigrationItemResult,
   type UploadedCloudImage,
+  type MemoryVisibility,
 } from '../../models/cloud-memory';
 import {
   normalizeCreateMemoryInput,
@@ -200,6 +201,21 @@ export class CloudMemoryRepository implements MemoryRepository {
     const response = await this.client.call('memory-api', 'clearMine');
     parseResult(response, () => undefined);
     this.imageIdsByMemory.clear();
+  }
+
+  async setVisibility(
+    memoryId: string,
+    visibility: MemoryVisibility,
+    selectedFriendIds: readonly string[] = [],
+  ): Promise<CloudMemory> {
+    const response = await this.client.call('memory-api', 'setVisibility', {
+      memoryId,
+      selectedFriendIds: [...selectedFriendIds],
+      visibility,
+    });
+    const memory = parseResult(response, parseMemoryData);
+    this.cacheImages(memory);
+    return memory;
   }
 
   async migrateMemory(memory: Memory): Promise<MigrationItemResult> {

@@ -179,9 +179,39 @@ async function toOwnerView(options, user, memory) {
     ownerDisplayName: user.displayName || 'iSdu 用户',
     ownerUserId: user._id,
     publishedAt: memory.publishedAt ?? null,
-    selectedFriendIds: [],
+    selectedFriendIds: Array.isArray(memory.selectedGrants)
+      ? memory.selectedGrants.map((grant) => grant.friendUserId)
+      : [],
     visibility: VALID_VISIBILITY.has(memory.visibility) ? memory.visibility : 'private',
   };
+}
+
+function normalizeSelectedFriendIds(value) {
+  if (!Array.isArray(value) || value.length > 100) {
+    throw new PublicError('INVALID_INPUT', '部分好友选择无效');
+  }
+  const ids = value.map((item) => requireString(item, '好友标识', 80, false));
+  if (new Set(ids).size !== ids.length) {
+    throw new PublicError('INVALID_INPUT', '部分好友选择存在重复');
+  }
+  return ids;
+}
+
+async function buildSelectedGrants(options, ownerUserId, selectedFriendIds) {
+  const relationships = await options.store.listActiveFriendships(ownerUserId);
+  const byFriendId = new Map();
+  for (const relationship of relationships) {
+    const friendUserId =
+      relationship.userAId === ownerUserId ? relationship.userBId : relationship.userAId;
+    byFriendId.set(friendUserId, relationship);
+  }
+  return selectedFriendIds.map((friendUserId) => {
+    const relationship = byFriendId.get(friendUserId);
+    if (!relationship) {
+      throw new PublicError('NOT_FRIENDS', '所选用户已不是你的好友，请刷新后重试');
+    }
+    return { friendUserId, relationshipId: relationship.relationshipId };
+  });
 }
 
 function createMemoryDocument(options, user, content, images, payload, now) {
@@ -305,6 +335,38 @@ function createMemoryHandler(options) {
           throw new PublicError('NOT_FOUND', '没有找到这段云端回忆');
         }
         return { ok: true, data: { memory: await toOwnerView(options, user, memory) }, requestId };
+      }
+
+      if (event.action === 'setVisibility') {
+        const memoryId = requireString(payload.memoryId, '回忆 ID', 80, false);
+        const visibility = payload.visibility;
+        if (!VALID_VISIBILITY.has(visibility)) {
+          throw new PublicError('INVALID_INPUT', '可见范围无效');
+        }
+        const current = await options.store.getMine(user._id, memoryId);
+        if (!current) throw new PublicError('NOT_FOUND', '没有找到这段云端回忆');
+
+        const selectedFriendIds = normalizeSelectedFriendIds(payload.selectedFriendIds ?? []);
+        if (visibility === 'selected_friends' && selectedFriendIds.length === 0) {
+          throw new PublicError('FRIEND_SELECTION_REQUIRED', '部分好友可见至少需要选择一位好友');
+        }
+        const selectedGrants =
+          visibility === 'selected_friends'
+            ? await buildSelectedGrants(options, user._id, selectedFriendIds)
+            : [];
+        const publishedAt =
+          visibility !== 'private' && !current.publishedAt ? now : (current.publishedAt ?? null);
+        const updated = await options.store.updateMine(user._id, memoryId, {
+          visibility,
+          selectedGrants,
+          publishedAt,
+          updatedAt: now,
+        });
+        return {
+          ok: true,
+          data: { memory: await toOwnerView(options, user, updated) },
+          requestId,
+        };
       }
 
       if (event.action === 'update') {

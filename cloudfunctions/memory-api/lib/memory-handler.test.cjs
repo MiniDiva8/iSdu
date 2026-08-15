@@ -6,8 +6,19 @@ const test = require('node:test');
 const { createMemoryHandler } = require('./memory-handler');
 
 function createHarness() {
-  const users = [{ _id: 'usr_a', identityHash: 'identity-a', status: 'active', displayName: 'A' }];
+  const users = [
+    { _id: 'usr_a', identityHash: 'identity-a', status: 'active', displayName: 'A' },
+    { _id: 'usr_b', identityHash: 'identity-b', status: 'active', displayName: 'B' },
+  ];
   const memories = new Map();
+  const friendships = [
+    {
+      userAId: 'usr_a',
+      userBId: 'usr_b',
+      relationshipId: 'relationship-original',
+      status: 'active',
+    },
+  ];
   const migrations = new Map();
   const plans = new Map();
   let sequence = 0;
@@ -68,9 +79,14 @@ function createHarness() {
         return current;
       },
       clearMine: async () => [],
+      listActiveFriendships: async (userId) =>
+        friendships.filter(
+          (item) =>
+            item.status === 'active' && (item.userAId === userId || item.userBId === userId),
+        ),
     },
   };
-  return { handler: createMemoryHandler(options), memories, plans };
+  return { friendships, handler: createMemoryHandler(options), memories, plans };
 }
 
 const content = {
@@ -197,6 +213,100 @@ test('does not accept a client supplied owner id', async () => {
     payload: { clientRequestId: 'new-memory', content, ownerUserId: 'usr_attacker', uploaded: [] },
   });
   assert.equal([...memories.values()][0].ownerUserId, 'usr_a');
+});
+
+test('sets selected friends using current server-side relationship ids', async () => {
+  const { handler, memories } = createHarness();
+  const created = await handler({
+    action: 'create',
+    payload: { clientRequestId: 'selected-memory', content, uploaded: [] },
+  });
+  const result = await handler({
+    action: 'setVisibility',
+    payload: {
+      memoryId: created.data.memory.id,
+      selectedFriendIds: ['usr_b'],
+      visibility: 'selected_friends',
+    },
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.data.memory.selectedFriendIds, ['usr_b']);
+  const stored = memories.get(created.data.memory.id);
+  assert.deepEqual(stored.selectedGrants, [
+    { friendUserId: 'usr_b', relationshipId: 'relationship-original' },
+  ]);
+  assert.equal(stored.publishedAt, '2026-08-15T08:00:00.000Z');
+});
+
+test('rejects an empty selected-friends list and non-friend ids', async () => {
+  const { handler } = createHarness();
+  const created = await handler({
+    action: 'create',
+    payload: { clientRequestId: 'invalid-selected-memory', content, uploaded: [] },
+  });
+  const empty = await handler({
+    action: 'setVisibility',
+    payload: {
+      memoryId: created.data.memory.id,
+      selectedFriendIds: [],
+      visibility: 'selected_friends',
+    },
+  });
+  const stranger = await handler({
+    action: 'setVisibility',
+    payload: {
+      memoryId: created.data.memory.id,
+      selectedFriendIds: ['usr_stranger'],
+      visibility: 'selected_friends',
+    },
+  });
+  assert.equal(empty.code, 'FRIEND_SELECTION_REQUIRED');
+  assert.equal(stranger.code, 'NOT_FRIENDS');
+});
+
+test('making a memory private clears grants but preserves first published time', async () => {
+  const { handler, memories } = createHarness();
+  const created = await handler({
+    action: 'create',
+    payload: { clientRequestId: 'private-again', content, uploaded: [] },
+  });
+  await handler({
+    action: 'setVisibility',
+    payload: {
+      memoryId: created.data.memory.id,
+      selectedFriendIds: ['usr_b'],
+      visibility: 'selected_friends',
+    },
+  });
+  await handler({
+    action: 'setVisibility',
+    payload: { memoryId: created.data.memory.id, visibility: 'private' },
+  });
+  const stored = memories.get(created.data.memory.id);
+  assert.equal(stored.visibility, 'private');
+  assert.deepEqual(stored.selectedGrants, []);
+  assert.equal(stored.publishedAt, '2026-08-15T08:00:00.000Z');
+});
+
+test('old selected grant is not silently rebound after relationship id rotates', async () => {
+  const { handler, friendships, memories } = createHarness();
+  const created = await handler({
+    action: 'create',
+    payload: { clientRequestId: 'rotated-friend', content, uploaded: [] },
+  });
+  await handler({
+    action: 'setVisibility',
+    payload: {
+      memoryId: created.data.memory.id,
+      selectedFriendIds: ['usr_b'],
+      visibility: 'selected_friends',
+    },
+  });
+  friendships[0].relationshipId = 'relationship-new';
+  assert.equal(
+    memories.get(created.data.memory.id).selectedGrants[0].relationshipId,
+    'relationship-original',
+  );
 });
 
 test('sanitizes unexpected storage failures', async () => {

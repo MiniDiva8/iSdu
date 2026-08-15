@@ -5,6 +5,15 @@ function createCloudMemoryStore(database) {
   const memories = database.collection('memories');
   const migrations = database.collection('memory_migrations');
   const uploadPlans = database.collection('image_upload_plans');
+  const friendships = database.collection('friendships');
+
+  async function getMine(ownerUserId, memoryId) {
+    const result = await memories
+      .where({ _id: memoryId, ownerUserId, deletedAt: null })
+      .limit(1)
+      .get();
+    return result.data[0] ?? null;
+  }
 
   return {
     async findUserByIdentityHash(identityHash) {
@@ -63,14 +72,10 @@ function createCloudMemoryStore(database) {
       return result.data;
     },
     async getMine(ownerUserId, memoryId) {
-      const result = await memories
-        .where({ _id: memoryId, ownerUserId, deletedAt: null })
-        .limit(1)
-        .get();
-      return result.data[0] ?? null;
+      return getMine(ownerUserId, memoryId);
     },
     async updateMine(ownerUserId, memoryId, data) {
-      const current = await this.getMine(ownerUserId, memoryId);
+      const current = await getMine(ownerUserId, memoryId);
       if (!current) {
         return null;
       }
@@ -78,7 +83,7 @@ function createCloudMemoryStore(database) {
       return { ...current, ...data };
     },
     async deleteMine(ownerUserId, memoryId, now) {
-      const current = await this.getMine(ownerUserId, memoryId);
+      const current = await getMine(ownerUserId, memoryId);
       if (!current) {
         return null;
       }
@@ -86,11 +91,19 @@ function createCloudMemoryStore(database) {
       return current;
     },
     async clearMine(ownerUserId, now) {
-      const items = await this.listMine(ownerUserId);
+      const result = await memories.where({ ownerUserId, deletedAt: null }).limit(100).get();
+      const items = result.data;
       for (const item of items) {
         await memories.doc(item._id).update({ data: { deletedAt: now, updatedAt: now } });
       }
       return items;
+    },
+    async listActiveFriendships(userId) {
+      const [left, right] = await Promise.all([
+        friendships.where({ userAId: userId, status: 'active' }).limit(100).get(),
+        friendships.where({ userBId: userId, status: 'active' }).limit(100).get(),
+      ]);
+      return [...left.data, ...right.data];
     },
   };
 }

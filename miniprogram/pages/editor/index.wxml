@@ -173,6 +173,44 @@
       </view>
     </view>
 
+    <view wx:if="{{isCloudMode}}" class="editor-section visibility-section">
+      <text class="editor-section__title">谁可以看</text>
+      <text class="editor-section__hint">
+        新回忆默认仅自己可见；以后改为私密时，好友刷新后会立即失去访问权。
+      </text>
+      <view class="option-grid">
+        <button
+          wx:for="{{visibilityOptions}}"
+          wx:key="value"
+          class="option-chip {{visibility === item.value ? 'option-chip--selected' : ''}}"
+          data-value="{{item.value}}"
+          disabled="{{isSaving || hasSaved}}"
+          bindtap="selectVisibility"
+        >
+          {{item.label}}
+        </button>
+      </view>
+      <view wx:if="{{visibility === 'selected_friends'}}" class="friend-selector">
+        <text wx:if="{{friendLoadError}}" class="friend-selector__message">
+          {{friendLoadError}}
+        </text>
+        <text wx:elif="{{friendChoices.length === 0}}" class="friend-selector__message">
+          还没有 iSdu 好友，请先从“时光”页发送好友邀请。
+        </text>
+        <button
+          wx:for="{{friendChoices}}"
+          wx:key="relationshipId"
+          class="friend-choice {{item.selected ? 'friend-choice--selected' : ''}}"
+          data-user-id="{{item.friend.userId}}"
+          disabled="{{isSaving || hasSaved}}"
+          bindtap="toggleFriendSelection"
+        >
+          <text>{{item.friend.displayName}}</text>
+          <text>{{item.selected ? '已选择' : '选择'}}</text>
+        </button>
+      </view>
+    </view>
+
     <view wx:if="{{formError}}" class="editor-error">{{formError}}</view>
 
     <view class="editor-actions">
@@ -189,7 +227,8 @@
     </view>
 
     <text class="editor-storage-note">
-      照片会复制到小程序本地用户目录，日记保存在本机 Storage；卸载或清理小程序数据后可能丢失。
+      {{isCloudMode ? '回忆保存到 iSdu 云端；好友只能按你设置的范围访问。' :
+      '照片会复制到小程序本地用户目录，日记保存在本机 Storage；卸载或清理小程序数据后可能丢失。'}}
     </text>
   </view>
 </view>

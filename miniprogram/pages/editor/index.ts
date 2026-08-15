@@ -16,9 +16,17 @@ import {
   type MemoryContentInput,
   type MemoryMood,
 } from '../../models/memory';
+import {
+  isMemoryVisibility,
+  type CloudMemory,
+  type MemoryVisibility,
+} from '../../models/cloud-memory';
+import type { FriendListItem } from '../../models/cloud-friend';
 import { CURRENT_MAP_ASSET_VERSION } from '../../config/campus-map';
 import { LocalImageServiceError, localImageService } from '../../services/local-image-service';
 import { memoryRepository } from '../../services/repository/index';
+import { cloudFriendRepository } from '../../services/repository/cloud-friend-repository';
+import { cloudMemoryRepository } from '../../services/repository/cloud-memory-repository';
 import { cloudModeService } from '../../services/cloud/cloud-mode-service';
 import { validateRatio } from '../../utils/map-coordinates';
 import { formatMemoryDateTime } from '../../utils/date-format';
@@ -35,7 +43,14 @@ interface SelectOption<T extends string> {
   value: T;
 }
 
+interface FriendChoice extends FriendListItem {
+  readonly selected: boolean;
+}
+
 const MAX_LOCAL_IMAGE_BYTES = 5 * 1024 * 1024;
+function createDefaultVisibility(): MemoryVisibility {
+  return 'private';
+}
 
 const moodOptions: SelectOption<MemoryMood>[] = MEMORY_MOODS.map((value) => ({
   label: MEMORY_MOOD_LABELS[value],
@@ -45,6 +60,18 @@ const categoryOptions: SelectOption<MemoryCategory>[] = MEMORY_CATEGORIES.map((v
   label: MEMORY_CATEGORY_LABELS[value],
   value,
 }));
+const visibilityOptions: SelectOption<MemoryVisibility>[] = [
+  { label: '仅自己', value: 'private' },
+  { label: '部分好友', value: 'selected_friends' },
+  { label: '全部好友', value: 'friends' },
+];
+
+function isCloudMemory(memory: Memory): memory is CloudMemory {
+  return (
+    'visibility' in memory &&
+    isMemoryVisibility((memory as Memory & { visibility?: unknown }).visibility)
+  );
+}
 
 let navigationTimer: ReturnType<typeof setTimeout> | undefined;
 let editorImageSequence = 0;
@@ -129,10 +156,13 @@ Page({
     imageLimit: MEMORY_IMAGE_MAX_COUNT,
     imageMaxSizeLabel: '5 MB',
     images: [] as EditorImage[],
+    friendChoices: [] as FriendChoice[],
+    friendLoadError: '',
     isDirty: false,
     isEditMode: false,
     isFormReady: false,
     isLoading: false,
+    isCloudMode: false,
     isPageActive: true,
     isSaving: false,
     mapAssetVersion: CURRENT_MAP_ASSET_VERSION,
@@ -146,15 +176,21 @@ Page({
     placeName: '',
     recordedAt: '',
     recordedAtLabel: '',
+    selectedFriendIds: [] as string[],
     text: '',
     textMaxLength: MEMORY_TEXT_MAX_LENGTH,
     textRemaining: MEMORY_TEXT_MAX_LENGTH,
+    visibility: createDefaultVisibility(),
+    visibilityOptions,
     xRatio: 0.5,
     yRatio: 0.5,
   },
 
   onLoad(query: Record<string, string | undefined>) {
     this.data.isPageActive = true;
+    const isCloudMode = cloudModeService.getState().mode === 'cloud';
+    this.setData({ isCloudMode });
+    if (isCloudMode) void this.loadFriendChoices();
     const memoryId = query.memoryId?.trim();
 
     if (memoryId) {
@@ -192,6 +228,24 @@ Page({
     });
   },
 
+  async loadFriendChoices() {
+    try {
+      const friends = await cloudFriendRepository.listFriends();
+      const selectedIds = new Set(this.data.selectedFriendIds);
+      this.setData({
+        friendChoices: friends.map((item) => ({
+          ...item,
+          selected: selectedIds.has(item.friend.userId),
+        })),
+        friendLoadError: '',
+      });
+    } catch (error: unknown) {
+      this.setData({
+        friendLoadError: error instanceof Error ? error.message : '好友列表读取失败，请稍后重试。',
+      });
+    }
+  },
+
   async loadMemory(memoryId: string) {
     try {
       const memory = await memoryRepository.getMemoryById(memoryId);
@@ -216,6 +270,8 @@ Page({
   },
 
   populateMemory(memory: Memory) {
+    const cloudMemory = isCloudMemory(memory) ? memory : null;
+    const selectedIds = new Set(cloudMemory?.selectedFriendIds ?? []);
     this.setData({
       category: memory.category,
       coordinateLabel: `横向 ${(memory.mapXRatio * 100).toFixed(1)}% · 纵向 ${(
@@ -236,7 +292,36 @@ Page({
       textRemaining: MEMORY_TEXT_MAX_LENGTH - memory.text.length,
       xRatio: memory.mapXRatio,
       yRatio: memory.mapYRatio,
+      visibility: cloudMemory?.visibility ?? 'private',
+      selectedFriendIds: [...selectedIds],
+      friendChoices: this.data.friendChoices.map((item) => ({
+        ...item,
+        selected: selectedIds.has(item.friend.userId),
+      })),
     });
+  },
+
+  selectVisibility(event: WechatMiniprogram.BaseEvent) {
+    const value = (event.currentTarget.dataset as { value?: unknown }).value;
+    if (!isMemoryVisibility(value) || this.data.isSaving || this.data.hasSaved) return;
+    this.setData({ formError: '', visibility: value });
+    this.markDirty();
+  },
+
+  toggleFriendSelection(event: WechatMiniprogram.BaseEvent) {
+    const userId = (event.currentTarget.dataset as { userId?: unknown }).userId;
+    if (typeof userId !== 'string' || this.data.isSaving || this.data.hasSaved) return;
+    const friendChoices = this.data.friendChoices.map((item) =>
+      item.friend.userId === userId ? { ...item, selected: !item.selected } : item,
+    );
+    this.setData({
+      formError: '',
+      friendChoices,
+      selectedFriendIds: friendChoices
+        .filter((item) => item.selected)
+        .map((item) => item.friend.userId),
+    });
+    this.markDirty();
   },
 
   markDirty() {
@@ -477,6 +562,16 @@ Page({
       return;
     }
 
+    const selectedFriendIds = this.data.selectedFriendIds;
+    if (
+      this.data.isCloudMode &&
+      this.data.visibility === 'selected_friends' &&
+      selectedFriendIds.length === 0
+    ) {
+      this.setData({ formError: '请选择至少一位好友，或将可见范围改为“仅自己”。' });
+      return;
+    }
+
     this.setData({ formError: '', isSaving: true });
     const persistentPaths = this.data.images
       .filter((image) => !image.isTemporary)
@@ -505,6 +600,19 @@ Page({
         savedMemory = await memoryRepository.createMemory({ id: this.data.memoryId, ...content });
       }
 
+      let visibilityWarning = '';
+      if (this.data.isCloudMode) {
+        try {
+          savedMemory = await cloudMemoryRepository.setVisibility(
+            savedMemory.id,
+            this.data.visibility,
+            selectedFriendIds,
+          );
+        } catch (error: unknown) {
+          visibilityWarning = `正文已保存，但可见范围未更新，仍按服务端原范围处理：${getErrorMessage(error)}`;
+        }
+      }
+
       const removedOriginalPaths = this.data.originalImagePaths.filter(
         (path) => !finalImagePaths.includes(path),
       );
@@ -513,7 +621,8 @@ Page({
       wx.disableAlertBeforeUnload({ fail: () => undefined });
       this.setData({
         formError:
-          cleanupFailures.length > 0 ? '回忆已保存，但部分旧照片未能清理，可稍后重试。' : '',
+          visibilityWarning ||
+          (cleanupFailures.length > 0 ? '回忆已保存，但部分旧照片未能清理，可稍后重试。' : ''),
         images: (savedMemory?.imagePaths ?? finalImagePaths).map((path, index) =>
           createEditorImage(path, index, false),
         ),
