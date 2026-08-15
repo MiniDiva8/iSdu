@@ -6,6 +6,7 @@ export interface MemoryRepository {
   createMemory(input: CreateMemoryInput): Promise<Memory>;
   updateMemory(id: string, input: UpdateMemoryInput): Promise<Memory>;
   deleteMemory(id: string): Promise<void>;
+  clearMemories(): Promise<void>;
 }
 
 export type MemoryRepositoryErrorCode =

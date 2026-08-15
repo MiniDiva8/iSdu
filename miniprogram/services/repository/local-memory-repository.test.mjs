@@ -37,6 +37,10 @@ function createStorage(initialValue = MISSING_STORAGE_VALUE) {
     adapter: {
       has: () => exists,
       read: () => value,
+      remove: () => {
+        exists = false;
+        value = '';
+      },
       write: (_key, nextValue) => {
         exists = true;
         value = nextValue;
@@ -106,6 +110,19 @@ test('creates, reads, updates and deletes a memory', async () => {
 
   await repository.deleteMemory('memory-001');
   assert.equal(await repository.getMemoryById('memory-001'), null);
+});
+
+test('clears all memories while keeping an explicit empty snapshot', async () => {
+  const storage = createStorage();
+  const repository = new LocalMemoryRepository(storage.adapter, () => FIXED_NOW);
+  await repository.createMemory(createInput('memory-001'));
+  await repository.createMemory(createInput('memory-002'));
+
+  await repository.clearMemories();
+
+  assert.deepEqual(await repository.listMemories(), []);
+  assert.equal(JSON.parse(storage.getValue()).schemaVersion, 3);
+  assert.deepEqual(JSON.parse(storage.getValue()).memories, []);
 });
 
 test('sorts repository results by recorded date', async () => {
@@ -232,6 +249,7 @@ test('keeps the previous snapshot when storage writing fails', async () => {
   const failingStorage = {
     has: () => true,
     read: () => oldValue,
+    remove: () => {},
     write: () => {
       throw new Error('disk full');
     },
@@ -251,6 +269,7 @@ test('writes the versioned storage key', async () => {
   const storage = {
     has: () => false,
     read: () => '',
+    remove: () => {},
     write: (key, value) => {
       writtenKey = key;
       writtenValue = value;

@@ -4,6 +4,6 @@ export interface RepositoryStatus {
 }
 
 export interface SkeletonRepository {
-  readonly mode: 'demo';
+  readonly mode: 'local';
   getStatus(): Promise<RepositoryStatus>;
 }

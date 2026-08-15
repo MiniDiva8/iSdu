@@ -21,37 +21,37 @@
 
 每项满分 10 分。分数越高越有利：
 
-| 缩写 | 维度 | 高分含义 |
-|---|---|---|
-| L | 许可证清晰度 | 根许可证清晰、元数据一致 |
-| M | 当前维护状态 | 近期有实质维护和问题响应 |
-| C | 微信小程序兼容性 | 原生兼容且当前工具链风险低 |
-| F | 需求匹配程度 | 与个人校园地图日记直接相关 |
-| R | 可复用价值 | 可在合规前提下低风险复用 |
-| Q | 代码质量 | 结构、测试、类型和规范良好 |
-| D | 文档完整度 | 安装、API、示例和限制清楚 |
-| I | 引入成本 | 高分代表引入简单、耦合低 |
-| P | 包体和性能风险 | 高分代表风险低、易按需控制 |
-| S | 安全与隐私风险 | 高分代表默认做法更安全 |
+| 缩写 | 维度             | 高分含义                   |
+| ---- | ---------------- | -------------------------- |
+| L    | 许可证清晰度     | 根许可证清晰、元数据一致   |
+| M    | 当前维护状态     | 近期有实质维护和问题响应   |
+| C    | 微信小程序兼容性 | 原生兼容且当前工具链风险低 |
+| F    | 需求匹配程度     | 与个人校园地图日记直接相关 |
+| R    | 可复用价值       | 可在合规前提下低风险复用   |
+| Q    | 代码质量         | 结构、测试、类型和规范良好 |
+| D    | 文档完整度       | 安装、API、示例和限制清楚  |
+| I    | 引入成本         | 高分代表引入简单、耦合低   |
+| P    | 包体和性能风险   | 高分代表风险低、易按需控制 |
+| S    | 安全与隐私风险   | 高分代表默认做法更安全     |
 
 总分只用于横向辅助，最终分类优先考虑许可证、隐私和产品边界等一票否决条件。
 
 ## 3. 候选仓库总览
 
-| # | 仓库 | 主要用途 | LICENSE 核实 | 技术栈摘要 | 最近可见提交 | 推荐 | 最终分类 | 总分 |
-|---:|---|---|---|---|---|---|---|---:|
-| 1 | [Tencent/tdesign-miniprogram](https://github.com/Tencent/tdesign-miniprogram) | 小程序 UI | MIT，根文件清晰 | TS/JS、WXML、WXSS/Less、npm | [2026-07-28](https://github.com/Tencent/tdesign-miniprogram/commit/ef43247e2e37e53120d73a755546ba8a83ef8dda) | A | 正式依赖 | 90 |
-| 2 | [wechat-miniprogram/miniprogram-demo](https://github.com/wechat-miniprogram/miniprogram-demo) | 官方 API 示例 | MIT，根文件清晰 | 原生小程序、JS/TS、CloudBase 示例 | [2026-03-27](https://github.com/wechat-miniprogram/miniprogram-demo/commit/0b1de6f2a28ff185d7139e06b3956d8fdf15f61c) | A | 技术参考 | 88 |
-| 3 | [Tencent/tdesign-miniprogram-starter-retail](https://github.com/Tencent/tdesign-miniprogram-starter-retail) | 工程结构/视觉 | 根 LICENSE 为 MIT；`package.json` 标为 ISC，存在冲突 | JS、WXML、WXSS、TDesign、Mock | [2026-05-19](https://github.com/Tencent/tdesign-miniprogram-starter-retail/commit/4280f410121c75775c4b1fd15c3849031f830cd7) | B- | 技术参考、视觉参考 | 64 |
-| 4 | [TencentCloudBase/awesome-cloudbase-examples](https://github.com/TencentCloudBase/awesome-cloudbase-examples) | CloudBase 示例集合 | README 声称 MIT，但根 LICENSE 当前 404 | 多技术栈、多示例、CloudBase | [2026-07-29](https://github.com/TencentCloudBase/awesome-cloudbase-examples/commit/f49f097b306565bf6ce7ea1f8b7a9c2de78078f5) | B- | 技术参考 | 62 |
-| 5 | [TencentCloudBase/cloudbase-skills](https://github.com/TencentCloudBase/cloudbase-skills) | Agent 的 CloudBase 指南 | MIT，根文件清晰 | Markdown Agent Skill、MCP 路由 | [2026-07-29](https://github.com/TencentCloudBase/cloudbase-skills/commit/b0733652236b480d536460a22f04456cc6b24db5) | B | 暂不采用 | 79 |
-| 6 | [TencentCloudBase/awesome-miniprogram-skills](https://github.com/TencentCloudBase/awesome-miniprogram-skills) | 小程序 AI 开发模式 Skills | MIT，根文件清晰 | 原生小程序、AI Skills、云函数、Mock | [2026-06-18](https://github.com/TencentCloudBase/awesome-miniprogram-skills/commit/72523cad942a7d80de53646c3f1b7c367f0bc80b) | D | 暂不采用 | 62 |
-| 7 | [TencentLBS/TencentMapMiniProgramDemo](https://github.com/TencentLBS/TencentMapMiniProgramDemo) | 地理地图 Marker/Callout 示例 | 无根 LICENSE；`package.json` 标 ISC | 原生 JS/WXML/WXSS、`<map>`、LBS | [2023-05-15](https://github.com/TencentLBS/TencentMapMiniProgramDemo/commit/2c72cb48e789bfcb75ad9e9f42b3677b5cf1d6f4) | C- | 技术参考 | 45 |
-| 8 | [harveyqing/BearDiary](https://github.com/harveyqing/BearDiary) | 早期日记交互参考 | MIT，根文件清晰 | 2016 原生小程序、JS、本地存储、Server API | [2016-11-16](https://github.com/harveyqing/BearDiary/commit/aee2bfa9f758268699591d319baadae5b4dd5626) | D | 视觉参考 | 44 |
-| 9 | [KyaukYou/weapp-diary](https://github.com/KyaukYou/weapp-diary) | 日记与 CloudBase 示例 | MIT，根文件清晰 | 原生 JS、CloudBase、云函数、旧 UI 模块 | [2022-07-29](https://github.com/KyaukYou/weapp-diary/commit/5f5be13294f21da7cf309d60c70dd68c8a6af52e) | D | 暂不采用 | 40 |
-| 10 | [s-xianyu/xy-diary](https://github.com/s-xianyu/xy-diary) | 跨端日记/工具集合 | 无 LICENSE；README 要求署名并联系作者 | uni-app、Vue 3、TS、Pinia、uView Plus | [2026-03-16](https://github.com/s-xianyu/xy-diary/commit/f0f72c28c1166ffdbbe6469458b8d04baf31ddaa)，仅 CNAME | F | 禁止使用 | 35 |
-| 11 | [wechat-miniprogram/weui-miniprogram](https://github.com/wechat-miniprogram/weui-miniprogram) | 微信原生视觉组件 | MIT，根文件清晰 | JS/WXML/WXSS、WeUI、npm | [2026-04-28](https://github.com/wechat-miniprogram/weui-miniprogram/commit/5d04cad87bf9305d709aa1b623b8f34f2c659a2d) | B+ | 技术参考 | 85 |
-| 12 | [youzan/vant-weapp](https://github.com/youzan/vant-weapp) | 小程序 UI 备选 | MIT，根文件清晰 | TS/JS、WXML、Less、npm | [2026-02-27](https://github.com/youzan/vant-weapp/commit/7a7d43757ed19d3ad5e6bca69059e0b9ea565d0b)，依赖更新 | B | 暂不采用 | 84 |
+|   # | 仓库                                                                                                          | 主要用途                     | LICENSE 核实                                         | 技术栈摘要                                | 最近可见提交                                                                                                                 | 推荐 | 最终分类           | 总分 |
+| --: | ------------------------------------------------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ---- | ------------------ | ---: |
+|   1 | [Tencent/tdesign-miniprogram](https://github.com/Tencent/tdesign-miniprogram)                                 | 小程序 UI                    | MIT，根文件清晰                                      | TS/JS、WXML、WXSS/Less、npm               | [2026-07-28](https://github.com/Tencent/tdesign-miniprogram/commit/ef43247e2e37e53120d73a755546ba8a83ef8dda)                 | A    | 正式依赖           |   90 |
+|   2 | [wechat-miniprogram/miniprogram-demo](https://github.com/wechat-miniprogram/miniprogram-demo)                 | 官方 API 示例                | MIT，根文件清晰                                      | 原生小程序、JS/TS、CloudBase 示例         | [2026-03-27](https://github.com/wechat-miniprogram/miniprogram-demo/commit/0b1de6f2a28ff185d7139e06b3956d8fdf15f61c)         | A    | 技术参考           |   88 |
+|   3 | [Tencent/tdesign-miniprogram-starter-retail](https://github.com/Tencent/tdesign-miniprogram-starter-retail)   | 工程结构/视觉                | 根 LICENSE 为 MIT；`package.json` 标为 ISC，存在冲突 | JS、WXML、WXSS、TDesign、Mock             | [2026-05-19](https://github.com/Tencent/tdesign-miniprogram-starter-retail/commit/4280f410121c75775c4b1fd15c3849031f830cd7)  | B-   | 技术参考、视觉参考 |   64 |
+|   4 | [TencentCloudBase/awesome-cloudbase-examples](https://github.com/TencentCloudBase/awesome-cloudbase-examples) | CloudBase 示例集合           | README 声称 MIT，但根 LICENSE 当前 404               | 多技术栈、多示例、CloudBase               | [2026-07-29](https://github.com/TencentCloudBase/awesome-cloudbase-examples/commit/f49f097b306565bf6ce7ea1f8b7a9c2de78078f5) | B-   | 技术参考           |   62 |
+|   5 | [TencentCloudBase/cloudbase-skills](https://github.com/TencentCloudBase/cloudbase-skills)                     | Agent 的 CloudBase 指南      | MIT，根文件清晰                                      | Markdown Agent Skill、MCP 路由            | [2026-07-29](https://github.com/TencentCloudBase/cloudbase-skills/commit/b0733652236b480d536460a22f04456cc6b24db5)           | B    | 暂不采用           |   79 |
+|   6 | [TencentCloudBase/awesome-miniprogram-skills](https://github.com/TencentCloudBase/awesome-miniprogram-skills) | 小程序 AI 开发模式 Skills    | MIT，根文件清晰                                      | 原生小程序、AI Skills、云函数、Mock       | [2026-06-18](https://github.com/TencentCloudBase/awesome-miniprogram-skills/commit/72523cad942a7d80de53646c3f1b7c367f0bc80b) | D    | 暂不采用           |   62 |
+|   7 | [TencentLBS/TencentMapMiniProgramDemo](https://github.com/TencentLBS/TencentMapMiniProgramDemo)               | 地理地图 Marker/Callout 示例 | 无根 LICENSE；`package.json` 标 ISC                  | 原生 JS/WXML/WXSS、`<map>`、LBS           | [2023-05-15](https://github.com/TencentLBS/TencentMapMiniProgramDemo/commit/2c72cb48e789bfcb75ad9e9f42b3677b5cf1d6f4)        | C-   | 技术参考           |   45 |
+|   8 | [harveyqing/BearDiary](https://github.com/harveyqing/BearDiary)                                               | 早期日记交互参考             | MIT，根文件清晰                                      | 2016 原生小程序、JS、本地存储、Server API | [2016-11-16](https://github.com/harveyqing/BearDiary/commit/aee2bfa9f758268699591d319baadae5b4dd5626)                        | D    | 视觉参考           |   44 |
+|   9 | [KyaukYou/weapp-diary](https://github.com/KyaukYou/weapp-diary)                                               | 日记与 CloudBase 示例        | MIT，根文件清晰                                      | 原生 JS、CloudBase、云函数、旧 UI 模块    | [2022-07-29](https://github.com/KyaukYou/weapp-diary/commit/5f5be13294f21da7cf309d60c70dd68c8a6af52e)                        | D    | 暂不采用           |   40 |
+|  10 | [s-xianyu/xy-diary](https://github.com/s-xianyu/xy-diary)                                                     | 跨端日记/工具集合            | 无 LICENSE；README 要求署名并联系作者                | uni-app、Vue 3、TS、Pinia、uView Plus     | [2026-03-16](https://github.com/s-xianyu/xy-diary/commit/f0f72c28c1166ffdbbe6469458b8d04baf31ddaa)，仅 CNAME                 | F    | 禁止使用           |   35 |
+|  11 | [wechat-miniprogram/weui-miniprogram](https://github.com/wechat-miniprogram/weui-miniprogram)                 | 微信原生视觉组件             | MIT，根文件清晰                                      | JS/WXML/WXSS、WeUI、npm                   | [2026-04-28](https://github.com/wechat-miniprogram/weui-miniprogram/commit/5d04cad87bf9305d709aa1b623b8f34f2c659a2d)         | B+   | 技术参考           |   85 |
+|  12 | [youzan/vant-weapp](https://github.com/youzan/vant-weapp)                                                     | 小程序 UI 备选               | MIT，根文件清晰                                      | TS/JS、WXML、Less、npm                    | [2026-02-27](https://github.com/youzan/vant-weapp/commit/7a7d43757ed19d3ad5e6bca69059e0b9ea565d0b)，依赖更新                 | B    | 暂不采用           |   84 |
 
 ## 4. 逐项结论
 
@@ -199,20 +199,20 @@
 
 ## 5. 评分表
 
-| # | 仓库 | L | M | C | F | R | Q | D | I | P | S | 合计 |
-|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 1 | Tencent/tdesign-miniprogram | 10 | 10 | 10 | 9 | 9 | 9 | 9 | 8 | 7 | 9 | 90 |
-| 2 | wechat-miniprogram/miniprogram-demo | 10 | 9 | 10 | 7 | 9 | 9 | 8 | 9 | 8 | 9 | 88 |
-| 3 | Tencent/tdesign-miniprogram-starter-retail | 7 | 8 | 10 | 4 | 6 | 7 | 8 | 3 | 4 | 7 | 64 |
-| 4 | TencentCloudBase/awesome-cloudbase-examples | 3 | 10 | 8 | 8 | 7 | 6 | 8 | 3 | 4 | 5 | 62 |
-| 5 | TencentCloudBase/cloudbase-skills | 10 | 10 | 8 | 8 | 8 | 8 | 8 | 5 | 9 | 5 | 79 |
-| 6 | TencentCloudBase/awesome-miniprogram-skills | 10 | 9 | 9 | 2 | 3 | 7 | 9 | 4 | 5 | 4 | 62 |
-| 7 | TencentLBS/TencentMapMiniProgramDemo | 2 | 3 | 8 | 5 | 3 | 6 | 2 | 6 | 5 | 5 | 45 |
-| 8 | harveyqing/BearDiary | 10 | 1 | 2 | 5 | 3 | 3 | 5 | 5 | 7 | 3 | 44 |
-| 9 | KyaukYou/weapp-diary | 10 | 2 | 3 | 6 | 3 | 4 | 5 | 2 | 4 | 1 | 40 |
-| 10 | s-xianyu/xy-diary | 1 | 7 | 6 | 3 | 2 | 6 | 4 | 1 | 2 | 3 | 35 |
-| 11 | wechat-miniprogram/weui-miniprogram | 10 | 9 | 10 | 7 | 8 | 8 | 8 | 8 | 8 | 9 | 85 |
-| 12 | youzan/vant-weapp | 10 | 6 | 8 | 8 | 9 | 9 | 9 | 8 | 8 | 9 | 84 |
+|   # | 仓库                                        |   L |   M |   C |   F |   R |   Q |   D |   I |   P |   S | 合计 |
+| --: | ------------------------------------------- | --: | --: | --: | --: | --: | --: | --: | --: | --: | --: | ---: |
+|   1 | Tencent/tdesign-miniprogram                 |  10 |  10 |  10 |   9 |   9 |   9 |   9 |   8 |   7 |   9 |   90 |
+|   2 | wechat-miniprogram/miniprogram-demo         |  10 |   9 |  10 |   7 |   9 |   9 |   8 |   9 |   8 |   9 |   88 |
+|   3 | Tencent/tdesign-miniprogram-starter-retail  |   7 |   8 |  10 |   4 |   6 |   7 |   8 |   3 |   4 |   7 |   64 |
+|   4 | TencentCloudBase/awesome-cloudbase-examples |   3 |  10 |   8 |   8 |   7 |   6 |   8 |   3 |   4 |   5 |   62 |
+|   5 | TencentCloudBase/cloudbase-skills           |  10 |  10 |   8 |   8 |   8 |   8 |   8 |   5 |   9 |   5 |   79 |
+|   6 | TencentCloudBase/awesome-miniprogram-skills |  10 |   9 |   9 |   2 |   3 |   7 |   9 |   4 |   5 |   4 |   62 |
+|   7 | TencentLBS/TencentMapMiniProgramDemo        |   2 |   3 |   8 |   5 |   3 |   6 |   2 |   6 |   5 |   5 |   45 |
+|   8 | harveyqing/BearDiary                        |  10 |   1 |   2 |   5 |   3 |   3 |   5 |   5 |   7 |   3 |   44 |
+|   9 | KyaukYou/weapp-diary                        |  10 |   2 |   3 |   6 |   3 |   4 |   5 |   2 |   4 |   1 |   40 |
+|  10 | s-xianyu/xy-diary                           |   1 |   7 |   6 |   3 |   2 |   6 |   4 |   1 |   2 |   3 |   35 |
+|  11 | wechat-miniprogram/weui-miniprogram         |  10 |   9 |  10 |   7 |   8 |   8 |   8 |   8 |   8 |   9 |   85 |
+|  12 | youzan/vant-weapp                           |  10 |   6 |   8 |   8 |   9 |   9 |   9 |   8 |   8 |   9 |   84 |
 
 ## 6. 最终分类
 

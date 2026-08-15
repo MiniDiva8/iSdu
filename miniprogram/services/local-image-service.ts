@@ -8,7 +8,11 @@ const FILE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const SAFE_IMAGE_EXTENSIONS = new Set(['gif', 'heic', 'heif', 'jpeg', 'jpg', 'png', 'webp']);
 
 export type LocalImageServiceErrorCode =
-  'INVALID_IMAGE_COUNT' | 'INVALID_MEMORY_ID' | 'INVALID_TEMP_FILE_PATH' | 'SAVE_FAILED';
+  | 'CLEANUP_FAILED'
+  | 'INVALID_IMAGE_COUNT'
+  | 'INVALID_MEMORY_ID'
+  | 'INVALID_TEMP_FILE_PATH'
+  | 'SAVE_FAILED';
 
 export interface LocalImageCleanupResult {
   readonly failedPaths: string[];
@@ -17,6 +21,7 @@ export interface LocalImageCleanupResult {
 
 export interface LocalImageFileSystemAdapter {
   ensureDirectory(directoryPath: string): Promise<void>;
+  removeDirectory(directoryPath: string): Promise<void>;
   removeFile(filePath: string): Promise<void>;
   saveFile(tempFilePath: string, destinationPath: string): Promise<void>;
 }
@@ -33,6 +38,7 @@ export interface LocalImageServiceOptions {
 }
 
 export interface LocalImageServiceApi {
+  clearAllManagedImages(): Promise<void>;
   cleanupManagedImages(filePaths: readonly string[]): Promise<LocalImageCleanupResult>;
   isManagedImagePath(filePath: string): boolean;
   persistTempImages(memoryId: string, tempFilePaths: readonly string[]): Promise<string[]>;
@@ -168,6 +174,17 @@ export class LocalImageService implements LocalImageServiceApi {
     }
   }
 
+  async clearAllManagedImages(): Promise<void> {
+    try {
+      await this.adapter.removeDirectory(this.managedRoot);
+    } catch (error: unknown) {
+      throw new LocalImageServiceError(
+        'CLEANUP_FAILED',
+        `本地照片清理失败：${describeError(error)}`,
+      );
+    }
+  }
+
   async cleanupManagedImages(filePaths: readonly string[]): Promise<LocalImageCleanupResult> {
     const failedPaths: string[] = [];
     const removedPaths: string[] = [];
@@ -230,6 +247,24 @@ export function createWechatLocalImageFileSystemAdapter(
           },
         });
       }),
+    removeDirectory: (directoryPath) =>
+      new Promise<void>((resolve, reject) => {
+        fileSystemManager.rmdir({
+          dirPath: directoryPath,
+          recursive: true,
+          success: () => {
+            resolve();
+          },
+          fail: (result) => {
+            if (/no such file|not exist/iu.test(result.errMsg)) {
+              resolve();
+              return;
+            }
+
+            reject(new Error(result.errMsg));
+          },
+        });
+      }),
     removeFile: (filePath) =>
       new Promise<void>((resolve, reject) => {
         fileSystemManager.unlink({
@@ -276,6 +311,7 @@ function getDefaultWechatLocalImageService(): LocalImageService {
 }
 
 export const localImageService: LocalImageServiceApi = {
+  clearAllManagedImages: () => getDefaultWechatLocalImageService().clearAllManagedImages(),
   cleanupManagedImages: (filePaths) =>
     getDefaultWechatLocalImageService().cleanupManagedImages(filePaths),
   isManagedImagePath: (filePath) =>

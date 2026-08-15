@@ -19,6 +19,12 @@ project.private.config.json
 # Third-party evaluation checkouts must never enter the product repository
 third-party-evaluation/
 
+# Local source artwork and export files; only optimized runtime assets belong in miniprogram/assets
+/ChatGPT Image*
+/*.psd
+/*.psb
+/*.ai
+
 # Logs and editor/OS noise
 *.log
 .DS_Store

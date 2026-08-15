@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "iSdu · 校园地图",
+  "navigationBarTitleText": "校园地图",
   "usingComponents": {
     "t-button": "tdesign-miniprogram/button/button"
   }

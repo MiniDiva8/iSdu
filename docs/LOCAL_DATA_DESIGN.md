@@ -64,7 +64,7 @@ interface MemoryRepository {
 }
 ```
 
-当前实现为 `LocalMemoryRepository`，默认单例由 `memoryRepository` 导出。页面的正式数据读写只使用上述 CRUD；首次 Demo Seed 使用本地实现的 `initializeDemoMemories()` 扩展。未来替换 `CloudMemoryRepository` 时，CRUD 保持一致，Demo 初始化由运行模式协调层决定。
+当前实现为 `LocalMemoryRepository`，默认单例由 `memoryRepository` 导出。除 CRUD 外，发布版数据管理页使用 `clearMemories()` 写入一个合法的空快照。`initializeDemoMemories()` 只保留给开发测试，正式 `local` 运行模式不会调用它。未来替换 `CloudMemoryRepository` 时，CRUD 保持一致，批量清除需要重新设计为当前登录用户作用域内的操作。
 
 行为约定：
 
@@ -146,7 +146,7 @@ origin = demo
 origin = user
 ```
 
-`initializeDemoMemories()` 通过 `StorageAdapter.has()` 检查 key 是否真实存在，只在 `sdu-memory:memories:v1` 从未存在时写入 Seed。一旦键存在，即使 envelope 中的 `memories` 是空数组，也不能再次自动 Seed。因此用户主动删除到零条后，重新打开小程序仍保持真正的空状态，不会重新出现演示日记。键存在但值为 `''`、`null` 或损坏 JSON 时按损坏数据报错，绝不能误当首次启动并覆盖为 Demo。
+`initializeDemoMemories()` 通过 `StorageAdapter.has()` 检查 key 是否真实存在，只在 `sdu-memory:memories:v1` 从未存在时写入 Seed。一旦键存在，即使 envelope 中的 `memories` 是空数组，也不能再次自动 Seed。当前 `local` 发布模式不调用 Demo Seed，因此新用户首次打开会看到真实空状态。键存在但值为 `''`、`null` 或损坏 JSON 时按损坏数据报错，绝不能误当首次启动并覆盖为 Demo。
 
 不得在每次 `App.onLaunch`、地图 `onShow` 或页面刷新时覆盖已有快照。如果以后增加“恢复演示数据”，它只能作为开发环境显式操作，并且必须保留全部 `origin: 'user'` 记录，只替换或补充 `origin: 'demo'` 记录。
 
@@ -244,6 +244,16 @@ Repository 和图片文件系统无法组成真正的数据库事务，因此页
 解析失败返回 `CORRUPT_DATA`，当前实现不会自动用空数组覆盖损坏原值。页面应进入可恢复错误状态，提供重试、导出诊断信息或由用户明确确认的重置操作；不能白屏，也不能在用户不知情时丢弃原数据。
 
 图片文件丢失与 JSON 损坏是两类不同问题。Memory 结构仍合法但图片无法读取时，应保留正文、坐标和其余图片，在图片组件 `binderror` 中显示占位状态，并允许用户编辑移除失效路径或删除日记。不得因为单张图片丢失而丢弃整篇日记。
+
+### 8.1 一键清除全部本机数据
+
+入口位于“时光 → 数据管理”。用户确认不可恢复提示后，页面按以下顺序处理：
+
+1. `memoryRepository.clearMemories()` 写入一个合法空快照，避免后续误判为首次 Demo 数据；
+2. `userProfileRepository.clearProfile()` 移除本机名字和个性签名；
+3. `localImageService.clearAllManagedImages()` 递归删除 `USER_DATA_PATH/sdu-memory/images/`。
+
+照片目录删除失败时，日记和资料可能已经清空，页面必须明确提示照片可能仍占用空间。任一 Storage 操作失败时显示“清除未完成”，不得使用 `wx.clearStorageSync()` 粗暴删除微信或未来功能的其他键。
 
 ## 9. 存储空间、临时路径和卸载风险
 

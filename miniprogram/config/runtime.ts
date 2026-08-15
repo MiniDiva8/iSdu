@@ -1,7 +1,7 @@
-export type RuntimeMode = 'demo';
+export type RuntimeMode = 'local';
 
 export const runtimeConfig = {
-  mode: 'demo',
+  mode: 'local',
   cloudEnabled: false,
   showDeveloperTools: false,
 } as const satisfies {

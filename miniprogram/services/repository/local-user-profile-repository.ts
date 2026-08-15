@@ -16,7 +16,7 @@ interface UserProfileSnapshot {
 }
 
 export class UserProfileRepositoryError extends Error {
-  readonly code: 'CORRUPT_DATA' | 'READ_FAILED' | 'WRITE_FAILED';
+  readonly code: 'CORRUPT_DATA' | 'DELETE_FAILED' | 'READ_FAILED' | 'WRITE_FAILED';
 
   constructor(code: UserProfileRepositoryError['code'], message: string) {
     super(message);
@@ -102,6 +102,16 @@ export class LocalUserProfileRepository {
         return profile;
       } catch {
         throw new UserProfileRepositoryError('WRITE_FAILED', '保存本地用户资料失败');
+      }
+    });
+  }
+
+  clearProfile(): Promise<void> {
+    return Promise.resolve().then(() => {
+      try {
+        this.storage.remove(USER_PROFILE_STORAGE_KEY);
+      } catch {
+        throw new UserProfileRepositoryError('DELETE_FAILED', '清除本地用户资料失败');
       }
     });
   }

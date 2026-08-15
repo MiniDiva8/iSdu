@@ -24,19 +24,20 @@
 
 ## 当前阶段
 
-当前处于“基于本地数据的校园地图日记完整闭环”人工验收阶段：
+当前处于 `0.9.0` 本地数据公测候选的发布验收阶段：
 
 - 已建立项目执行规则。
 - 已完成候选仓库、许可证、维护状态和兼容风险评估。
 - 已确定技术栈和集成边界。
-- 已完成 `1280 × 960` 二维插画地图、拖动、缩放、复位和中心准星比例选点。
-- 已建立 Memory 模型、版本化本地 Repository、首次 Demo Seed 和损坏数据处理。
+- 已完成 `1448 × 1086` 二维插画地图、拖动、缩放、复位和中心准星比例选点。
+- 已建立 Memory 模型、版本化本地 Repository、真实空状态和损坏数据处理；发布模式不再自动灌入 Demo 日记。
 - 已实现 1—3 张照片选择与用户目录持久化，新建、编辑和删除都有文件回滚或清理规则。
 - 已打通地图选点 → 保存 → 星点 → 详情 → 编辑 / 删除 → 重启读取的本地闭环。
-- 已创建地图、记录、时光三个底部 Tab；时间轴与个人页仍是当前范围外的占位页面。
+- 底部仅保留地图、时光两个 Tab；记录入口统一放在地图页，时光页支持按月回顾、关键词搜索、本机个人资料和数据管理。
+- 已提供“清除全部本机数据”入口，并在照片选择前说明本机保存用途。
 - 已精确安装 `tdesign-miniprogram@1.15.3`，只使用 Button 和 Empty。
-- 37 项坐标、Memory、Repository 和本地图片自动测试以及 TypeScript、ESLint、Prettier 检查已通过。
-- 尚待在微信开发者工具中重新构建 npm、编译并完成完整闭环与真机冒烟测试。
+- 坐标、Memory、Repository、本地图片和筛选测试以及 TypeScript、ESLint、Prettier 检查纳入统一 `npm run check`。
+- 尚待在微信开发者工具中重新构建 npm、记录主包大小，并完成 iOS 与 Android 发布候选验收。
 - 尚未接入 CloudBase、GPS、登录、社交、正式时间轴或个人统计。
 
 ## 已确定的技术路线
@@ -46,8 +47,8 @@
 - WebView 渲染器作为比赛版基线。
 - `tdesign-miniprogram` 作为唯一正式 UI 组件库，按需注册组件。
 - 自研二维插画地图画布：`movable-area` / `movable-view` + 比例坐标。
-- 本地 Demo Repository 与 CloudBase Repository 共享统一接口。
-- 正式数据使用 CloudBase 文档数据库与云存储，并设置仅创建者可读写。
+- 当前 `0.9.0` 仅使用本地 Repository，不含云同步；未来 CloudBase 实现继续复用统一接口。
+- 长期云端版使用 CloudBase 文档数据库与云存储，并设置仅创建者可读写。
 - TypeScript 类型检查、ESLint、Prettier、纯逻辑测试和真机关键流程检查。
 
 完整理由与风险见 [技术栈决策](docs/TECH_STACK_DECISION.md)。
@@ -106,11 +107,13 @@
 - [本地数据与图片设计](docs/LOCAL_DATA_DESIGN.md)
 - [开发者工具与真机手册](docs/MANUAL_SETUP.md)
 - [本地闭环人工测试清单](docs/MANUAL_TEST_CHECKLIST.md)
+- [上线准备与发布清单](docs/RELEASE_READINESS.md)
+- [用户隐私保护指引填报草案](docs/PRIVACY_GUIDE_DRAFT.md)
 - [骨架任务基线（已执行）](docs/NEXT_TASK_PROMPT.md)
 
 ## 当前验收
 
-请先按 [人工配置与测试手册](docs/MANUAL_SETUP.md) 导入并构建，再逐项执行 [本地闭环人工测试清单](docs/MANUAL_TEST_CHECKLIST.md)。当前完整闭环通过开发者工具和至少一台真机验收前，不进入 CloudBase、正式时间轴、地图聚合或正式素材阶段。
+请先按 [上线准备与发布清单](docs/RELEASE_READINESS.md) 完成账号侧准备，再按 [人工配置与测试手册](docs/MANUAL_SETUP.md) 导入并构建，最后逐项执行 [本地闭环人工测试清单](docs/MANUAL_TEST_CHECKLIST.md)。当前版本通过开发者工具、一台 iOS 和一台 Android 的发布候选验收前，不提交正式审核。
 
 当前仓库不提交 `node_modules`、`miniprogram_npm`、真实 AppID 或开发者工具私有配置。
 

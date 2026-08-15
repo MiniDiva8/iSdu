@@ -1,13 +1,40 @@
-<view class="page-shell">
-  <view class="paper-card">
-    <text class="eyebrow">个人页占位</text>
+<view class="page-shell profile-page">
+  <view class="page-hero">
+    <text class="eyebrow">私人记忆册</text>
     <text class="page-title">我的校园记忆</text>
-    <text class="page-subtitle">本阶段不计算日记总数、地点数或其他统计。</text>
-    <view class="component-space">
-      <t-empty description="个人统计将在本地闭环里程碑实现" />
-    </view>
-    <view class="button-stack">
-      <t-button theme="primary" variant="outline" block bind:tap="returnToMap"> 返回地图 </t-button>
-    </view>
+    <text class="page-subtitle">个人资料可以在“时光”页设置，回忆始终只属于你。</text>
   </view>
+  <view class="profile-note">
+    <text class="profile-note__title">数据只保存在这台设备</text>
+    <text class="profile-note__copy">
+      回忆、照片、名字和签名不会上传到 iSdu
+      的服务器或云端。更换设备、清除微信数据或卸载相关应用后，记录可能永久丢失，运营者也无法代为找回。
+    </text>
+    <text class="profile-note__copy">
+      地图位置是你在插画地图上手动选择的比例位置，不是 GPS、经纬度或实时定位。
+    </text>
+  </view>
+  <view class="profile-danger-zone">
+    <text class="profile-danger-zone__title">本机数据管理</text>
+    <text class="profile-danger-zone__copy">
+      清除后将永久删除全部回忆、受管照片和个人资料，无法恢复。逐条删除请在回忆详情页操作。
+    </text>
+    <button
+      class="profile-clear-action"
+      loading="{{isClearing}}"
+      disabled="{{isClearing}}"
+      bindtap="clearAllLocalData"
+    >
+      {{isClearing ? '正在清除…' : '清除全部本机数据'}}
+    </button>
+  </view>
+  <view class="profile-about">
+    <text class="profile-about__title">关于 iSdu</text>
+    <text class="profile-about__copy">
+      iSdu 是非官方的个人校园记忆工具，不代表山东大学官方应用。当前版本不含登录、好友、公开发布、GPS
+      定位和云同步。
+    </text>
+  </view>
+  <text wx:if="{{actionMessage}}" class="profile-message">{{actionMessage}}</text>
+  <button class="profile-map-action" bindtap="returnToMap">返回校园地图</button>
 </view>

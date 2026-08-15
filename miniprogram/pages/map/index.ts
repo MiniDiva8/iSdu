@@ -12,15 +12,16 @@ import {
   type MemoryMood,
 } from '../../models/memory';
 import { campusMapConfig } from '../../config/campus-map';
-import { demoMemories } from '../../data/demo-memories';
-import { consumeMapPickIntent } from '../../services/map-pick-intent';
+import { consumeMapFocusIntent, type MapFocusIntent } from '../../services/map-focus-intent';
 import { memoryRepository } from '../../services/repository/index';
 import {
   calculateCenteredOffset,
   calculateCoverSize,
+  calculateRenderedMapCenterCorrection,
+  calculateRenderedViewportCoverageCorrection,
   clampTranslationToMapCenterBounds,
-  clampTranslationToViewportCoverage,
   isRatioPointInPolygon,
+  mapPositionToViewportPositionInCanvas,
   renderedViewportCenterToRatio,
   ratioToMapPosition,
   validateRatio,
@@ -35,12 +36,11 @@ import {
   type MemoryFilterCriteria,
 } from '../../utils/memory-filters';
 const MAP_SOURCE: string = campusMapConfig.assetPath;
-const MISSING_MAP_SOURCE = '/assets/demo/missing-map-for-state-test.jpg';
 const ORIGINAL_MAP_SIZE: MapSize = campusMapConfig.originalSize;
 const MIN_SCALE: number = campusMapConfig.minimumScale;
 const MAX_SCALE: number = campusMapConfig.maximumScale;
 const DEFAULT_WINDOW_SIZE: MapSize = { width: 375, height: 667 };
-const MAP_BOUNDARY_SETTLE_DELAY_MS = 140;
+const MAP_BOUNDARY_SETTLE_DELAY_MS = 80;
 const MAP_EDGE_BLANK_ALLOWANCE_PX = 10;
 type ScaleBoundary = 'maximum' | 'minimum' | 'normal';
 type MarkerMode = 'dot' | 'photo';
@@ -168,10 +168,10 @@ function isNodeRect(value: unknown): value is NodeRect {
   );
 }
 function createMapLayout(windowSize: MapSize): MapLayout {
-  const horizontalPadding = (windowSize.width * 48) / 750;
+  const horizontalPadding = windowSize.width <= 340 ? 32 : 40;
   const viewportSize = {
-    width: Math.max(280, Math.round(windowSize.width - horizontalPadding)),
-    height: Math.max(240, Math.min(520, Math.round(windowSize.height * 0.58))),
+    width: Math.max(280, Math.min(920, Math.round(windowSize.width - horizontalPadding))),
+    height: Math.max(320, Math.min(620, Math.round(windowSize.height * 0.62))),
   };
   const mapSize = calculateCoverSize(ORIGINAL_MAP_SIZE, viewportSize);
   const mapOffset = { x: viewportSize.width / 2, y: viewportSize.height / 2 };
@@ -285,15 +285,21 @@ function getScaleStatus(boundary: ScaleBoundary): string {
   };
   return statusByBoundary[boundary];
 }
+function getMarkerVisualScale(scale: number): number {
+  const safeScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
+  return Number((1 / safeScale).toFixed(4));
+}
 const initialLayout = createMapLayout(DEFAULT_WINDOW_SIZE);
 let latestViewPosition = initialLayout.defaultPosition;
 let latestViewScale: number = MIN_SCALE;
 let lastScaleBoundary: ScaleBoundary = 'minimum';
 let mapBoundaryTimer: ReturnType<typeof setTimeout> | undefined;
+let isMapGestureActive = false;
+let mapGestureRevision = 0;
+let pendingFocusIntent: MapFocusIntent | null = null;
 Page({
   data: {
     activeFilterCount: 0,
-    assetSizeLabel: `${ORIGINAL_MAP_SIZE.width} × ${ORIGINAL_MAP_SIZE.height}`,
     availableMarkerCount: 0,
     categoryFilterOptions: CATEGORY_FILTER_OPTIONS,
     dateFilterOptions: DATE_FILTER_OPTIONS,
@@ -318,18 +324,15 @@ Page({
     isMemoryLoading: true,
     isNavigatingToEditor: false,
     isPickingLocation: false,
-    mapInertia: true,
     mapCanvasHeight: initialLayout.canvasSize.height,
     mapCanvasWidth: initialLayout.canvasSize.width,
     mapOffsetX: initialLayout.mapOffset.x,
     mapOffsetY: initialLayout.mapOffset.y,
     mapRenderHeight: initialLayout.mapSize.height,
-    mapRenderSizeLabel: `${Math.round(initialLayout.mapSize.width)} × ${Math.round(
-      initialLayout.mapSize.height,
-    )}`,
     mapRenderWidth: initialLayout.mapSize.width,
     mapSource: MAP_SOURCE,
     markerMode: getInitialMarkerMode(),
+    markerVisualScale: getMarkerVisualScale(MIN_SCALE),
     markers: [] as MemoryMarker[],
     maxScale: MAX_SCALE,
     memories: [] as Memory[],
@@ -339,8 +342,6 @@ Page({
     scaleStatus: getScaleStatus('minimum'),
     selectedMemory: null as MemoryCardView | null,
     viewportHeight: initialLayout.viewportSize.height,
-    viewportSizeLabel: `${initialLayout.viewportSize.width} ×
-        ${initialLayout.viewportSize.height}`,
     viewportWidth: initialLayout.viewportSize.width,
     viewScale: MIN_SCALE,
     viewX: initialLayout.defaultPosition.x,
@@ -355,10 +356,7 @@ Page({
     );
   },
   onShow() {
-    const pickIntent = consumeMapPickIntent();
-    if (pickIntent) {
-      this.startPickingLocation();
-    }
+    pendingFocusIntent = consumeMapFocusIntent();
     void this.refreshMemories();
   },
   onResize(options: WechatMiniprogram.Page.IResizeOption) {
@@ -395,19 +393,17 @@ Page({
       incompatibleMapMemoryCount: markerResult.incompatibleMapCount,
       isNavigatingToEditor: false,
       isPickingLocation: false,
-      mapInertia: true,
       mapCanvasHeight: layout.canvasSize.height,
       mapCanvasWidth: layout.canvasSize.width,
       mapOffsetX: layout.mapOffset.x,
       mapOffsetY: layout.mapOffset.y,
       mapRenderHeight: layout.mapSize.height,
-      mapRenderSizeLabel: `${Math.round(layout.mapSize.width)} × ${Math.round(layout.mapSize.height)}`,
       mapRenderWidth: layout.mapSize.width,
+      markerVisualScale: getMarkerVisualScale(MIN_SCALE),
       markers: markerResult.markers,
       scaleStatus: getScaleStatus('minimum'),
       selectedMemory: null,
       viewportHeight: layout.viewportSize.height,
-      viewportSizeLabel: `${layout.viewportSize.width} × ${layout.viewportSize.height}`,
       viewportWidth: layout.viewportSize.width,
       viewScale: MIN_SCALE,
       viewX: layout.defaultPosition.x,
@@ -420,28 +416,30 @@ Page({
       isMemoryLoading: true,
     });
     try {
-      await memoryRepository.initializeDemoMemories(demoMemories);
       const memories = await memoryRepository.listMemories();
       const mapSize = { width: this.data.mapRenderWidth, height: this.data.mapRenderHeight };
       const markerResult = createMemoryMarkers(memories, mapSize, this.data.markerMode, this.data);
       const selectedId = this.data.selectedMemory?.id;
       const selected = selectedId ? memories.find((memory) => memory.id === selectedId) : undefined;
-      this.setData({
-        activeFilterCount: markerResult.activeFilterCount,
-        availableMarkerCount: markerResult.availableMarkerCount,
-        hasInvalidMarkers: markerResult.invalidCount > 0,
-        hasIncompatibleMapMemories: markerResult.incompatibleMapCount > 0,
-        hasNoMarkers: markerResult.markers.length === 0,
-        hasRepositoryError: false,
-        invalidMarkerCount: markerResult.invalidCount,
-        incompatibleMapMemoryCount: markerResult.incompatibleMapCount,
-        isMemoryLoading: false,
-        markers: markerResult.markers,
-        memories,
-        repositoryErrorMessage: '',
-        selectedMemory: selected ? createMemoryCard(selected) : null,
-        visibleMarkerCount: markerResult.markers.length,
-      });
+      this.setData(
+        {
+          activeFilterCount: markerResult.activeFilterCount,
+          availableMarkerCount: markerResult.availableMarkerCount,
+          hasInvalidMarkers: markerResult.invalidCount > 0,
+          hasIncompatibleMapMemories: markerResult.incompatibleMapCount > 0,
+          hasNoMarkers: markerResult.markers.length === 0,
+          hasRepositoryError: false,
+          invalidMarkerCount: markerResult.invalidCount,
+          incompatibleMapMemoryCount: markerResult.incompatibleMapCount,
+          isMemoryLoading: false,
+          markers: markerResult.markers,
+          memories,
+          repositoryErrorMessage: '',
+          selectedMemory: selected ? createMemoryCard(selected) : null,
+          visibleMarkerCount: markerResult.markers.length,
+        },
+        () => this.applyPendingFocusIntent(),
+      );
     } catch (error) {
       this.setData({
         hasNoMarkers: true,
@@ -453,6 +451,54 @@ Page({
         selectedMemory: null,
       });
     }
+  },
+  applyPendingFocusIntent() {
+    const intent = pendingFocusIntent;
+    pendingFocusIntent = null;
+    if (!intent || this.data.isPickingLocation) {
+      return;
+    }
+
+    const memory = this.data.memories.find((item) => item.id === intent.memoryId);
+    if (!memory || memory.mapAssetVersion !== campusMapConfig.assetVersion) {
+      return;
+    }
+
+    const mapSize = { width: this.data.mapRenderWidth, height: this.data.mapRenderHeight };
+    const canvasSize = { width: this.data.mapCanvasWidth, height: this.data.mapCanvasHeight };
+    const mapOffset = { x: this.data.mapOffsetX, y: this.data.mapOffsetY };
+    const viewportCenter = { x: this.data.viewportWidth / 2, y: this.data.viewportHeight / 2 };
+    const mapPosition = ratioToMapPosition(
+      { xRatio: intent.mapXRatio, yRatio: intent.mapYRatio },
+      mapSize,
+    );
+    const currentViewportPosition = mapPositionToViewportPositionInCanvas(
+      mapPosition,
+      mapSize,
+      { canvasSize, mapOffset },
+      latestViewPosition,
+      latestViewScale,
+    );
+    const targetPosition = {
+      x: latestViewPosition.x + viewportCenter.x - currentViewportPosition.x,
+      y: latestViewPosition.y + viewportCenter.y - currentViewportPosition.y,
+    };
+    const correctedPosition = clampTranslationToMapCenterBounds(
+      targetPosition,
+      { width: this.data.viewportWidth, height: this.data.viewportHeight },
+      mapSize,
+      { canvasSize, mapOffset },
+      latestViewScale,
+    );
+
+    latestViewPosition = correctedPosition;
+    this.setData({
+      defaultViewMessage: `已回到：${memory.placeName || '校园中的某处'}`,
+      selectedMemory: createMemoryCard(memory),
+      viewScale: latestViewScale,
+      viewX: correctedPosition.x,
+      viewY: correctedPosition.y,
+    });
   },
   refreshVisibleMarkers(message = '') {
     const markerResult = createMemoryMarkers(
@@ -578,6 +624,16 @@ Page({
       '已显示全部地图回忆',
     );
   },
+  applyMapFilters() {
+    const visibleCount = this.data.visibleMarkerCount;
+    const activeFilterCount = this.data.activeFilterCount;
+    this.setData({
+      defaultViewMessage: activeFilterCount
+        ? `筛选已生效，地图显示 ${visibleCount} 段回忆`
+        : '当前显示全部地图回忆',
+      filterPanelOpen: false,
+    });
+  },
   handleMapLoad(event: WechatMiniprogram.ImageLoad) {
     const matchesExpectedSize =
       event.detail.width === ORIGINAL_MAP_SIZE.width &&
@@ -599,7 +655,6 @@ Page({
       isMapLoading: false,
       isMapReady: false,
       isPickingLocation: false,
-      mapInertia: true,
       selectedMemory: null,
     });
   },
@@ -618,16 +673,27 @@ Page({
   retryMap() {
     this.reloadMapSource(MAP_SOURCE);
   },
-  simulateMapFailure() {
-    this.reloadMapSource(MISSING_MAP_SOURCE);
-  },
   handleViewChange(event: WechatMiniprogram.MovableViewChange) {
     if (Number.isFinite(event.detail.x) && Number.isFinite(event.detail.y)) {
       latestViewPosition = { x: event.detail.x, y: event.detail.y };
-      if (event.detail.source) {
-        this.scheduleMapBoundaryCorrection();
-      }
     }
+  },
+  handleMapTouchStart() {
+    isMapGestureActive = true;
+    mapGestureRevision += 1;
+    if (mapBoundaryTimer) {
+      clearTimeout(mapBoundaryTimer);
+      mapBoundaryTimer = undefined;
+    }
+  },
+  handleMapTouchEnd() {
+    isMapGestureActive = false;
+    const completedGestureRevision = mapGestureRevision;
+    const markerVisualScale = getMarkerVisualScale(latestViewScale);
+    if (Math.abs(markerVisualScale - this.data.markerVisualScale) >= 0.001) {
+      this.setData({ markerVisualScale });
+    }
+    this.scheduleMapBoundaryCorrection(completedGestureRevision);
   },
   handleScale(event: WechatMiniprogram.MovableViewScale) {
     if (
@@ -639,82 +705,84 @@ Page({
     }
     latestViewPosition = { x: event.detail.x, y: event.detail.y };
     latestViewScale = event.detail.scale;
+    if (!isMapGestureActive) {
+      const markerVisualScale = getMarkerVisualScale(event.detail.scale);
+      if (Math.abs(markerVisualScale - this.data.markerVisualScale) >= 0.001) {
+        this.setData({ markerVisualScale });
+      }
+    }
     const nextBoundary = getScaleBoundary(event.detail.scale);
     if (nextBoundary !== lastScaleBoundary) {
       lastScaleBoundary = nextBoundary;
       this.setData({ scaleStatus: getScaleStatus(nextBoundary) });
     }
-    this.scheduleMapBoundaryCorrection();
   },
-  scheduleMapBoundaryCorrection() {
+  scheduleMapBoundaryCorrection(expectedGestureRevision = mapGestureRevision) {
+    if (isMapGestureActive) {
+      return;
+    }
     if (mapBoundaryTimer) {
       clearTimeout(mapBoundaryTimer);
     }
 
     mapBoundaryTimer = setTimeout(() => {
       mapBoundaryTimer = undefined;
-      this.correctMapBoundary();
+      void this.correctMapBoundary(expectedGestureRevision);
     }, MAP_BOUNDARY_SETTLE_DELAY_MS);
   },
-  correctMapBoundary() {
-    if (!this.data.isMapReady) {
-      return;
-    }
-
-    const viewportSize = {
-      width: this.data.viewportWidth,
-      height: this.data.viewportHeight,
-    };
-    const mapSize = {
-      width: this.data.mapRenderWidth,
-      height: this.data.mapRenderHeight,
-    };
-    const frame = {
-      canvasSize: {
-        width: this.data.mapCanvasWidth,
-        height: this.data.mapCanvasHeight,
-      },
-      mapOffset: {
-        x: this.data.mapOffsetX,
-        y: this.data.mapOffsetY,
-      },
-    };
-    const correctedPosition = this.data.isPickingLocation
-      ? clampTranslationToMapCenterBounds(
-          latestViewPosition,
-          viewportSize,
-          mapSize,
-          frame,
-          latestViewScale,
-        )
-      : clampTranslationToViewportCoverage(
-          latestViewPosition,
-          viewportSize,
-          mapSize,
-          frame,
-          latestViewScale,
-          MAP_EDGE_BLANK_ALLOWANCE_PX,
-        );
-
+  async correctMapBoundary(expectedGestureRevision = mapGestureRevision) {
     if (
-      Math.abs(correctedPosition.x - latestViewPosition.x) < 0.5 &&
-      Math.abs(correctedPosition.y - latestViewPosition.y) < 0.5
+      !this.data.isMapReady ||
+      isMapGestureActive ||
+      expectedGestureRevision !== mapGestureRevision
     ) {
       return;
     }
 
-    const currentPosition = latestViewPosition;
-    this.setData(
-      {
-        viewScale: latestViewScale,
-        viewX: currentPosition.x,
-        viewY: currentPosition.y,
-      },
-      () => {
-        latestViewPosition = correctedPosition;
-        this.setData({ viewX: correctedPosition.x, viewY: correctedPosition.y });
-      },
-    );
+    let renderedMap: { mapRect: NodeRect; viewportRect: NodeRect };
+    try {
+      renderedMap = await this.measureRenderedMap();
+    } catch {
+      return;
+    }
+    if (isMapGestureActive || expectedGestureRevision !== mapGestureRevision) {
+      return;
+    }
+
+    const viewportRect = {
+      x: renderedMap.viewportRect.left,
+      y: renderedMap.viewportRect.top,
+      width: renderedMap.viewportRect.width,
+      height: renderedMap.viewportRect.height,
+    };
+    const mapRect = {
+      x: renderedMap.mapRect.left,
+      y: renderedMap.mapRect.top,
+      width: renderedMap.mapRect.width,
+      height: renderedMap.mapRect.height,
+    };
+    const correction = this.data.isPickingLocation
+      ? calculateRenderedMapCenterCorrection(viewportRect, mapRect)
+      : calculateRenderedViewportCoverageCorrection(
+          viewportRect,
+          mapRect,
+          MAP_EDGE_BLANK_ALLOWANCE_PX,
+        );
+
+    if (Math.abs(correction.x) < 0.5 && Math.abs(correction.y) < 0.5) {
+      return;
+    }
+
+    const correctedPosition = {
+      x: latestViewPosition.x + correction.x,
+      y: latestViewPosition.y + correction.y,
+    };
+    latestViewPosition = correctedPosition;
+    this.setData({
+      viewScale: latestViewScale,
+      viewX: correctedPosition.x,
+      viewY: correctedPosition.y,
+    });
   },
   resetMapView() {
     if (mapBoundaryTimer) {
@@ -729,6 +797,7 @@ Page({
         lastScaleBoundary = 'minimum';
         this.setData({
           defaultViewMessage: '已回到初始位置',
+          markerVisualScale: getMarkerVisualScale(MIN_SCALE),
           scaleStatus: getScaleStatus('minimum'),
           selectedMemory: null,
           viewScale: MIN_SCALE,
@@ -745,7 +814,6 @@ Page({
         : '地图加载完成后即可用中心准星选点',
       isPickingLocation: true,
       filterPanelOpen: false,
-      mapInertia: false,
       selectedMemory: null,
     });
   },
@@ -753,7 +821,6 @@ Page({
     this.setData({
       defaultViewMessage: '已取消本次选点',
       isPickingLocation: false,
-      mapInertia: true,
     });
     this.scheduleMapBoundaryCorrection();
   },
@@ -815,7 +882,6 @@ Page({
           this.setData({
             isNavigatingToEditor: false,
             isPickingLocation: false,
-            mapInertia: true,
           });
         },
         fail: () => {
@@ -903,5 +969,8 @@ Page({
     latestViewPosition = initialLayout.defaultPosition;
     latestViewScale = MIN_SCALE;
     lastScaleBoundary = 'minimum';
+    isMapGestureActive = false;
+    mapGestureRevision = 0;
+    pendingFocusIntent = null;
   },
 });

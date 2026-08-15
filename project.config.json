@@ -3,13 +3,15 @@
   "miniprogramRoot": "miniprogram/",
   "srcMiniprogramRoot": "miniprogram/",
   "setting": {
-    "urlCheck": false,
+    "urlCheck": true,
     "es6": true,
     "enhance": true,
     "postcss": true,
     "minified": true,
     "minifyWXSS": true,
     "minifyWXML": true,
+    "ignoreUploadUnusedFiles": true,
+    "ignoreDevUnusedFiles": true,
     "nodeModules": true,
     "packNpmManually": true,
     "packNpmRelationList": [
@@ -47,6 +49,38 @@
       },
       {
         "value": "components/README.md",
+        "type": "file"
+      },
+      {
+        "value": "data/demo-memories.ts",
+        "type": "file"
+      },
+      {
+        "value": "models/memory.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "services/local-image-service.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "services/repository/local-memory-repository.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "services/repository/local-user-profile-repository.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "utils/map-coordinates.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "utils/memory-filters.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "utils/memory-insights.test.mjs",
         "type": "file"
       }
     ],

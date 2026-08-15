@@ -213,6 +213,12 @@ export class LocalMemoryRepository implements MemoryRepository {
     });
   }
 
+  clearMemories(): Promise<void> {
+    return Promise.resolve().then(() => {
+      this.writeMemories([], this.getNow());
+    });
+  }
+
   private getNow(): string {
     const now = this.now();
 

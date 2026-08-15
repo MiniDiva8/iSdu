@@ -8,8 +8,10 @@ const USER_DATA_PATH = 'wxfile://usr';
 class FakeFileSystemAdapter {
   directories = [];
   failRemovePaths = new Set();
+  failRemoveDirectory = false;
   failSaveAttempt = null;
   removeCalls = [];
+  removeDirectoryCalls = [];
   saveAttempts = 0;
   saveCalls = [];
   savedPaths = new Set();
@@ -26,6 +28,16 @@ class FakeFileSystemAdapter {
     }
 
     this.savedPaths.delete(filePath);
+  }
+
+  async removeDirectory(directoryPath) {
+    this.removeDirectoryCalls.push(directoryPath);
+
+    if (this.failRemoveDirectory) {
+      throw new Error('remove directory failed');
+    }
+
+    this.savedPaths.clear();
   }
 
   async saveFile(tempFilePath, destinationPath) {
@@ -160,4 +172,26 @@ test('cleanup removes only managed files and reports refused or failed paths', a
   assert.deepEqual(adapter.removeCalls, [removablePath, failedManagedPath]);
   assert.deepEqual(result.removedPaths, [removablePath]);
   assert.deepEqual(result.failedPaths, [failedManagedPath, outsidePath, traversalPath]);
+});
+
+test('clears the complete managed image directory', async () => {
+  const adapter = new FakeFileSystemAdapter();
+  const service = createService(adapter);
+  adapter.savedPaths.add('wxfile://usr/sdu-memory/images/memory-001/photo-1.jpg');
+
+  await service.clearAllManagedImages();
+
+  assert.deepEqual(adapter.removeDirectoryCalls, ['wxfile://usr/sdu-memory/images']);
+  assert.equal(adapter.savedPaths.size, 0);
+});
+
+test('reports a managed directory cleanup failure', async () => {
+  const adapter = new FakeFileSystemAdapter();
+  const service = createService(adapter);
+  adapter.failRemoveDirectory = true;
+
+  await assert.rejects(
+    service.clearAllManagedImages(),
+    (error) => error instanceof LocalImageServiceError && error.code === 'CLEANUP_FAILED',
+  );
 });

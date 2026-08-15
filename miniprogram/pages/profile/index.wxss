@@ -1,3 +1,108 @@
-.page-title {
-  font-size: 44rpx;
+.profile-note {
+  padding: 24px 0;
+  border-top: 1px solid var(--ui-color-divider);
+  border-bottom: 1px solid var(--ui-color-divider);
+}
+
+.profile-note__title,
+.profile-note__copy {
+  display: block;
+}
+
+.profile-note__copy + .profile-note__copy {
+  margin-top: 12px;
+}
+
+.profile-danger-zone,
+.profile-about {
+  padding: 24px 0;
+  border-bottom: 1px solid var(--ui-color-divider);
+}
+
+.profile-danger-zone__title,
+.profile-danger-zone__copy,
+.profile-about__title,
+.profile-about__copy,
+.profile-message {
+  display: block;
+}
+
+.profile-danger-zone__title,
+.profile-about__title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.profile-danger-zone__copy,
+.profile-about__copy {
+  max-width: 560px;
+  margin-top: 8px;
+  color: var(--ui-color-text-secondary);
+  font-size: 14px;
+  line-height: 21px;
+}
+
+.profile-clear-action {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 20px;
+  margin: 20px 0 0;
+  color: var(--ui-color-danger);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 46px;
+  background: var(--ui-color-danger-soft);
+  border: 0;
+  border-radius: 14px;
+}
+
+.profile-clear-action::after {
+  border: 0;
+}
+
+.profile-clear-action[disabled] {
+  color: var(--ui-color-disabled);
+  background: var(--ui-color-surface-secondary);
+}
+
+.profile-message {
+  padding: 12px 16px;
+  margin-top: 20px;
+  color: var(--ui-color-primary-strong);
+  font-size: 13px;
+  line-height: 19px;
+  background: var(--ui-color-primary-soft);
+  border-radius: var(--ui-radius-small);
+}
+
+.profile-note__title {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.profile-note__copy {
+  max-width: 520px;
+  margin-top: 8px;
+  color: var(--ui-color-text-secondary);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.profile-map-action {
+  min-height: 48px;
+  padding: 0 20px;
+  margin: 24px 0 0;
+  color: var(--ui-color-primary);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 46px;
+  background: var(--ui-color-primary-soft);
+  border: 0;
+  border-radius: 14px;
+}
+
+.profile-map-action::after {
+  border: 0;
 }

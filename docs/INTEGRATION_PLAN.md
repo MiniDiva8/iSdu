@@ -13,20 +13,20 @@
 
 ## 2. 仓库角色
 
-| 仓库 | 角色 | 是否进入 `package.json` | 是否允许复制代码 | 约束 |
-|---|---|---:|---|---|
-| Tencent/tdesign-miniprogram | 计划中的正式 UI 依赖 | 是，下一里程碑 | 通过 npm 使用，不复制整仓源码 | 固定版本、按需注册、保留 MIT |
-| wechat-miniprogram/miniprogram-demo | 官方 API 参考 | 否 | 仅针对明确文件，可少量重写/迁移 | 标注具体来源和 MIT |
-| Tencent/tdesign-miniprogram-starter-retail | 工程/视觉参考 | 否 | 默认不允许 | 根 MIT 与 package ISC 冲突；不迁移零售业务 |
-| TencentCloudBase/awesome-cloudbase-examples | CloudBase 示例索引 | 否 | 默认不允许 | 根 LICENSE 缺失；以官方文档为主 |
-| TencentCloudBase/cloudbase-skills | 可选开发辅助 | 否，不是运行时依赖 | 不复制进产品 | 当前不安装；后续项目级审阅 |
-| TencentCloudBase/awesome-miniprogram-skills | 不相关 AI Skills | 否 | 不允许 | AI、支付等超出 MVP |
-| TencentLBS/TencentMapMiniProgramDemo | 地图交互概念参考 | 否 | 不允许 | 无根 LICENSE；不用作插画地图底座 |
-| harveyqing/BearDiary | 公开截图视觉参考 | 否 | 不允许 | 旧 API/架构，不使用其资源 |
-| KyaukYou/weapp-diary | 反例/产品参考 | 否 | 不允许 | 权限和旧登录模式不合格 |
-| s-xianyu/xy-diary | 禁止使用 | 否 | 禁止 | 无 LICENSE，README 要求联系作者 |
-| wechat-miniprogram/weui-miniprogram | 微信交互规范参考 | 否 | 默认不复制 | 不作为第二套 UI 依赖 |
-| youzan/vant-weapp | 备用 UI 方案 | 否 | 不复制 | 只有 TDesign 阻断后才重新决策 |
+| 仓库                                        | 角色                 | 是否进入 `package.json` | 是否允许复制代码                | 约束                                       |
+| ------------------------------------------- | -------------------- | ----------------------: | ------------------------------- | ------------------------------------------ |
+| Tencent/tdesign-miniprogram                 | 计划中的正式 UI 依赖 |          是，下一里程碑 | 通过 npm 使用，不复制整仓源码   | 固定版本、按需注册、保留 MIT               |
+| wechat-miniprogram/miniprogram-demo         | 官方 API 参考        |                      否 | 仅针对明确文件，可少量重写/迁移 | 标注具体来源和 MIT                         |
+| Tencent/tdesign-miniprogram-starter-retail  | 工程/视觉参考        |                      否 | 默认不允许                      | 根 MIT 与 package ISC 冲突；不迁移零售业务 |
+| TencentCloudBase/awesome-cloudbase-examples | CloudBase 示例索引   |                      否 | 默认不允许                      | 根 LICENSE 缺失；以官方文档为主            |
+| TencentCloudBase/cloudbase-skills           | 可选开发辅助         |      否，不是运行时依赖 | 不复制进产品                    | 当前不安装；后续项目级审阅                 |
+| TencentCloudBase/awesome-miniprogram-skills | 不相关 AI Skills     |                      否 | 不允许                          | AI、支付等超出 MVP                         |
+| TencentLBS/TencentMapMiniProgramDemo        | 地图交互概念参考     |                      否 | 不允许                          | 无根 LICENSE；不用作插画地图底座           |
+| harveyqing/BearDiary                        | 公开截图视觉参考     |                      否 | 不允许                          | 旧 API/架构，不使用其资源                  |
+| KyaukYou/weapp-diary                        | 反例/产品参考        |                      否 | 不允许                          | 权限和旧登录模式不合格                     |
+| s-xianyu/xy-diary                           | 禁止使用             |                      否 | 禁止                            | 无 LICENSE，README 要求联系作者            |
+| wechat-miniprogram/weui-miniprogram         | 微信交互规范参考     |                      否 | 默认不复制                      | 不作为第二套 UI 依赖                       |
+| youzan/vant-weapp                           | 备用 UI 方案         |                      否 | 不复制                          | 只有 TDesign 阻断后才重新决策              |
 
 ## 3. 允许的局部迁移规则
 

@@ -72,6 +72,20 @@ function showEditorNotice(title: string, content: string): Promise<void> {
   });
 }
 
+function confirmPhotoUse(): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    wx.showModal({
+      title: '添加本机照片',
+      content:
+        '你选择的照片只用于创建这段回忆，并保存在当前设备；不会上传到 iSdu 云端。你也可以取消并只写文字。',
+      confirmText: '继续选择',
+      cancelText: '暂不添加',
+      success: (result) => resolve(result.confirm),
+      fail: (result) => reject(new Error(result.errMsg)),
+    });
+  });
+}
+
 function createEditorImage(path: string, index: number, isTemporary: boolean): EditorImage {
   return {
     id: `${isTemporary ? 'temp' : 'saved'}-${Date.now()}-${index}-${editorImageSequence++}`,
@@ -318,10 +332,22 @@ Page({
     this.markDirty();
   },
 
-  chooseImages() {
+  async chooseImages() {
     const remainingCount = MEMORY_IMAGE_MAX_COUNT - this.data.images.length;
 
     if (remainingCount <= 0 || this.data.isSaving || this.data.hasSaved) {
+      return;
+    }
+
+    try {
+      if (!(await confirmPhotoUse())) {
+        return;
+      }
+    } catch (error: unknown) {
+      this.setData({
+        formError:
+          error instanceof Error ? error.message : '照片用途说明暂时无法显示，请稍后重试。',
+      });
       return;
     }
 

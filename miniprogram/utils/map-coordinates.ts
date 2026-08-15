@@ -110,6 +110,86 @@ export function renderedViewportCenterToRatio(
   return mapPositionToRatio(mapPosition, mapRect);
 }
 
+/**
+ * Returns the screen-space translation required to keep the rendered map
+ * covering the viewport. Reading rendered rectangles avoids depending on
+ * movable-view's platform-specific scale origin and x/y calculations.
+ */
+export function calculateRenderedViewportCoverageCorrection(
+  viewportRect: RenderedRect,
+  mapRect: RenderedRect,
+  blankAllowance = 0,
+): MapPosition {
+  assertValidSize(viewportRect, 'viewportRect');
+  assertFinitePosition(viewportRect, 'viewportRect');
+  assertValidSize(mapRect, 'mapRect');
+  assertFinitePosition(mapRect, 'mapRect');
+  if (!Number.isFinite(blankAllowance) || blankAllowance < 0) {
+    throw new RangeError('blankAllowance must be a non-negative finite number');
+  }
+
+  const viewportLeft = viewportRect.x + blankAllowance;
+  const viewportTop = viewportRect.y + blankAllowance;
+  const viewportRight = viewportRect.x + viewportRect.width - blankAllowance;
+  const viewportBottom = viewportRect.y + viewportRect.height - blankAllowance;
+  const mapRight = mapRect.x + mapRect.width;
+  const mapBottom = mapRect.y + mapRect.height;
+
+  const correctionX =
+    mapRect.width < viewportRight - viewportLeft
+      ? viewportRect.x + viewportRect.width / 2 - (mapRect.x + mapRect.width / 2)
+      : mapRect.x > viewportLeft
+        ? viewportLeft - mapRect.x
+        : mapRight < viewportRight
+          ? viewportRight - mapRight
+          : 0;
+  const correctionY =
+    mapRect.height < viewportBottom - viewportTop
+      ? viewportRect.y + viewportRect.height / 2 - (mapRect.y + mapRect.height / 2)
+      : mapRect.y > viewportTop
+        ? viewportTop - mapRect.y
+        : mapBottom < viewportBottom
+          ? viewportBottom - mapBottom
+          : 0;
+
+  return { x: correctionX, y: correctionY };
+}
+
+/**
+ * Returns the screen-space translation required to put the viewport centre
+ * back on the rendered map. This is used while selecting a location so every
+ * map edge and corner can still reach the fixed crosshair.
+ */
+export function calculateRenderedMapCenterCorrection(
+  viewportRect: RenderedRect,
+  mapRect: RenderedRect,
+): MapPosition {
+  assertValidSize(viewportRect, 'viewportRect');
+  assertFinitePosition(viewportRect, 'viewportRect');
+  assertValidSize(mapRect, 'mapRect');
+  assertFinitePosition(mapRect, 'mapRect');
+
+  const viewportCenterX = viewportRect.x + viewportRect.width / 2;
+  const viewportCenterY = viewportRect.y + viewportRect.height / 2;
+  const mapRight = mapRect.x + mapRect.width;
+  const mapBottom = mapRect.y + mapRect.height;
+
+  return {
+    x:
+      viewportCenterX < mapRect.x
+        ? viewportCenterX - mapRect.x
+        : viewportCenterX > mapRight
+          ? viewportCenterX - mapRight
+          : 0,
+    y:
+      viewportCenterY < mapRect.y
+        ? viewportCenterY - mapRect.y
+        : viewportCenterY > mapBottom
+          ? viewportCenterY - mapBottom
+          : 0,
+  };
+}
+
 export function mapPositionToViewportPosition(
   position: MapPosition,
   mapSize: MapSize,

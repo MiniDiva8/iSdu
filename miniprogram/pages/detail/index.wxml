@@ -1,23 +1,24 @@
 <view class="page-shell detail-page">
-  <view wx:if="{{isLoading}}" class="paper-card detail-state">
-    <view class="detail-spinner"></view>
-    <text class="detail-state__title">正在打开这段记忆</text>
-    <text class="supporting-copy">从本地日记中读取照片与文字…</text>
+  <view wx:if="{{isLoading}}" class="detail-skeleton" aria-label="正在打开这段记忆">
+    <view class="detail-skeleton__eyebrow"></view>
+    <view class="detail-skeleton__title"></view>
+    <view class="detail-skeleton__photo"></view>
+    <view class="detail-skeleton__line"></view>
+    <view class="detail-skeleton__line detail-skeleton__line--short"></view>
   </view>
 
-  <view wx:elif="{{loadError}}" class="paper-card detail-state">
-    <t-empty description="{{loadError}}" />
-    <text class="detail-state__title">{{loadErrorTitle}}</text>
-    <view class="button-stack detail-state__actions">
-      <t-button wx:if="{{memoryId}}" theme="primary" variant="outline" block bind:tap="loadMemory">
-        重新读取
-      </t-button>
-      <t-button theme="default" variant="text" block bind:tap="returnToMap">返回地图</t-button>
+  <view wx:elif="{{loadError}}" class="ui-state detail-state">
+    <text class="detail-state__symbol">!</text>
+    <text class="ui-state__title">{{loadErrorTitle}}</text>
+    <text class="ui-state__copy">{{loadError}}</text>
+    <view class="detail-state__actions">
+      <t-button wx:if="{{memoryId}}" theme="primary" bind:tap="loadMemory">重新读取</t-button>
+      <button class="ui-text-button" bindtap="returnToMap">返回地图</button>
     </view>
   </view>
 
   <block wx:elif="{{memory}}">
-    <view class="detail-heading">
+    <view class="detail-heading page-hero">
       <text class="eyebrow">我的校园记忆</text>
       <text class="page-title">{{displayPlaceName}}</text>
       <text class="page-subtitle">{{formattedRecordedAt}}</text>
@@ -30,79 +31,69 @@
           class="memory-photo"
           src="{{item.path}}"
           mode="aspectFill"
+          lazy-load="{{true}}"
           data-index="{{index}}"
           binderror="handleImageError"
         />
         <view wx:else class="missing-photo">
           <text class="missing-photo__symbol">◇</text>
           <text class="missing-photo__title">照片无法显示</text>
-          <text class="missing-photo__copy">本地文件可能已丢失</text>
+          <text class="missing-photo__copy">本地文件可能已经丢失</text>
         </view>
       </view>
     </view>
 
-    <view wx:else class="paper-card text-memory-cover">
+    <view wx:else class="text-memory-cover">
       <text class="text-memory-cover__symbol">记</text>
       <text class="supporting-copy">这是一段没有添加照片的文字记忆</text>
     </view>
 
-    <view class="paper-card memory-content-card">
-      <text class="section-title">那天留下的话</text>
+    <view class="memory-story">
+      <text class="memory-story__label">那天留下的话</text>
       <text wx:if="{{hasText}}" class="memory-text">{{memory.text}}</text>
-      <text wx:else class="supporting-copy">这段记忆只留下了照片。</text>
+      <text wx:else class="memory-story__empty">这段记忆只留下了照片。</text>
+      <view class="memory-tags">
+        <text class="ui-chip">{{categoryLabel}}</text>
+        <text class="ui-chip ui-chip--mood">{{moodLabel}}</text>
+      </view>
     </view>
 
-    <view class="paper-card memory-meta-card">
-      <view class="meta-row">
-        <text class="meta-row__label">记录时间</text>
-        <text class="meta-row__value">{{formattedRecordedAt}}</text>
+    <view class="memory-location">
+      <text class="section-title">记忆发生在这里</text>
+      <text class="memory-location__copy">{{coordinateLabel}}</text>
+      <view class="memory-location__preview" bindtap="showOnMap">
+        <image
+          class="memory-location__map"
+          src="{{mapPreviewSource}}"
+          mode="scaleToFill"
+          lazy-load="{{true}}"
+        />
+        <view
+          class="memory-location__marker"
+          style="left: {{mapPreviewMarkerX}}; top: {{mapPreviewMarkerY}}"
+        ></view>
       </view>
-      <view class="meta-row">
-        <text class="meta-row__label">地点</text>
-        <text class="meta-row__value">{{displayPlaceName}}</text>
-      </view>
-      <view class="meta-row">
-        <text class="meta-row__label">心情</text>
-        <text class="memory-tag memory-tag--mood">{{moodLabel}}</text>
-      </view>
-      <view class="meta-row">
-        <text class="meta-row__label">分类</text>
-        <text class="memory-tag">{{categoryLabel}}</text>
-      </view>
-      <view class="meta-row meta-row--coordinate">
-        <text class="meta-row__label">地图位置</text>
-        <view class="coordinate-copy">
-          <text class="meta-row__value">{{coordinateLabel}}</text>
-          <text class="meta-row__hint">比例坐标以校园地图左上角为原点</text>
-        </view>
-      </view>
+      <button class="memory-location__action" bindtap="showOnMap">在地图中查看</button>
     </view>
 
     <view wx:if="{{actionMessage}}" class="action-message">{{actionMessage}}</view>
 
     <view class="detail-actions">
-      <t-button theme="primary" block disabled="{{isDeleting}}" bind:tap="editMemory">
-        编辑这段记忆
-      </t-button>
-      <t-button
-        theme="danger"
-        variant="outline"
-        block
-        loading="{{isDeleting}}"
-        disabled="{{isDeleting}}"
-        bind:tap="deleteMemory"
+      <t-button theme="primary" block disabled="{{isDeleting}}" bind:tap="showOnMap"
+        >在地图中查看</t-button
       >
-        {{isDeleting ? '正在删除' : '删除记忆'}}
-      </t-button>
-      <t-button
-        theme="default"
-        variant="text"
-        block
-        disabled="{{isDeleting}}"
-        bind:tap="returnToMap"
-      >
-        返回地图
-      </t-button>
+      <button class="detail-actions__edit" disabled="{{isDeleting}}" bindtap="editMemory">
+        编辑
+      </button>
     </view>
+
+    <button
+      class="detail-delete"
+      loading="{{isDeleting}}"
+      disabled="{{isDeleting}}"
+      bindtap="deleteMemory"
+    >
+      {{isDeleting ? '正在删除' : '删除这段记忆'}}
+    </button>
   </block>
 </view>

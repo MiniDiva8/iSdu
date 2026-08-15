@@ -1,7 +1,1 @@
-{
-  "navigationBarTitleText": "个人记忆",
-  "usingComponents": {
-    "t-button": "tdesign-miniprogram/button/button",
-    "t-empty": "tdesign-miniprogram/empty/empty"
-  }
-}
+{ "navigationBarTitleText": "个人记忆", "usingComponents": {} }

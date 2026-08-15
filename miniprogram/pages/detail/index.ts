@@ -2,6 +2,8 @@ import { getMemoryCategoryLabel, getMemoryMoodLabel, type Memory } from '../../m
 import { localImageService } from '../../services/local-image-service';
 import { memoryRepository } from '../../services/repository/index';
 import { formatMemoryDateTime } from '../../utils/date-format';
+import { campusMapConfig } from '../../config/campus-map';
+import { setMapFocusIntent } from '../../services/map-focus-intent';
 
 interface DetailPhoto {
   isMissing: boolean;
@@ -80,6 +82,9 @@ Page({
     memory: null as Memory | null,
     memoryId: '',
     moodLabel: '',
+    mapPreviewSource: campusMapConfig.assetPath,
+    mapPreviewMarkerX: '50%',
+    mapPreviewMarkerY: '50%',
     photoItems: [] as DetailPhoto[],
   },
 
@@ -128,15 +133,15 @@ Page({
 
       this.setData({
         categoryLabel: getMemoryCategoryLabel(memory),
-        coordinateLabel: `横向 ${(memory.mapXRatio * 100).toFixed(1)}% · 纵向 ${(
-          memory.mapYRatio * 100
-        ).toFixed(1)}%`,
+        coordinateLabel: '已保存在校园地图上的原位置',
         displayPlaceName: memory.placeName || '未填写地点名称',
         formattedRecordedAt: formatMemoryDateTime(memory.recordedAt),
         hasText: Boolean(memory.text),
         isLoading: false,
         memory,
         moodLabel: getMemoryMoodLabel(memory),
+        mapPreviewMarkerX: `${(memory.mapXRatio * 100).toFixed(3)}%`,
+        mapPreviewMarkerY: `${(memory.mapYRatio * 100).toFixed(3)}%`,
         photoItems: createPhotoItems(memory.imagePaths),
       });
     } catch (error: unknown) {
@@ -177,6 +182,26 @@ Page({
           actionMessage: '编辑页打开失败，请检查页面配置后重试。',
         });
       },
+    });
+  },
+
+  showOnMap() {
+    const memory = this.data.memory;
+    if (!memory || this.data.isDeleting) {
+      return;
+    }
+
+    setMapFocusIntent({
+      mapXRatio: memory.mapXRatio,
+      mapYRatio: memory.mapYRatio,
+      memoryId: memory.id,
+      source: 'detail',
+    });
+
+    void switchToMap().catch((error: unknown) => {
+      this.setData({
+        actionMessage: describeError(error, '地图暂时无法打开，请稍后重试。'),
+      });
     });
   },
 

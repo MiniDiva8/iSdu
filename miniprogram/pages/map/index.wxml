@@ -1,299 +1,297 @@
 <view class="map-page">
-  <view class="map-header">
-    <view>
-      <text class="eyebrow">我的校园回忆</text>
-      <text class="map-page-title">记忆星图</text>
-      <text class="map-page-subtitle">拖动与缩放地图，在熟悉的地方留下一颗回忆星点。</text>
-    </view>
-    <t-button size="small" theme="default" variant="text" bind:tap="goToProfile">个人页</t-button>
+  <view class="map-hero">
+    <text class="eyebrow">我的校园回忆</text>
+    <text class="map-page-title">记忆星图</text>
+    <text class="map-page-subtitle">在熟悉的地方，留下属于你的回忆。</text>
   </view>
 
-  <view class="map-frame" style="width: {{viewportWidth}}px; height: {{viewportHeight}}px">
-    <movable-area id="map-viewport" class="map-viewport" scale-area="{{true}}">
-      <movable-view
-        class="map-canvas"
-        style="width: {{mapCanvasWidth}}px; height: {{mapCanvasHeight}}px"
-        direction="all"
-        inertia="{{mapInertia}}"
-        out-of-bounds="{{true}}"
-        damping="24"
-        friction="2"
-        scale="{{true}}"
-        scale-min="{{minScale}}"
-        scale-max="{{maxScale}}"
-        scale-value="{{viewScale}}"
-        x="{{viewX}}"
-        y="{{viewY}}"
-        animation="{{true}}"
-        bindchange="handleViewChange"
-        bindscale="handleScale"
-      >
-        <image
-          wx:if="{{mapSource}}"
-          id="map-image"
-          class="map-image"
-          style="left: {{mapOffsetX}}px; top: {{mapOffsetY}}px; width: {{mapRenderWidth}}px; height: {{mapRenderHeight}}px"
-          src="{{mapSource}}"
-          mode="scaleToFill"
-          bindload="handleMapLoad"
-          binderror="handleMapError"
-        />
-
-        <view
-          wx:if="{{isMapReady && !isPickingLocation}}"
-          class="marker-layer"
-          style="left: {{mapOffsetX}}px; top: {{mapOffsetY}}px; width: {{mapRenderWidth}}px; height: {{mapRenderHeight}}px"
+  <view class="map-stage">
+    <view class="map-frame" style="width: {{viewportWidth}}px; height: {{viewportHeight}}px">
+      <movable-area id="map-viewport" class="map-viewport" scale-area="{{true}}">
+        <movable-view
+          class="map-canvas"
+          style="width: {{mapCanvasWidth}}px; height: {{mapCanvasHeight}}px"
+          direction="all"
+          inertia="{{false}}"
+          out-of-bounds="{{false}}"
+          damping="24"
+          friction="2"
+          scale="{{true}}"
+          scale-min="{{minScale}}"
+          scale-max="{{maxScale}}"
+          scale-value="{{viewScale}}"
+          x="{{viewX}}"
+          y="{{viewY}}"
+          animation="{{false}}"
+          bindchange="handleViewChange"
+          bindscale="handleScale"
+          bindtouchstart="handleMapTouchStart"
+          bindtouchend="handleMapTouchEnd"
+          bindtouchcancel="handleMapTouchEnd"
         >
-          <button
-            wx:for="{{markers}}"
-            wx:key="renderKey"
-            class="memory-marker memory-marker--{{markerMode}} memory-marker--mood-{{item.moodClass}}"
-            style="left: {{item.x}}px; top: {{item.y}}px"
-            aria-label="查看回忆：{{item.title}}"
-            data-memory-id="{{item.id}}"
-            catchtap="handleMarkerTap"
+          <image
+            wx:if="{{mapSource}}"
+            id="map-image"
+            class="map-image"
+            style="left: {{mapOffsetX}}px; top: {{mapOffsetY}}px; width: {{mapRenderWidth}}px; height: {{mapRenderHeight}}px"
+            src="{{mapSource}}"
+            mode="scaleToFill"
+            bindload="handleMapLoad"
+            binderror="handleMapError"
+          />
+
+          <view
+            wx:if="{{isMapReady && !isPickingLocation}}"
+            class="marker-layer"
+            style="left: {{mapOffsetX}}px; top: {{mapOffsetY}}px; width: {{mapRenderWidth}}px; height: {{mapRenderHeight}}px"
           >
-            <image
-              wx:if="{{item.showThumbnail && !item.thumbnailFailed}}"
-              class="memory-marker__photo"
-              src="{{item.thumbnail}}"
-              mode="aspectFill"
+            <button
+              wx:for="{{markers}}"
+              wx:key="renderKey"
+              class="memory-marker memory-marker--{{markerMode}} memory-marker--mood-{{item.moodClass}} {{selectedMemory && selectedMemory.id === item.id ? 'memory-marker--selected' : ''}}"
+              style="left: {{item.x}}px; top: {{item.y}}px; transform: translate(-50%, -50%) scale({{markerVisualScale}})"
+              aria-label="查看回忆：{{item.title}}"
               data-memory-id="{{item.id}}"
-              binderror="handleMarkerImageError"
-            />
-            <view wx:else class="memory-marker__dot"></view>
+              catchtap="handleMarkerTap"
+            >
+              <image
+                wx:if="{{item.showThumbnail && !item.thumbnailFailed}}"
+                class="memory-marker__photo"
+                src="{{item.thumbnail}}"
+                mode="aspectFill"
+                lazy-load="{{true}}"
+                data-memory-id="{{item.id}}"
+                binderror="handleMarkerImageError"
+              />
+              <view wx:else class="memory-marker__dot"></view>
+            </button>
+          </view>
+        </movable-view>
+      </movable-area>
+
+      <view wx:if="{{isPickingLocation && isMapReady}}" class="map-crosshair" aria-hidden="true">
+        <view class="map-crosshair__ring"></view>
+        <view class="map-crosshair__dot"></view>
+      </view>
+
+      <view wx:if="{{isMapLoading}}" class="map-state-overlay">
+        <view class="loading-spinner"></view>
+        <text class="map-state-title">正在打开校园地图</text>
+        <text class="map-state-copy">稍等一下，回忆正在回到原来的位置。</text>
+      </view>
+
+      <view wx:if="{{isMapError}}" class="map-state-overlay map-state-overlay--error">
+        <text class="map-state-symbol">!</text>
+        <text class="map-state-title">地图暂时没有打开</text>
+        <text class="map-state-copy">你的回忆仍然安全保存在本机，可以稍后重试。</text>
+        <view class="map-state-action">
+          <t-button theme="primary" bind:tap="retryMap">重新加载</t-button>
+        </view>
+      </view>
+
+      <view wx:if="{{isMapReady && !isPickingLocation}}" class="map-floating-tools">
+        <button
+          class="map-floating-control {{activeFilterCount ? 'map-floating-control--active' : ''}}"
+          bindtap="toggleFilterPanel"
+        >
+          筛选<text wx:if="{{activeFilterCount}}"> · {{activeFilterCount}}</text>
+        </button>
+        <text class="map-memory-count">{{visibleMarkerCount}} 段回忆</text>
+      </view>
+
+      <scroll-view
+        wx:if="{{filterPanelOpen && isMapReady && !isPickingLocation}}"
+        class="map-filter-panel"
+        scroll-y
+        enhanced
+        show-scrollbar="{{false}}"
+        catchtap="stopEvent"
+      >
+        <view class="map-filter-panel__head">
+          <view>
+            <text class="map-filter-panel__title">筛选地图回忆</text>
+            <text class="map-filter-panel__count">
+              当前显示 {{visibleMarkerCount}} / {{availableMarkerCount}} 条
+            </text>
+          </view>
+          <button class="map-filter-panel__close" aria-label="关闭筛选" bindtap="closeFilterPanel">
+            ×
           </button>
         </view>
-      </movable-view>
-    </movable-area>
 
-    <view wx:if="{{isPickingLocation && isMapReady}}" class="map-crosshair" aria-hidden="true">
-      <view class="map-crosshair__ring"></view>
-      <view class="map-crosshair__dot"></view>
-    </view>
-
-    <view wx:if="{{isMapLoading}}" class="map-state-overlay">
-      <view class="loading-spinner"></view>
-      <text class="map-state-title">地图加载中</text>
-      <text class="map-state-copy">正在准备本地校园地图…</text>
-    </view>
-
-    <view wx:if="{{isMapError}}" class="map-state-overlay map-state-overlay--error">
-      <text class="map-state-symbol">!</text>
-      <text class="map-state-title">地图资源加载失败</text>
-      <text class="map-state-copy">页面不会白屏，请重新加载地图资源。</text>
-      <view class="map-state-action">
-        <t-button size="small" theme="primary" bind:tap="retryMap">重新加载</t-button>
-      </view>
-    </view>
-
-    <view wx:if="{{isMapReady}}" class="map-scale-badge">{{scaleStatus}}</view>
-
-    <button
-      wx:if="{{isMapReady && !isPickingLocation}}"
-      class="map-filter-trigger {{activeFilterCount ? 'map-filter-trigger--active' : ''}}"
-      bindtap="toggleFilterPanel"
-    >
-      筛选<text wx:if="{{activeFilterCount}}"> {{activeFilterCount}}</text>
-    </button>
-
-    <scroll-view
-      wx:if="{{filterPanelOpen && isMapReady && !isPickingLocation}}"
-      class="map-filter-panel"
-      scroll-y
-      enhanced
-      show-scrollbar="{{false}}"
-      catchtap="stopEvent"
-    >
-      <view class="map-filter-panel__head">
-        <view>
-          <text class="map-filter-panel__title">地图显示</text>
-          <text class="map-filter-panel__count">
-            显示 {{visibleMarkerCount}} / {{availableMarkerCount}} 条
-          </text>
-        </view>
-        <button class="map-filter-panel__close" bindtap="closeFilterPanel">×</button>
-      </view>
-
-      <view class="map-filter-section">
-        <text class="map-filter-section__label">日期</text>
-        <view class="map-filter-chips">
-          <button
-            wx:for="{{dateFilterOptions}}"
-            wx:key="value"
-            class="map-filter-chip {{filterDatePreset === item.value ? 'map-filter-chip--active' : ''}}"
-            data-value="{{item.value}}"
-            catchtap="handleDatePresetTap"
-          >
-            {{item.label}}
-          </button>
-        </view>
-        <view wx:if="{{filterDatePreset === 'custom'}}" class="map-date-range">
-          <picker
-            mode="date"
-            value="{{filterCustomStartDate}}"
-            bindchange="handleCustomStartDateChange"
-          >
-            <view class="map-date-picker">{{filterCustomStartDate || '开始日期'}}</view>
-          </picker>
-          <text>至</text>
-          <picker
-            mode="date"
-            value="{{filterCustomEndDate}}"
-            bindchange="handleCustomEndDateChange"
-          >
-            <view class="map-date-picker">{{filterCustomEndDate || '结束日期'}}</view>
-          </picker>
-        </view>
-      </view>
-
-      <view class="map-filter-section">
-        <text class="map-filter-section__label">心情</text>
-        <scroll-view class="map-filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
-          <view class="map-filter-chips map-filter-chips--nowrap">
+        <view class="map-filter-section">
+          <text class="map-filter-section__label">日期</text>
+          <view class="map-filter-chips">
             <button
-              wx:for="{{moodFilterOptions}}"
+              wx:for="{{dateFilterOptions}}"
               wx:key="value"
-              class="map-filter-chip {{filterMood === item.value ? 'map-filter-chip--active' : ''}}"
+              class="map-filter-chip {{filterDatePreset === item.value ? 'map-filter-chip--active' : ''}}"
               data-value="{{item.value}}"
-              catchtap="handleMoodFilterTap"
+              catchtap="handleDatePresetTap"
             >
               {{item.label}}
             </button>
           </view>
-        </scroll-view>
-      </view>
-
-      <view class="map-filter-section">
-        <text class="map-filter-section__label">内容主题</text>
-        <scroll-view class="map-filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
-          <view class="map-filter-chips map-filter-chips--nowrap">
-            <button
-              wx:for="{{categoryFilterOptions}}"
-              wx:key="value"
-              class="map-filter-chip {{filterCategory === item.value ? 'map-filter-chip--active' : ''}}"
-              data-value="{{item.value}}"
-              catchtap="handleCategoryFilterTap"
+          <view wx:if="{{filterDatePreset === 'custom'}}" class="map-date-range">
+            <picker
+              mode="date"
+              value="{{filterCustomStartDate}}"
+              bindchange="handleCustomStartDateChange"
             >
-              {{item.label}}
+              <view class="map-date-picker">{{filterCustomStartDate || '开始日期'}}</view>
+            </picker>
+            <text>至</text>
+            <picker
+              mode="date"
+              value="{{filterCustomEndDate}}"
+              bindchange="handleCustomEndDateChange"
+            >
+              <view class="map-date-picker">{{filterCustomEndDate || '结束日期'}}</view>
+            </picker>
+          </view>
+        </view>
+
+        <view class="map-filter-section">
+          <text class="map-filter-section__label">心情</text>
+          <scroll-view class="map-filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+            <view class="map-filter-chips map-filter-chips--nowrap">
+              <button
+                wx:for="{{moodFilterOptions}}"
+                wx:key="value"
+                class="map-filter-chip {{filterMood === item.value ? 'map-filter-chip--active' : ''}}"
+                data-value="{{item.value}}"
+                catchtap="handleMoodFilterTap"
+              >
+                {{item.label}}
+              </button>
+            </view>
+          </scroll-view>
+        </view>
+
+        <view class="map-filter-section">
+          <text class="map-filter-section__label">内容主题</text>
+          <scroll-view class="map-filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+            <view class="map-filter-chips map-filter-chips--nowrap">
+              <button
+                wx:for="{{categoryFilterOptions}}"
+                wx:key="value"
+                class="map-filter-chip {{filterCategory === item.value ? 'map-filter-chip--active' : ''}}"
+                data-value="{{item.value}}"
+                catchtap="handleCategoryFilterTap"
+              >
+                {{item.label}}
+              </button>
+            </view>
+          </scroll-view>
+        </view>
+
+        <view class="map-filter-section">
+          <text class="map-filter-section__label">标记样式</text>
+          <view class="map-filter-chips">
+            <button
+              class="map-filter-chip {{markerMode === 'dot' ? 'map-filter-chip--active' : ''}}"
+              data-value="dot"
+              catchtap="handleMarkerModeTap"
+            >
+              小圆点
+            </button>
+            <button
+              class="map-filter-chip {{markerMode === 'photo' ? 'map-filter-chip--active' : ''}}"
+              data-value="photo"
+              catchtap="handleMarkerModeTap"
+            >
+              小照片
             </button>
           </view>
-        </scroll-view>
-      </view>
-
-      <view class="map-filter-section">
-        <text class="map-filter-section__label">标记样式</text>
-        <view class="map-filter-chips">
-          <button
-            class="map-filter-chip {{markerMode === 'dot' ? 'map-filter-chip--active' : ''}}"
-            data-value="dot"
-            catchtap="handleMarkerModeTap"
-          >
-            心情彩色小点
-          </button>
-          <button
-            class="map-filter-chip {{markerMode === 'photo' ? 'map-filter-chip--active' : ''}}"
-            data-value="photo"
-            catchtap="handleMarkerModeTap"
-          >
-            照片标记
-          </button>
         </view>
-      </view>
 
-      <button class="map-filter-reset" catchtap="resetMapFilters">清除筛选</button>
-    </scroll-view>
+        <view class="map-filter-actions">
+          <button class="map-filter-reset" catchtap="resetMapFilters">重置</button>
+          <button class="map-filter-apply" catchtap="applyMapFilters">应用筛选</button>
+        </view>
+      </scroll-view>
+
+      <view wx:if="{{isPickingLocation && isMapReady}}" class="map-pick-hint">
+        移动地图，把想记录的位置放到准星下
+      </view>
+    </view>
   </view>
 
   <view wx:if="{{hasRepositoryError}}" class="status-banner status-banner--error">
-    <text>{{repositoryErrorMessage}}</text>
-    <button class="status-banner__action" bindtap="refreshMemories">重试读取</button>
+    <text>回忆暂时没有读取成功</text>
+    <button class="status-banner__action" bindtap="refreshMemories">重试</button>
   </view>
 
   <view wx:if="{{hasInvalidMarkers}}" class="status-banner status-banner--warning">
-    {{invalidMarkerCount}}
-    条回忆的位置在校园边界外或坐标异常，已停止在地图空白区显示；日记数据仍然保留。
+    {{invalidMarkerCount}} 条回忆的位置异常，暂不显示在地图上
   </view>
 
   <view wx:if="{{hasIncompatibleMapMemories}}" class="status-banner status-banner--warning">
-    {{incompatibleMapMemoryCount}}
-    条回忆来自旧地图版本，为避免标记落到错误建筑，暂不投影到新地图；日记仍可在“时光”中查看。
+    {{incompatibleMapMemoryCount}} 条旧版地图记忆暂不投射到当前地图
   </view>
 
-  <view
-    wx:if="{{hasNoMarkers && !isMemoryLoading && !hasRepositoryError}}"
-    class="empty-memory-hint"
-  >
-    <text class="empty-memory-hint__title">
-      {{activeFilterCount ? '当前筛选下没有回忆' : '地图上还没有星点'}}
+  <view wx:if="{{hasNoMarkers && !isMemoryLoading && !hasRepositoryError}}" class="map-empty-state">
+    <text class="map-empty-state__title">
+      {{activeFilterCount ? '当前筛选下没有回忆' : '这里还没有留下记忆'}}
     </text>
-    <text class="empty-memory-hint__copy">
-      {{activeFilterCount ? '可以调整或清除筛选，已有日记不会被删除。' :
-      '选择一个校园位置，写下第一段回忆吧。'}}
+    <text class="map-empty-state__copy">
+      {{activeFilterCount ? '调整筛选，就能重新看见其他记忆。' :
+      '在地图上标记属于你的第一段校园时光。'}}
+    </text>
+    <text wx:if="{{!activeFilterCount}}" class="map-empty-state__privacy-copy">
+      当前版本的回忆和照片只保存在这台设备，没有云端备份。
     </text>
   </view>
 
-  <view class="map-control-panel map-control-panel--picking" wx:if="{{isPickingLocation}}">
-    <view class="map-control-copy">
-      <text class="map-control-status">让目标地点停在中央准星下方</text>
-      <text class="map-control-hint">可以继续拖动和双指缩放；选点时已关闭惯性，确认更稳定。</text>
+  <view wx:if="{{isPickingLocation}}" class="map-pick-bar">
+    <view class="map-pick-bar__copy">
+      <text class="map-pick-bar__label">正在选择位置</text>
+      <button class="map-pick-bar__cancel" bindtap="cancelPickingLocation">取消</button>
     </view>
-    <view class="map-control-grid">
-      <t-button
-        theme="primary"
-        block
-        loading="{{isNavigatingToEditor}}"
-        disabled="{{!isMapReady || isNavigatingToEditor}}"
-        bind:tap="confirmPickingLocation"
-      >
-        确认位置
-      </t-button>
-      <t-button theme="default" variant="outline" block bind:tap="cancelPickingLocation">
-        取消
-      </t-button>
-    </view>
+    <t-button
+      theme="primary"
+      block
+      loading="{{isNavigatingToEditor}}"
+      disabled="{{!isMapReady || isNavigatingToEditor}}"
+      bind:tap="confirmPickingLocation"
+    >
+      确认这个位置
+    </t-button>
   </view>
 
-  <view class="map-control-panel" wx:else>
-    <view class="map-control-copy">
-      <text class="map-control-status">{{defaultViewMessage}}</text>
-      <text class="map-control-hint">回忆只保存在本机；本阶段不会上传云端。</text>
-    </view>
-    <view class="map-control-grid">
-      <t-button theme="primary" block bind:tap="startPickingLocation">记录此处</t-button>
-      <t-button theme="primary" variant="outline" block bind:tap="resetMapView">
-        回到初始位置
-      </t-button>
-    </view>
-    <button class="developer-state-link" bindtap="simulateMapFailure">测试地图加载失败状态</button>
+  <view wx:else class="map-primary-actions">
+    <t-button theme="primary" block bind:tap="startPickingLocation">记录此处</t-button>
+    <button class="map-reset-action" bindtap="resetMapView">回到初始位置</button>
   </view>
 
-  <view wx:if="{{selectedMemory}}" class="memory-card">
-    <button class="memory-card__close" aria-label="关闭回忆卡片" bindtap="closeMemoryCard">
+  <view wx:if="{{selectedMemory}}" class="memory-sheet-backdrop" catchtap="closeMemoryCard"></view>
+  <view wx:if="{{selectedMemory}}" class="memory-sheet">
+    <view class="memory-sheet__handle"></view>
+    <button class="memory-sheet__close" aria-label="关闭回忆卡片" bindtap="closeMemoryCard">
       ×
     </button>
-    <view class="memory-card__content">
+    <view class="memory-sheet__content">
       <image
         wx:if="{{selectedMemory.hasImage}}"
-        class="memory-card__image"
+        class="memory-sheet__image"
         src="{{selectedMemory.imagePath}}"
         mode="aspectFill"
+        lazy-load="{{true}}"
         binderror="handleCardImageError"
       />
-      <view wx:else class="memory-card__placeholder"><text>✦</text></view>
-      <view class="memory-card__body">
-        <text class="memory-card__title">{{selectedMemory.title}}</text>
-        <text class="memory-card__meta">{{selectedMemory.dateLabel}}</text>
-        <text class="memory-card__place">{{selectedMemory.placeLabel}}</text>
-        <view class="memory-card__tags">
-          <text>{{selectedMemory.categoryLabel}}</text>
-          <text>{{selectedMemory.moodLabel}}</text>
+      <view wx:else class="memory-sheet__placeholder"><text>记</text></view>
+      <view class="memory-sheet__body">
+        <text class="memory-sheet__place">{{selectedMemory.placeLabel}}</text>
+        <text class="memory-sheet__meta">{{selectedMemory.dateLabel}}</text>
+        <text class="memory-sheet__preview">{{selectedMemory.text}}</text>
+        <view class="memory-sheet__tags">
+          <text class="ui-chip">{{selectedMemory.categoryLabel}}</text>
+          <text class="ui-chip ui-chip--mood">{{selectedMemory.moodLabel}}</text>
         </view>
       </view>
     </view>
-    <text class="memory-card__preview">{{selectedMemory.text}}</text>
-    <view class="memory-card__action">
-      <t-button theme="primary" block bind:tap="goToDetail">查看详情</t-button>
+    <view class="memory-sheet__action">
+      <t-button theme="primary" block bind:tap="goToDetail">查看这段记忆</t-button>
     </view>
   </view>
 </view>

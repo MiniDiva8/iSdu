@@ -1,6 +1,6 @@
 {
   "name": "isdu-miniprogram",
-  "version": "0.1.0",
+  "version": "0.9.0",
   "private": true,
   "description": "iSdu：基于校园地图的个人空间日记微信小程序",
   "license": "UNLICENSED",
@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"miniprogram/**/*.ts\"",
     "format:check": "npm run format:check:base && npm run format:check:wxml && npm run format:check:wxss",
-    "format:check:base": "prettier --check package.json package-lock.json tsconfig.json project.config.json .prettierrc.json eslint.config.mjs \"scripts/**/*.mjs\" \"miniprogram/**/*.ts\" \"miniprogram/**/*.mjs\" \"miniprogram/**/*.json\" AGENTS.md README.md docs/LOCAL_DATA_DESIGN.md docs/MANUAL_SETUP.md docs/MANUAL_TEST_CHECKLIST.md docs/MAP_COORDINATE_SYSTEM.md docs/RISK_REGISTER.md docs/STATUS.md docs/THIRD_PARTY_NOTICES.md",
+    "format:check:base": "prettier --check package.json package-lock.json tsconfig.json project.config.json .prettierrc.json eslint.config.mjs \"scripts/**/*.mjs\" \"miniprogram/**/*.ts\" \"miniprogram/**/*.mjs\" \"miniprogram/**/*.json\" AGENTS.md README.md docs/*.md",
     "format:check:wxml": "prettier --check \"miniprogram/**/*.wxml\" --parser html",
     "format:check:wxss": "prettier --check \"miniprogram/**/*.wxss\" --parser css",
     "check": "npm run test && npm run typecheck && npm run lint && npm run format:check"

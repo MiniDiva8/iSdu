@@ -271,6 +271,15 @@ Page({
     });
   },
 
+  openDataManagement() {
+    void wx.navigateTo({
+      url: '/pages/profile/index',
+      fail: () => {
+        this.setData({ actionMessage: '数据管理页暂时无法打开，请稍后重试。' });
+      },
+    });
+  },
+
   findMemoryView(memoryId: string): TimelineMemoryView | null {
     for (const group of this.data.groups) {
       const memory = group.items.find((item) => item.id === memoryId);
@@ -302,8 +311,10 @@ Page({
   },
 
   openDetail(event: WechatMiniprogram.BaseEvent) {
-    const dataset = event.currentTarget.dataset as { memoryId?: unknown };
-    const memoryId = typeof dataset.memoryId === 'string' ? dataset.memoryId : '';
+    const currentDataset = event.currentTarget.dataset as { memoryId?: unknown };
+    const targetDataset = (event.target as { dataset?: { memoryId?: unknown } }).dataset;
+    const rawMemoryId = currentDataset.memoryId ?? targetDataset?.memoryId;
+    const memoryId = typeof rawMemoryId === 'string' ? rawMemoryId : '';
 
     if (!this.findMemoryView(memoryId)) {
       this.setData({ actionMessage: '这条回忆已不存在，请刷新时间轴。' });
@@ -346,9 +357,9 @@ Page({
 
   goToRecord() {
     void wx.switchTab({
-      url: '/pages/record/index',
+      url: '/pages/map/index',
       fail: () => {
-        this.setData({ actionMessage: '记录页暂时无法打开，请稍后重试。' });
+        this.setData({ actionMessage: '地图暂时无法打开，请稍后重试。' });
       },
     });
   },

@@ -4,6 +4,8 @@ import test from 'node:test';
 import {
   calculateCenteredOffset,
   calculateCoverSize,
+  calculateRenderedMapCenterCorrection,
+  calculateRenderedViewportCoverageCorrection,
   calculateTranslationToCenterMapPosition,
   clampRatio,
   clampTranslationToMapCenterBounds,
@@ -117,6 +119,59 @@ test('rendered rectangle selection stays correct across translation and scale', 
   assertClose(zoomedRatio.yRatio, (380 + 226) / 1357.5);
 });
 
+test('corrects only the rendered map edge that exposes viewport blank space', () => {
+  const viewport = { x: 20, y: 100, width: 320, height: 480 };
+
+  assert.deepEqual(
+    calculateRenderedViewportCoverageCorrection(
+      viewport,
+      { x: 35, y: 90, width: 600, height: 700 },
+      10,
+    ),
+    { x: -5, y: 0 },
+  );
+  assert.deepEqual(
+    calculateRenderedViewportCoverageCorrection(
+      viewport,
+      { x: -300, y: -200, width: 630, height: 770 },
+      10,
+    ),
+    { x: 0, y: 0 },
+  );
+});
+
+test('keeps every rendered map edge reachable by the fixed centre crosshair', () => {
+  const viewport = { x: 20, y: 100, width: 320, height: 480 };
+
+  assert.deepEqual(
+    calculateRenderedMapCenterCorrection(viewport, {
+      x: 200,
+      y: 360,
+      width: 600,
+      height: 700,
+    }),
+    { x: -20, y: -20 },
+  );
+  assert.deepEqual(
+    calculateRenderedMapCenterCorrection(viewport, {
+      x: -420,
+      y: -500,
+      width: 500,
+      height: 700,
+    }),
+    { x: 100, y: 140 },
+  );
+  assert.deepEqual(
+    calculateRenderedMapCenterCorrection(viewport, {
+      x: -100,
+      y: 0,
+      width: 800,
+      height: 900,
+    }),
+    { x: 0, y: 0 },
+  );
+});
+
 test('rejects rendered rectangles when the crosshair is outside the map image', () => {
   assert.throws(
     () =>
@@ -210,6 +265,33 @@ test('keeps edge selection and movement bounds correct after zooming', () => {
     clampTranslationToMapCenterBounds({ x: 900, y: -2000 }, viewportSize, mapSize, frame, scale),
     { x: 480, y: -840 },
   );
+});
+
+test('allows all four map corners to reach the viewport center after zooming', () => {
+  const viewportSize = { width: 320, height: 240 };
+  const mapSize = { width: 640, height: 480 };
+  const frame = {
+    canvasSize: { width: 960, height: 720 },
+    mapOffset: { x: 160, y: 120 },
+  };
+  const scale = 2.5;
+  const cornerTranslations = [
+    { translation: { x: 480, y: 360 }, ratio: { xRatio: 0, yRatio: 0 } },
+    { translation: { x: -1120, y: 360 }, ratio: { xRatio: 1, yRatio: 0 } },
+    { translation: { x: 480, y: -840 }, ratio: { xRatio: 0, yRatio: 1 } },
+    { translation: { x: -1120, y: -840 }, ratio: { xRatio: 1, yRatio: 1 } },
+  ];
+
+  for (const { translation, ratio } of cornerTranslations) {
+    assert.deepEqual(
+      clampTranslationToMapCenterBounds(translation, viewportSize, mapSize, frame, scale),
+      translation,
+    );
+    assert.deepEqual(
+      viewportCenterToRatioInCanvas(viewportSize, mapSize, frame, translation, scale),
+      ratio,
+    );
+  }
 });
 
 test('prevents the padded canvas from settling as a large blank viewport', () => {

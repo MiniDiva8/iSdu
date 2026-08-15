@@ -1,33 +1,25 @@
 {
   "pages": [
     "pages/map/index",
-    "pages/record/index",
     "pages/editor/index",
     "pages/timeline/index",
     "pages/detail/index",
     "pages/profile/index"
   ],
   "window": {
-    "navigationBarBackgroundColor": "#fbf7ef",
+    "navigationBarBackgroundColor": "#f6f2ea",
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "iSdu",
-    "backgroundColor": "#f6f0e6",
+    "backgroundColor": "#f6f2ea",
     "backgroundTextStyle": "light"
   },
   "tabBar": {
-    "color": "#777269",
-    "selectedColor": "#3f745f",
-    "backgroundColor": "#fbf7ef",
-    "borderStyle": "white",
+    "color": "#6d726b",
+    "selectedColor": "#437a64",
+    "backgroundColor": "#fffdf9",
+    "borderStyle": "black",
     "list": [
-      {
-        "pagePath": "pages/map/index",
-        "text": "地图"
-      },
-      {
-        "pagePath": "pages/record/index",
-        "text": "记录"
-      },
+      { "pagePath": "pages/map/index", "text": "地图" },
       {
         "pagePath": "pages/timeline/index",
         "text": "时光"
