@@ -4,7 +4,9 @@
     "pages/editor/index",
     "pages/timeline/index",
     "pages/detail/index",
-    "pages/profile/index"
+    "pages/profile/index",
+    "pages/friends/index",
+    "pages/friend-invite/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#f6f2ea",

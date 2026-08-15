@@ -6,7 +6,9 @@ import {
   UserProfileValidationError,
   type UserProfile,
 } from '../../models/user-profile';
+import { cloudModeService } from '../../services/cloud/cloud-mode-service';
 import { consumeMapFocusIntent, setMapFocusIntent } from '../../services/map-focus-intent';
+import { cloudAuthRepository } from '../../services/repository/cloud-auth-repository';
 import { memoryRepository, userProfileRepository } from '../../services/repository/index';
 import { formatMemoryDateTime } from '../../utils/date-format';
 import { EMPTY_MEMORY_FILTERS, filterMemories } from '../../utils/memory-filters';
@@ -187,8 +189,22 @@ Page({
         signature: this.data.profileDraftSignature,
       });
 
+      let actionMessage = '个人资料已保存在本机。';
+      if (cloudModeService.getState().privacyAcceptedAt) {
+        try {
+          await cloudAuthRepository.bootstrap();
+          await cloudAuthRepository.updateMyProfile({
+            displayName: profile.displayName,
+            signature: profile.signature,
+          });
+          actionMessage = '个人资料已同步到 iSdu 好友身份。';
+        } catch {
+          actionMessage = '资料已保存在本机，但云端好友资料同步失败，请稍后重试。';
+        }
+      }
+
       this.setData({
-        actionMessage: '个人资料已保存在本机。',
+        actionMessage,
         isProfileEditorOpen: false,
         isProfileSaving: false,
         profileButtonLabel: '编辑资料',
@@ -276,6 +292,15 @@ Page({
       url: '/pages/profile/index',
       fail: () => {
         this.setData({ actionMessage: '数据管理页暂时无法打开，请稍后重试。' });
+      },
+    });
+  },
+
+  openFriends() {
+    void wx.navigateTo({
+      url: '/pages/friends/index',
+      fail: () => {
+        this.setData({ actionMessage: '好友页暂时无法打开，请稍后重试。' });
       },
     });
   },

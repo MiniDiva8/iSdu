@@ -13,9 +13,12 @@
         {{profileSignature || '写下一句属于你的校园签名'}}
       </text>
     </view>
-    <button class="ui-text-button" disabled="{{isProfileLoading}}" bindtap="openProfileEditor">
-      {{isProfileLoading ? '读取中' : profileButtonLabel}}
-    </button>
+    <view class="timeline-profile__actions">
+      <button class="ui-text-button" bindtap="openFriends">好友</button>
+      <button class="ui-text-button" disabled="{{isProfileLoading}}" bindtap="openProfileEditor">
+        {{isProfileLoading ? '读取中' : profileButtonLabel}}
+      </button>
+    </view>
   </view>
 
   <view wx:if="{{isProfileEditorOpen}}" class="timeline-profile-editor">
