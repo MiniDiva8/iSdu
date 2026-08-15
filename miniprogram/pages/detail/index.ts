@@ -5,6 +5,9 @@ import { memoryRepository } from '../../services/repository/index';
 import { formatMemoryDateTime } from '../../utils/date-format';
 import { campusMapConfig } from '../../config/campus-map';
 import { setMapFocusIntent } from '../../services/map-focus-intent';
+import type { CloudMemory } from '../../models/cloud-memory';
+import { cloudMemoryRepository } from '../../services/repository/cloud-memory-repository';
+import { cloudLikeRepository } from '../../services/repository/cloud-like-repository';
 
 interface DetailPhoto {
   isMissing: boolean;
@@ -80,12 +83,17 @@ Page({
     formattedRecordedAt: '',
     hasText: false,
     isDeleting: false,
+    isFriendMemory: false,
+    isLikeSaving: false,
     isLoading: true,
     loadError: '',
     loadErrorTitle: '',
     memory: null as Memory | null,
     memoryId: '',
     moodLabel: '',
+    ownerDisplayName: '',
+    likeCount: 0,
+    likedByMe: false,
     mapPreviewSource: campusMapConfig.assetPath,
     mapPreviewMarkerX: '50%',
     mapPreviewMarkerY: '50%',
@@ -104,7 +112,7 @@ Page({
       return;
     }
 
-    this.setData({ memoryId });
+    this.setData({ isFriendMemory: query.source === 'friend', memoryId });
   },
 
   onShow() {
@@ -122,7 +130,9 @@ Page({
     });
 
     try {
-      const memory = await memoryRepository.getMemoryById(this.data.memoryId);
+      const memory = this.data.isFriendMemory
+        ? await cloudMemoryRepository.getSharedMemoryById(this.data.memoryId)
+        : await memoryRepository.getMemoryById(this.data.memoryId);
 
       if (!memory) {
         this.setData({
@@ -135,6 +145,7 @@ Page({
         return;
       }
 
+      const cloudMemory = this.data.isFriendMemory ? (memory as CloudMemory) : null;
       this.setData({
         categoryLabel: getMemoryCategoryLabel(memory),
         coordinateLabel: '已保存在校园地图上的原位置',
@@ -143,6 +154,9 @@ Page({
         hasText: Boolean(memory.text),
         isLoading: false,
         memory,
+        likeCount: cloudMemory?.likeCount ?? 0,
+        likedByMe: cloudMemory?.likedByMe ?? false,
+        ownerDisplayName: cloudMemory?.ownerDisplayName ?? '',
         moodLabel: getMemoryMoodLabel(memory),
         mapPreviewMarkerX: `${(memory.mapXRatio * 100).toFixed(3)}%`,
         mapPreviewMarkerY: `${(memory.mapYRatio * 100).toFixed(3)}%`,
@@ -155,6 +169,25 @@ Page({
         loadErrorTitle: '记忆暂时无法读取',
         memory: null,
         photoItems: [],
+      });
+    }
+  },
+
+  async toggleLike() {
+    if (!this.data.isFriendMemory || this.data.isLikeSaving || !this.data.memory) return;
+    const target = !this.data.likedByMe;
+    this.setData({ actionMessage: '', isLikeSaving: true });
+    try {
+      const state = await cloudLikeRepository.setLiked(this.data.memory.id, target);
+      this.setData({
+        isLikeSaving: false,
+        likeCount: state.likeCount,
+        likedByMe: state.likedByMe,
+      });
+    } catch (error: unknown) {
+      this.setData({
+        actionMessage: describeError(error, '点赞失败，好友关系或回忆权限可能已经改变。'),
+        isLikeSaving: false,
       });
     }
   },
@@ -175,7 +208,7 @@ Page({
   },
 
   editMemory() {
-    if (!this.data.memory || this.data.isDeleting) {
+    if (!this.data.memory || this.data.isDeleting || this.data.isFriendMemory) {
       return;
     }
 
@@ -212,7 +245,7 @@ Page({
   async deleteMemory() {
     const memory = this.data.memory;
 
-    if (!memory || this.data.isDeleting) {
+    if (!memory || this.data.isDeleting || this.data.isFriendMemory) {
       return;
     }
 

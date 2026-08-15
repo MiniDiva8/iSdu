@@ -6,6 +6,7 @@ function createCloudMemoryStore(database) {
   const migrations = database.collection('memory_migrations');
   const uploadPlans = database.collection('image_upload_plans');
   const friendships = database.collection('friendships');
+  const likes = database.collection('likes');
 
   async function getMine(ownerUserId, memoryId) {
     const result = await memories
@@ -104,6 +105,82 @@ function createCloudMemoryStore(database) {
         friendships.where({ userBId: userId, status: 'active' }).limit(100).get(),
       ]);
       return [...left.data, ...right.data];
+    },
+    async getMemory(memoryId) {
+      const result = await memories.where({ _id: memoryId, deletedAt: null }).limit(1).get();
+      return result.data[0] ?? null;
+    },
+    async getUser(userId) {
+      const result = await users.where({ _id: userId, status: 'active' }).limit(1).get();
+      return result.data[0] ?? null;
+    },
+    async getActiveFriendship(pairKey) {
+      const result = await friendships.where({ pairKey, status: 'active' }).limit(1).get();
+      return result.data[0] ?? null;
+    },
+    async findLike(pairKey) {
+      const result = await likes.where({ pairKey }).limit(1).get();
+      return result.data[0] ?? null;
+    },
+    async setLikeState(input) {
+      return database.runTransaction(async (transaction) => {
+        const memoryResult = await transaction
+          .collection('memories')
+          .where({ _id: input.memoryId, deletedAt: null })
+          .limit(1)
+          .get();
+        const memory = memoryResult.data[0];
+        if (!memory || memory.ownerUserId === input.userId) return { code: 'VIEW_FORBIDDEN' };
+
+        const friendshipResult = await transaction
+          .collection('friendships')
+          .where({ pairKey: input.friendshipPairKey, status: 'active' })
+          .limit(1)
+          .get();
+        const friendship = friendshipResult.data[0];
+        const selectedAllowed =
+          memory.visibility === 'selected_friends' &&
+          Array.isArray(memory.selectedGrants) &&
+          memory.selectedGrants.some(
+            (grant) =>
+              grant.friendUserId === input.userId &&
+              grant.relationshipId === friendship?.relationshipId,
+          );
+        if (!friendship || (memory.visibility !== 'friends' && !selectedAllowed)) {
+          return { code: 'VIEW_FORBIDDEN' };
+        }
+
+        const likeResult = await transaction
+          .collection('likes')
+          .where({ pairKey: input.likePairKey })
+          .limit(1)
+          .get();
+        const existing = likeResult.data[0];
+        let likeCount = Number.isInteger(memory.likeCount) ? memory.likeCount : 0;
+
+        if (input.liked && !existing) {
+          await transaction.collection('likes').add({
+            data: {
+              _id: input.likeId,
+              pairKey: input.likePairKey,
+              memoryId: input.memoryId,
+              ownerUserId: memory.ownerUserId,
+              userId: input.userId,
+              createdAt: input.now,
+            },
+          });
+          likeCount += 1;
+        } else if (!input.liked && existing) {
+          await transaction.collection('likes').doc(existing._id).remove();
+          likeCount = Math.max(0, likeCount - 1);
+        }
+
+        await transaction
+          .collection('memories')
+          .doc(memory._id)
+          .update({ data: { likeCount, updatedAt: input.now } });
+        return { likeCount, likedByMe: input.liked };
+      });
     },
   };
 }

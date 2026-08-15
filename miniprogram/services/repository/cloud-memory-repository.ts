@@ -133,6 +133,11 @@ export class CloudMemoryRepository implements MemoryRepository {
     return memory;
   }
 
+  async getSharedMemoryById(id: string): Promise<CloudMemory> {
+    const response = await this.client.call('memory-api', 'getSharedById', { memoryId: id });
+    return parseResult(response, parseMemoryData);
+  }
+
   async createMemory(input: CreateMemoryInput): Promise<Memory> {
     const normalized = normalizeCreateMemoryInput(input);
     const upload = await this.uploadNewImages(normalized.imagePaths, normalized.id);

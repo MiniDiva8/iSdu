@@ -11,6 +11,7 @@ function createHarness() {
     { _id: 'usr_b', identityHash: 'identity-b', status: 'active', displayName: 'B' },
   ];
   const memories = new Map();
+  const likes = new Map();
   const friendships = [
     {
       userAId: 'usr_a',
@@ -21,12 +22,17 @@ function createHarness() {
   ];
   const migrations = new Map();
   const plans = new Map();
+  let currentOpenId = 'open-a';
   let sequence = 0;
   const options = {
     deleteFiles: async () => undefined,
     getTempUrls: async (fileIds) => fileIds.map((_, index) => `https://temp.invalid/${index}`),
-    getTrustedContext: () => ({ APPID: 'app', OPENID: 'open-a' }),
-    hash: (value) => (value === 'app\0open-a' ? 'identity-a' : `hash:${value}`),
+    getTrustedContext: () => ({ APPID: 'app', OPENID: currentOpenId }),
+    hash: (value) => {
+      if (value === 'app\0open-a') return 'identity-a';
+      if (value === 'app\0open-b') return 'identity-b';
+      return `hash:${value}`;
+    },
     newId: (prefix) => `${prefix}_${++sequence}`,
     newRequestId: () => `req_${++sequence}`,
     now: () => '2026-08-15T08:00:00.000Z',
@@ -84,9 +90,54 @@ function createHarness() {
           (item) =>
             item.status === 'active' && (item.userAId === userId || item.userBId === userId),
         ),
+      getMemory: async (memoryId) => memories.get(memoryId) ?? null,
+      getUser: async (userId) => users.find((user) => user._id === userId) ?? null,
+      getActiveFriendship: async (pairKey) =>
+        friendships.find(
+          (item) =>
+            item.status === 'active' &&
+            `hash:${[item.userAId, item.userBId].sort().join('\0')}` === pairKey,
+        ) ?? null,
+      findLike: async (pairKey) => likes.get(pairKey) ?? null,
+      setLikeState: async (input) => {
+        const memory = memories.get(input.memoryId);
+        const friendship = friendships.find(
+          (item) =>
+            item.status === 'active' &&
+            `hash:${[item.userAId, item.userBId].sort().join('\0')}` === input.friendshipPairKey,
+        );
+        const selectedAllowed = memory?.selectedGrants?.some(
+          (grant) =>
+            grant.friendUserId === input.userId &&
+            grant.relationshipId === friendship?.relationshipId,
+        );
+        if (!memory || !friendship || (memory.visibility !== 'friends' && !selectedAllowed)) {
+          return { code: 'VIEW_FORBIDDEN' };
+        }
+        const existing = likes.get(input.likePairKey);
+        let likeCount = memory.likeCount;
+        if (input.liked && !existing) {
+          likes.set(input.likePairKey, { _id: input.likeId, ...input });
+          likeCount += 1;
+        } else if (!input.liked && existing) {
+          likes.delete(input.likePairKey);
+          likeCount = Math.max(0, likeCount - 1);
+        }
+        memory.likeCount = likeCount;
+        return { likeCount, likedByMe: input.liked };
+      },
     },
   };
-  return { friendships, handler: createMemoryHandler(options), memories, plans };
+  return {
+    friendships,
+    handler: createMemoryHandler(options),
+    likes,
+    memories,
+    plans,
+    setCurrentUser(userId) {
+      currentOpenId = userId === 'usr_b' ? 'open-b' : 'open-a';
+    },
+  };
 }
 
 const content = {
@@ -307,6 +358,102 @@ test('old selected grant is not silently rebound after relationship id rotates',
     memories.get(created.data.memory.id).selectedGrants[0].relationshipId,
     'relationship-original',
   );
+});
+
+test('authorized friend detail returns temporary images without fileIDs', async () => {
+  const harness = createHarness();
+  const planned = await harness.handler({
+    action: 'createImageUploadPlan',
+    payload: { imageCount: 1, operationId: 'shared-photo' },
+  });
+  const target = planned.data.files[0];
+  const created = await harness.handler({
+    action: 'create',
+    payload: {
+      clientRequestId: 'shared-photo',
+      content,
+      planId: planned.data.planId,
+      uploaded: [{ imageId: target.imageId, fileId: `cloud://env/${target.cloudPath}` }],
+    },
+  });
+  await harness.handler({
+    action: 'setVisibility',
+    payload: { memoryId: created.data.memory.id, visibility: 'friends' },
+  });
+  harness.setCurrentUser('usr_b');
+  const shared = await harness.handler({
+    action: 'getSharedById',
+    payload: { memoryId: created.data.memory.id },
+  });
+  assert.equal(shared.ok, true);
+  assert.equal(shared.data.memory.canEdit, false);
+  assert.match(shared.data.memory.imagePaths[0], /^https:\/\//u);
+  assert.equal(JSON.stringify(shared).includes('cloud://'), false);
+});
+
+test('private and stale selected-friend grants deny detail and likes', async () => {
+  const harness = createHarness();
+  const created = await harness.handler({
+    action: 'create',
+    payload: { clientRequestId: 'private-share', content, uploaded: [] },
+  });
+  harness.setCurrentUser('usr_b');
+  const privateRead = await harness.handler({
+    action: 'getSharedById',
+    payload: { memoryId: created.data.memory.id },
+  });
+  assert.equal(privateRead.code, 'VIEW_FORBIDDEN');
+
+  harness.setCurrentUser('usr_a');
+  await harness.handler({
+    action: 'setVisibility',
+    payload: {
+      memoryId: created.data.memory.id,
+      selectedFriendIds: ['usr_b'],
+      visibility: 'selected_friends',
+    },
+  });
+  harness.friendships[0].relationshipId = 'relationship-new';
+  harness.setCurrentUser('usr_b');
+  const staleRead = await harness.handler({
+    action: 'getSharedById',
+    payload: { memoryId: created.data.memory.id },
+  });
+  const staleLike = await harness.handler({
+    action: 'setLike',
+    payload: { liked: true, memoryId: created.data.memory.id },
+  });
+  assert.equal(staleRead.code, 'VIEW_FORBIDDEN');
+  assert.equal(staleLike.code, 'VIEW_FORBIDDEN');
+});
+
+test('like and unlike are idempotent and keep one unique pair', async () => {
+  const harness = createHarness();
+  const created = await harness.handler({
+    action: 'create',
+    payload: { clientRequestId: 'liked-memory', content, uploaded: [] },
+  });
+  await harness.handler({
+    action: 'setVisibility',
+    payload: { memoryId: created.data.memory.id, visibility: 'friends' },
+  });
+  harness.setCurrentUser('usr_b');
+  const first = await harness.handler({
+    action: 'setLike',
+    payload: { liked: true, memoryId: created.data.memory.id },
+  });
+  const repeated = await harness.handler({
+    action: 'setLike',
+    payload: { liked: true, memoryId: created.data.memory.id },
+  });
+  const removed = await harness.handler({
+    action: 'setLike',
+    payload: { liked: false, memoryId: created.data.memory.id },
+  });
+  assert.equal(first.data.likeCount, 1);
+  assert.equal(repeated.data.likeCount, 1);
+  assert.equal(harness.likes.size, 0);
+  assert.equal(removed.data.likeCount, 0);
 });
 
 test('sanitizes unexpected storage failures', async () => {

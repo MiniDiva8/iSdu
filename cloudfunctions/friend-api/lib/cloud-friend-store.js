@@ -117,8 +117,36 @@ function createCloudFriendStore(database) {
       ) {
         return null;
       }
-      await friendships.doc(current._id).update({
-        data: { status: 'removed', removedAt: now, updatedAt: now },
+      await database.runTransaction(async (transaction) => {
+        const [likesFromA, likesFromB] = await Promise.all([
+          transaction
+            .collection('likes')
+            .where({ ownerUserId: current.userAId, userId: current.userBId })
+            .limit(100)
+            .get(),
+          transaction
+            .collection('likes')
+            .where({ ownerUserId: current.userBId, userId: current.userAId })
+            .limit(100)
+            .get(),
+        ]);
+        for (const like of [...likesFromA.data, ...likesFromB.data]) {
+          const memoryResult = await transaction.collection('memories').doc(like.memoryId).get();
+          const memory = memoryResult.data;
+          if (memory) {
+            await transaction
+              .collection('memories')
+              .doc(memory._id)
+              .update({
+                data: { likeCount: Math.max(0, (memory.likeCount ?? 0) - 1), updatedAt: now },
+              });
+          }
+          await transaction.collection('likes').doc(like._id).remove();
+        }
+        await transaction
+          .collection('friendships')
+          .doc(current._id)
+          .update({ data: { status: 'removed', removedAt: now, updatedAt: now } });
       });
       return current;
     },

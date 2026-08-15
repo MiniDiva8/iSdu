@@ -19,7 +19,9 @@
 
   <block wx:elif="{{memory}}">
     <view class="detail-heading page-hero">
-      <text class="eyebrow">我的校园记忆</text>
+      <text class="eyebrow">
+        {{isFriendMemory ? ownerDisplayName + ' 的好友回忆' : '我的校园记忆'}}
+      </text>
       <text class="page-title">{{displayPlaceName}}</text>
       <text class="page-subtitle">{{formattedRecordedAt}}</text>
     </view>
@@ -78,16 +80,34 @@
 
     <view wx:if="{{actionMessage}}" class="action-message">{{actionMessage}}</view>
 
+    <view wx:if="{{isFriendMemory}}" class="detail-like">
+      <button
+        class="detail-like__button {{likedByMe ? 'detail-like__button--active' : ''}}"
+        loading="{{isLikeSaving}}"
+        disabled="{{isLikeSaving}}"
+        bindtap="toggleLike"
+      >
+        {{likedByMe ? '已点赞' : '点赞'}} · {{likeCount}}
+      </button>
+      <text class="detail-like__copy">只有仍有权限查看这段回忆的好友才能点赞。</text>
+    </view>
+
     <view class="detail-actions">
       <t-button theme="primary" block disabled="{{isDeleting}}" bind:tap="showOnMap"
         >在地图中查看</t-button
       >
-      <button class="detail-actions__edit" disabled="{{isDeleting}}" bindtap="editMemory">
+      <button
+        wx:if="{{!isFriendMemory}}"
+        class="detail-actions__edit"
+        disabled="{{isDeleting}}"
+        bindtap="editMemory"
+      >
         编辑
       </button>
     </view>
 
     <button
+      wx:if="{{!isFriendMemory}}"
       class="detail-delete"
       loading="{{isDeleting}}"
       disabled="{{isDeleting}}"

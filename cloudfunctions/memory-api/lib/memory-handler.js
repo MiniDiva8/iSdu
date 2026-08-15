@@ -186,6 +186,71 @@ async function toOwnerView(options, user, memory) {
   };
 }
 
+function createPairKey(options, leftUserId, rightUserId) {
+  return options.hash([...new Set([leftUserId, rightUserId])].sort().join('\0'));
+}
+
+function canFriendViewMemory(memory, viewerUserId, friendship) {
+  if (!friendship || memory.visibility === 'private') return false;
+  if (memory.visibility === 'friends') return true;
+  return (
+    memory.visibility === 'selected_friends' &&
+    Array.isArray(memory.selectedGrants) &&
+    memory.selectedGrants.some(
+      (grant) =>
+        grant.friendUserId === viewerUserId && grant.relationshipId === friendship.relationshipId,
+    )
+  );
+}
+
+async function resolveSharedMemory(options, viewer, memoryId) {
+  const memory = await options.store.getMemory(memoryId);
+  if (!memory || memory.ownerUserId === viewer._id) {
+    throw new PublicError('VIEW_FORBIDDEN', '这段好友回忆当前不可访问');
+  }
+  const friendshipPairKey = createPairKey(options, viewer._id, memory.ownerUserId);
+  const friendship = await options.store.getActiveFriendship(friendshipPairKey);
+  if (!canFriendViewMemory(memory, viewer._id, friendship)) {
+    throw new PublicError('VIEW_FORBIDDEN', '这段好友回忆当前不可访问');
+  }
+  return { friendship, friendshipPairKey, memory };
+}
+
+async function toSharedView(options, viewer, memory) {
+  const owner = await options.store.getUser(memory.ownerUserId);
+  if (!owner) throw new PublicError('VIEW_FORBIDDEN', '这段好友回忆当前不可访问');
+  const images = Array.isArray(memory.images) ? memory.images : [];
+  const urls = await options.getTempUrls(images.map((image) => image.fileId));
+  const likePairKey = options.hash(`${memory._id}\0${viewer._id}`);
+  const likedByMe = Boolean(await options.store.findLike(likePairKey));
+  return {
+    id: memory._id,
+    text: memory.text,
+    imagePaths: urls,
+    imageIds: [],
+    placeName: memory.placeName,
+    mood: memory.mood,
+    customMood: memory.customMood,
+    category: memory.category,
+    customCategory: memory.customCategory,
+    mapAssetVersion: memory.mapAssetVersion,
+    mapXRatio: memory.mapXRatio,
+    mapYRatio: memory.mapYRatio,
+    recordedAt: memory.recordedAt,
+    origin: 'user',
+    createdAt: memory.createdAt,
+    updatedAt: memory.updatedAt,
+    canEdit: false,
+    likeCount: memory.likeCount ?? 0,
+    likedByMe,
+    ownerDisplayName: owner.displayName || 'iSdu 好友',
+    ownerUserId: owner._id,
+    publishedAt: memory.publishedAt ?? null,
+    selectedFriendIds: [],
+    visibility: VALID_VISIBILITY.has(memory.visibility) ? memory.visibility : 'private',
+  };
+}
+
 function normalizeSelectedFriendIds(value) {
   if (!Array.isArray(value) || value.length > 100) {
     throw new PublicError('INVALID_INPUT', '部分好友选择无效');
@@ -367,6 +432,35 @@ function createMemoryHandler(options) {
           data: { memory: await toOwnerView(options, user, updated) },
           requestId,
         };
+      }
+
+      if (event.action === 'getSharedById') {
+        const memoryId = requireString(payload.memoryId, '回忆 ID', 80, false);
+        const { memory } = await resolveSharedMemory(options, user, memoryId);
+        return {
+          ok: true,
+          data: { memory: await toSharedView(options, user, memory) },
+          requestId,
+        };
+      }
+
+      if (event.action === 'setLike') {
+        const memoryId = requireString(payload.memoryId, '回忆 ID', 80, false);
+        if (typeof payload.liked !== 'boolean') {
+          throw new PublicError('INVALID_INPUT', '点赞状态无效');
+        }
+        const { friendshipPairKey } = await resolveSharedMemory(options, user, memoryId);
+        const result = await options.store.setLikeState({
+          friendshipPairKey,
+          likeId: options.newId('like'),
+          likePairKey: options.hash(`${memoryId}\0${user._id}`),
+          liked: payload.liked,
+          memoryId,
+          now,
+          userId: user._id,
+        });
+        if (result.code) throw new PublicError('VIEW_FORBIDDEN', '这段好友回忆当前不可点赞');
+        return { ok: true, data: result, requestId };
       }
 
       if (event.action === 'update') {

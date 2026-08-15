@@ -312,6 +312,42 @@
   border: 0;
 }
 
+.detail-like {
+  padding: 16px;
+  margin-top: 18px;
+  text-align: center;
+  background: var(--ui-color-surface);
+  border-radius: var(--ui-radius-medium);
+}
+
+.detail-like__button {
+  min-width: 132px;
+  min-height: 44px;
+  padding: 0 20px;
+  color: var(--ui-color-text-secondary);
+  font-size: 14px;
+  background: var(--ui-color-surface-secondary);
+  border: 0;
+  border-radius: var(--ui-radius-pill);
+}
+
+.detail-like__button--active {
+  color: var(--ui-color-primary-strong);
+  background: var(--ui-color-primary-soft);
+}
+
+.detail-like__button::after {
+  border: 0;
+}
+
+.detail-like__copy {
+  display: block;
+  margin-top: 8px;
+  color: var(--ui-color-text-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
 @media (max-width: 340px) {
   .detail-actions {
     grid-template-columns: minmax(0, 1fr) 96px;
