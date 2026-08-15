@@ -1,5 +1,6 @@
 {
   "description": "iSdu 微信原生 TypeScript 小程序公共工程配置",
+  "cloudfunctionRoot": "cloudfunctions/",
   "miniprogramRoot": "miniprogram/",
   "srcMiniprogramRoot": "miniprogram/",
   "setting": {

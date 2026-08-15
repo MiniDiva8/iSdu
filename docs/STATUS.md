@@ -8,7 +8,9 @@
 
 比赛第一版已经冻结在 `main` 分支提交 `4f517e9 feat: finalize competition v1`。该版本完成本地地图日记闭环，继续作为可独立运行、可回退的稳定基线。
 
-当前进入第二阶段第一个里程碑：“社交 V2 规则与技术设计”。本里程碑只完成范围、权限、数据结构、接口边界、迁移策略和测试门禁，不创建 CloudBase 环境、不部署云函数、不修改现有本地日记业务。
+第二阶段第一个里程碑“社交 V2 规则与技术设计”已经验收并提交为 `7226d69 docs: define social v2 architecture and security rules`。
+
+当前执行第二个里程碑：“CloudBase 环境与可信身份基础”。代码已经完成，等待用户在微信开发者工具中创建测试环境、配置 `users` 集合、部署 `auth-api` 并进行单账号和双账号人工验证。当前没有创建或部署任何真实云资源。
 
 第二阶段已经确认的产品范围只有：
 
@@ -23,11 +25,24 @@
 ## 当前仓库状态
 
 - 比赛第一版基线：`main` / `4f517e9 feat: finalize competition v1`。
-- 当前设计分支：`codex/social-v2`，从上述稳定基线创建。
-- 当前分支尚未提交或推送；本轮变更仅限第二阶段规则与设计文档。
-- 尚未创建 CloudBase 集合、存储桶、索引、云函数或环境配置，也没有迁移任何本地数据。
+- 当前开发分支：`codex/social-v2`。
+- 当前 HEAD：`7226d69 docs: define social v2 architecture and security rules`。
+- 当前未提交工作区只包含可信身份代码、专项测试和配置文档；尚未推送。
+- 尚未创建 CloudBase 集合、存储桶、索引或真实环境，也没有部署云函数、迁移本地数据或上传照片。
 - 公共工程配置继续使用安全占位 AppID；真实 AppID、环境 ID、OpenID、密钥和私人配置不得进入 Git。
 - `node_modules`、构建生成的 `miniprogram_npm` 和 `project.private.config.json` 均不应提交。
+
+## 已完成：CloudBase 可信身份代码基础
+
+- 公共工程配置已声明根目录 `cloudfunctions/`，但真实环境 ID 仍不进入 Git。
+- 小程序端新增可关闭的 CloudBase 初始化器；默认继续为 `local` 且 `cloudEnabled=false`，不会影响比赛第一版的本地运行。
+- 新增 `AuthRepository`、`CloudAuthRepository` 和严格的云端响应解析；页面没有直接处理 OpenID 或数据库文档。
+- 新增 `auth-api` 云函数，精确锁定 `wx-server-sdk@4.0.2`，使用 `cloud.DYNAMIC_CURRENT_ENV` 和可信 `getWXContext()`。
+- 服务端以可信 APPID 与 OPENID 的 SHA-256 哈希查询身份，不保存原始 OpenID；客户端只获得随机 `usr_` 用户 ID。
+- `bootstrap`、`getMyProfile`、`updateMyProfile` 已实现；客户端提交的伪造身份字段不会参与鉴权。
+- `users` 集合设计为客户端完全不可读写，并要求 `identityHash` 唯一索引；实际规则和索引仍需人工在控制台配置。
+- 13 项身份专项测试已经覆盖重复初始化、伪造身份、缺失上下文、资料校验、禁用账号、错误脱敏和客户端响应解析。
+- 本里程碑没有登录 UI、好友、可见范围、点赞、共享地图、本地迁云或云存储上传。
 
 ## 已完成：地图与选点
 
@@ -163,6 +178,6 @@
 
 ## 下一步
 
-先由人工验收 `AGENTS.md` 与 `docs/SOCIAL_V2_DESIGN.md` 中的第二阶段范围、可见性语义和安全门禁。验收通过后的唯一下一里程碑是“CloudBase 环境与可信身份基础”：只建立安全环境配置、用户集合和服务端身份接口，并完成单账号与双账号越权测试框架。
+先严格按照 `docs/CLOUDBASE_IDENTITY_SETUP.md` 完成真实测试环境、`users` 安全规则、唯一索引、`auth-api` 部署以及双账号身份隔离验证。未经过真实微信调用前，不得声称微信登录已经上线。
 
-在本设计里程碑通过前，不创建云资源，不实现好友、点赞、云端回忆或 24 小时好友地图，也不自动迁移现有本地数据。
+身份里程碑人工通过后的唯一下一里程碑是“本地回忆到云端的私密迁移”。在本轮通过前，不实现好友、点赞、云端共享或 24 小时好友地图，也不自动上传任何本地数据。

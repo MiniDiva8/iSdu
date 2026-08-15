@@ -49,4 +49,20 @@ export default defineConfig(
       ],
     },
   },
+  {
+    files: ['cloudfunctions/**/*.js'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 2022,
+      globals: {
+        exports: 'readonly',
+        module: 'readonly',
+        require: 'readonly',
+      },
+      sourceType: 'commonjs',
+    },
+    rules: {
+      'no-console': 'error',
+    },
+  },
 );

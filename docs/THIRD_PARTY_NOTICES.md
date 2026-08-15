@@ -1,10 +1,10 @@
 # 第三方声明
 
-更新日期：2026-08-11
+更新日期：2026-08-15
 
 ## 当前状态
 
-当前仓库已通过 npm 正式安装 `tdesign-miniprogram@1.15.3`，页面只按需注册 Button 和 Empty。没有新增第三方运行时依赖，也没有复制候选仓库源码、第三方字体或图标。
+当前仓库已通过 npm 正式安装 `tdesign-miniprogram@1.15.3`，页面只按需注册 Button 和 Empty。第二阶段的 `auth-api` 云函数精确声明 `wx-server-sdk@4.0.2`，由微信云函数部署时在该函数目录内安装；当前本机尚未安装或部署这份云函数依赖。没有复制候选仓库源码、第三方字体或图标。
 
 本机构建目录 `miniprogram/miniprogram_npm` 已存在，共 1,158 个文件、1,451,378 字节；该目录由微信开发者工具构建且保持 Git 忽略，实际主包大小与编译耗时仍需在本轮开发者工具验收中重新记录。
 
@@ -31,17 +31,18 @@
 
 ## 当前精确依赖
 
-| 包                        |     版本 | 类型   | 许可证     | 用途                             |
-| ------------------------- | -------: | ------ | ---------- | -------------------------------- |
-| `tdesign-miniprogram`     | `1.15.3` | 运行时 | MIT        | Button、Empty                    |
-| `@eslint/js`              | `10.0.1` | 开发   | MIT        | ESLint 官方基础规则              |
-| `eslint`                  | `10.8.0` | 开发   | MIT        | 静态检查                         |
-| `typescript-eslint`       | `8.65.0` | 开发   | MIT        | TypeScript ESLint 解析和类型规则 |
-| `typescript`              |  `5.9.3` | 开发   | Apache-2.0 | 命令行类型检查                   |
-| `miniprogram-api-typings` |  `5.2.2` | 开发   | MIT        | 微信小程序 API 类型              |
-| `prettier`                |  `3.9.6` | 开发   | MIT        | 格式检查                         |
+| 包                        |     版本 | 类型   | 许可证     | 用途                                             |
+| ------------------------- | -------: | ------ | ---------- | ------------------------------------------------ |
+| `tdesign-miniprogram`     | `1.15.3` | 运行时 | MIT        | Button、Empty                                    |
+| `wx-server-sdk`           |  `4.0.2` | 云函数 | MIT        | CloudBase 初始化、可信微信调用上下文与数据库访问 |
+| `@eslint/js`              | `10.0.1` | 开发   | MIT        | ESLint 官方基础规则                              |
+| `eslint`                  | `10.8.0` | 开发   | MIT        | 静态检查                                         |
+| `typescript-eslint`       | `8.65.0` | 开发   | MIT        | TypeScript ESLint 解析和类型规则                 |
+| `typescript`              |  `5.9.3` | 开发   | Apache-2.0 | 命令行类型检查                                   |
+| `miniprogram-api-typings` |  `5.2.2` | 开发   | MIT        | 微信小程序 API 类型                              |
+| `prettier`                |  `3.9.6` | 开发   | MIT        | 格式检查                                         |
 
-所有顶层依赖均在 `package.json` 和 `package-lock.json` 中精确记录。`node_modules` 与开发者工具生成的 `miniprogram_npm` 不提交 Git。
+小程序依赖均在根 `package.json` 和 `package-lock.json` 中精确记录；云函数依赖在 `cloudfunctions/auth-api/package.json` 中独立精确锁定。`wx-server-sdk` 的包元数据和官方仓库均标记为 MIT，部署产物必须保留 npm 包自带 LICENSE。`node_modules` 与开发者工具生成的 `miniprogram_npm` 不提交 Git。
 
 ## 正式引入后的更新要求
 

@@ -1,6 +1,6 @@
 # 第三方集成计划
 
-> 执行状态（2026-08-15）：比赛第一版已冻结在 `main` / `4f517e9`。第二阶段已授权按 `docs/SOCIAL_V2_DESIGN.md` 进入 CloudBase，但当前只完成规则与技术设计；尚未安装 CloudBase Skills/MCP、创建云环境、配置集合或部署云函数。下一里程碑仅建立可信身份基础。
+> 执行状态（2026-08-15）：比赛第一版已冻结在 `main` / `4f517e9`；社交 V2 设计已提交为 `7226d69`。可信身份代码骨架、`auth-api` 和客户端 Repository 已完成，但尚未创建或部署真实 CloudBase 环境。CloudBase Skills/MCP 仍未安装。
 
 ## 1. 集成原则
 

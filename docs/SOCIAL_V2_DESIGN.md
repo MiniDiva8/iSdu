@@ -64,7 +64,7 @@
 ```ts
 interface CloudUser {
   _id: string; // 随机 iSdu userId，对外可使用
-  _openid: string; // CloudBase 内部身份，不返回给其他用户
+  identityHash: string; // 可信 APPID + OPENID 的服务端哈希，不返回客户端
   displayName: string;
   avatarFileId: string;
   signature: string;
@@ -74,7 +74,7 @@ interface CloudUser {
 }
 ```
 
-索引：`_openid` 唯一。
+索引：`identityHash` 唯一。当前实现不在业务集合保存原始 OpenID；云函数从可信调用上下文取得 APPID 与 OPENID，计算 SHA-256 身份哈希后查询用户。身份哈希仍属于内部标识，不得返回客户端或写入日志。
 
 ### 3.2 `friend_requests`
 
