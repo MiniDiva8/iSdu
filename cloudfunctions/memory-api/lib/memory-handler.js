@@ -203,6 +203,39 @@ function canFriendViewMemory(memory, viewerUserId, friendship) {
   );
 }
 
+function parseMapCursor(value) {
+  if (value === undefined || value === null || value === '') return null;
+  if (!isRecord(value) || typeof value.id !== 'string' || typeof value.publishedAt !== 'string') {
+    throw new PublicError('INVALID_INPUT', '分页游标无效');
+  }
+  return { id: value.id, publishedAt: requireIso(value.publishedAt, '分页') };
+}
+
+function isAfterCursor(memory, cursor) {
+  if (!cursor) return true;
+  return (
+    memory.publishedAt < cursor.publishedAt ||
+    (memory.publishedAt === cursor.publishedAt && memory._id > cursor.id)
+  );
+}
+
+function toFriendMapPoint(memory, owner) {
+  return {
+    id: memory._id,
+    ownerDisplayName: owner.displayName || 'iSdu 好友',
+    ownerUserId: owner._id,
+    placeName: memory.placeName,
+    mood: memory.mood,
+    customMood: memory.customMood,
+    category: memory.category,
+    customCategory: memory.customCategory,
+    mapAssetVersion: memory.mapAssetVersion,
+    mapXRatio: memory.mapXRatio,
+    mapYRatio: memory.mapYRatio,
+    publishedAt: memory.publishedAt,
+  };
+}
+
 async function resolveSharedMemory(options, viewer, memoryId) {
   const memory = await options.store.getMemory(memoryId);
   if (!memory || memory.ownerUserId === viewer._id) {
@@ -461,6 +494,63 @@ function createMemoryHandler(options) {
         });
         if (result.code) throw new PublicError('VIEW_FORBIDDEN', '这段好友回忆当前不可点赞');
         return { ok: true, data: result, requestId };
+      }
+
+      if (event.action === 'listFriendRecentMap') {
+        const mapAssetVersion = requireString(payload.mapAssetVersion, '地图版本', 80, false);
+        const cursor = parseMapCursor(payload.cursor);
+        const friendships = await options.store.listActiveFriendships(user._id);
+        const relationshipByOwner = new Map();
+        for (const friendship of friendships) {
+          const friendUserId =
+            friendship.userAId === user._id ? friendship.userBId : friendship.userAId;
+          relationshipByOwner.set(friendUserId, friendship);
+        }
+        const ownerIds = [...relationshipByOwner.keys()];
+        const since = new Date(Date.parse(now) - 24 * 60 * 60 * 1000).toISOString();
+        const candidates = [];
+        for (let index = 0; index < ownerIds.length; index += 20) {
+          candidates.push(
+            ...(await options.store.listRecentMemoriesByOwners(
+              ownerIds.slice(index, index + 20),
+              since,
+            )),
+          );
+        }
+        const allowed = candidates
+          .filter(
+            (memory) =>
+              memory.publishedAt >= since &&
+              memory.mapAssetVersion === mapAssetVersion &&
+              Number.isFinite(memory.mapXRatio) &&
+              memory.mapXRatio >= 0 &&
+              memory.mapXRatio <= 1 &&
+              Number.isFinite(memory.mapYRatio) &&
+              memory.mapYRatio >= 0 &&
+              memory.mapYRatio <= 1 &&
+              canFriendViewMemory(memory, user._id, relationshipByOwner.get(memory.ownerUserId)),
+          )
+          .sort(
+            (left, right) =>
+              right.publishedAt.localeCompare(left.publishedAt) ||
+              left._id.localeCompare(right._id),
+          )
+          .filter((memory) => isAfterCursor(memory, cursor));
+        const page = allowed.slice(0, 50);
+        const points = [];
+        for (const memory of page) {
+          const owner = await options.store.getUser(memory.ownerUserId);
+          if (owner) points.push(toFriendMapPoint(memory, owner));
+        }
+        const last = allowed.length > page.length ? page[page.length - 1] : null;
+        return {
+          ok: true,
+          data: {
+            nextCursor: last ? { id: last._id, publishedAt: last.publishedAt } : null,
+            points,
+          },
+          requestId,
+        };
       }
 
       if (event.action === 'update') {

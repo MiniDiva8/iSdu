@@ -41,7 +41,7 @@
           />
 
           <view
-            wx:if="{{isMapReady && !isPickingLocation}}"
+            wx:if="{{isMapReady && !isPickingLocation && mapLayer === 'mine'}}"
             class="marker-layer"
             style="left: {{mapOffsetX}}px; top: {{mapOffsetY}}px; width: {{mapRenderWidth}}px; height: {{mapRenderHeight}}px"
           >
@@ -64,6 +64,24 @@
                 binderror="handleMarkerImageError"
               />
               <view wx:else class="memory-marker__dot"></view>
+            </button>
+          </view>
+
+          <view
+            wx:if="{{isMapReady && !isPickingLocation && mapLayer === 'friends'}}"
+            class="marker-layer"
+            style="left: {{mapOffsetX}}px; top: {{mapOffsetY}}px; width: {{mapRenderWidth}}px; height: {{mapRenderHeight}}px"
+          >
+            <button
+              wx:for="{{friendMarkers}}"
+              wx:key="renderKey"
+              class="memory-marker friend-memory-marker memory-marker--mood-{{item.moodClass}} {{selectedMemory && selectedMemory.id === item.id ? 'memory-marker--selected' : ''}}"
+              style="left: {{item.x}}px; top: {{item.y}}px; transform: translate(-50%, -50%) scale({{markerVisualScale}})"
+              aria-label="查看好友回忆：{{item.title}}"
+              data-memory-id="{{item.id}}"
+              catchtap="handleFriendMarkerTap"
+            >
+              <view class="friend-memory-marker__dot"></view>
             </button>
           </view>
         </movable-view>
@@ -91,12 +109,32 @@
 
       <view wx:if="{{isMapReady && !isPickingLocation}}" class="map-floating-tools">
         <button
+          wx:if="{{mapLayer === 'mine'}}"
           class="map-floating-control {{activeFilterCount ? 'map-floating-control--active' : ''}}"
           bindtap="toggleFilterPanel"
         >
           筛选<text wx:if="{{activeFilterCount}}"> · {{activeFilterCount}}</text>
         </button>
-        <text class="map-memory-count">{{visibleMarkerCount}} 段回忆</text>
+        <text class="map-memory-count">
+          {{mapLayer === 'mine' ? visibleMarkerCount : friendMarkers.length}} 段回忆
+        </text>
+      </view>
+
+      <view wx:if="{{isMapReady && !isPickingLocation}}" class="map-layer-switch">
+        <button
+          class="map-layer-switch__button {{mapLayer === 'mine' ? 'map-layer-switch__button--active' : ''}}"
+          data-layer="mine"
+          bindtap="handleMapLayerTap"
+        >
+          我的
+        </button>
+        <button
+          class="map-layer-switch__button {{mapLayer === 'friends' ? 'map-layer-switch__button--active' : ''}}"
+          data-layer="friends"
+          bindtap="handleMapLayerTap"
+        >
+          好友 24h
+        </button>
       </view>
 
       <scroll-view
@@ -222,6 +260,14 @@
     <button class="status-banner__action" bindtap="refreshMemories">重试</button>
   </view>
 
+  <view
+    wx:if="{{mapLayer === 'friends' && friendLoadError}}"
+    class="status-banner status-banner--error"
+  >
+    <text>{{friendLoadError}}</text>
+    <button class="status-banner__action" bindtap="refreshFriendLayer">重试</button>
+  </view>
+
   <view wx:if="{{hasInvalidMarkers}}" class="status-banner status-banner--warning">
     {{invalidMarkerCount}} 条回忆的位置异常，暂不显示在地图上
   </view>
@@ -230,7 +276,10 @@
     {{incompatibleMapMemoryCount}} 条旧版地图记忆暂不投射到当前地图
   </view>
 
-  <view wx:if="{{hasNoMarkers && !isMemoryLoading && !hasRepositoryError}}" class="map-empty-state">
+  <view
+    wx:if="{{mapLayer === 'mine' && hasNoMarkers && !isMemoryLoading && !hasRepositoryError}}"
+    class="map-empty-state"
+  >
     <text class="map-empty-state__title">
       {{activeFilterCount ? '当前筛选下没有回忆' : '这里还没有留下记忆'}}
     </text>
@@ -241,6 +290,16 @@
     <text wx:if="{{!activeFilterCount}}" class="map-empty-state__privacy-copy">
       当前版本的回忆和照片只保存在这台设备，没有云端备份。
     </text>
+  </view>
+
+  <view
+    wx:if="{{mapLayer === 'friends' && !isFriendLayerLoading && !friendLoadError && friendMarkers.length === 0}}"
+    class="map-empty-state"
+  >
+    <text class="map-empty-state__title">好友近 24 小时还没有公开星点</text>
+    <text class="map-empty-state__copy"
+      >只有仍是好友、当前有权查看且地图版本一致的回忆会显示。</text
+    >
   </view>
 
   <view wx:if="{{isPickingLocation}}" class="map-pick-bar">

@@ -14,6 +14,12 @@ import {
   type Memory,
   type UpdateMemoryInput,
 } from '../../models/memory';
+import {
+  parseFriendMapCursor,
+  parseFriendMapPoint,
+  type FriendMapCursor,
+  type FriendMapPoint,
+} from '../../models/friend-map-point';
 import { cloudImageService, type CloudImageServiceApi } from '../cloud/cloud-image-service';
 import {
   wechatCloudFunctionClient,
@@ -103,6 +109,19 @@ function parseMigrationResult(value: unknown): MigrationItemResult {
   };
 }
 
+function parseFriendMapPage(value: unknown): {
+  nextCursor: FriendMapCursor | null;
+  points: FriendMapPoint[];
+} {
+  if (!isRecord(value) || !Array.isArray(value.points) || !('nextCursor' in value)) {
+    throw new CloudMemoryRepositoryError('INVALID_RESPONSE', '好友地图结果格式无效');
+  }
+  return {
+    nextCursor: parseFriendMapCursor(value.nextCursor),
+    points: value.points.map(parseFriendMapPoint),
+  };
+}
+
 export class CloudMemoryRepository implements MemoryRepository {
   private readonly client: CloudFunctionClient;
   private readonly imageIdsByMemory = new Map<string, Map<string, string>>();
@@ -136,6 +155,22 @@ export class CloudMemoryRepository implements MemoryRepository {
   async getSharedMemoryById(id: string): Promise<CloudMemory> {
     const response = await this.client.call('memory-api', 'getSharedById', { memoryId: id });
     return parseResult(response, parseMemoryData);
+  }
+
+  async listFriendRecentMapPoints(mapAssetVersion: string): Promise<FriendMapPoint[]> {
+    const points: FriendMapPoint[] = [];
+    let cursor: FriendMapCursor | null = null;
+    for (let page = 0; page < 10; page += 1) {
+      const response = await this.client.call('memory-api', 'listFriendRecentMap', {
+        cursor,
+        mapAssetVersion,
+      });
+      const result = parseResult(response, parseFriendMapPage);
+      points.push(...result.points);
+      cursor = result.nextCursor;
+      if (!cursor) break;
+    }
+    return points;
   }
 
   async createMemory(input: CreateMemoryInput): Promise<Memory> {

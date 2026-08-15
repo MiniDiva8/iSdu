@@ -126,6 +126,14 @@ function createHarness() {
         memory.likeCount = likeCount;
         return { likeCount, likedByMe: input.liked };
       },
+      listRecentMemoriesByOwners: async (ownerUserIds, since) =>
+        [...memories.values()].filter(
+          (memory) =>
+            ownerUserIds.includes(memory.ownerUserId) &&
+            !memory.deletedAt &&
+            memory.publishedAt &&
+            memory.publishedAt >= since,
+        ),
     },
   };
   return {
@@ -454,6 +462,86 @@ test('like and unlike are idempotent and keep one unique pair', async () => {
   assert.equal(repeated.data.likeCount, 1);
   assert.equal(harness.likes.size, 0);
   assert.equal(removed.data.likeCount, 0);
+});
+
+test('friend map includes only authorized valid points from the last 24 hours', async () => {
+  const harness = createHarness();
+  const base = {
+    ...content,
+    _id: 'memory-boundary',
+    ownerUserId: 'usr_a',
+    visibility: 'friends',
+    selectedGrants: [],
+    publishedAt: '2026-08-14T08:00:00.000Z',
+    likeCount: 0,
+    deletedAt: null,
+    createdAt: '2026-08-14T08:00:00.000Z',
+    updatedAt: '2026-08-14T08:00:00.000Z',
+    images: [],
+  };
+  harness.memories.set(base._id, base);
+  harness.memories.set('memory-invalid-coordinate', {
+    ...base,
+    _id: 'memory-invalid-coordinate',
+    mapXRatio: 2,
+  });
+  harness.memories.set('memory-wrong-map', {
+    ...base,
+    _id: 'memory-wrong-map',
+    mapAssetVersion: 'other-map',
+  });
+  harness.memories.set('memory-private', {
+    ...base,
+    _id: 'memory-private',
+    visibility: 'private',
+  });
+  harness.setCurrentUser('usr_b');
+  const result = await harness.handler({
+    action: 'listFriendRecentMap',
+    payload: { mapAssetVersion: 'campus-map-v3' },
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(
+    result.data.points.map((point) => point.id),
+    ['memory-boundary'],
+  );
+  assert.equal(JSON.stringify(result).includes('text'), false);
+  assert.equal(JSON.stringify(result).includes('images'), false);
+});
+
+test('friend map paginates at 50 points without repeating the first page', async () => {
+  const harness = createHarness();
+  for (let index = 0; index < 55; index += 1) {
+    const id = `memory-page-${String(index).padStart(2, '0')}`;
+    harness.memories.set(id, {
+      ...content,
+      _id: id,
+      ownerUserId: 'usr_a',
+      visibility: 'friends',
+      selectedGrants: [],
+      publishedAt: `2026-08-15T07:${String(index).padStart(2, '0')}:00.000Z`,
+      likeCount: 0,
+      deletedAt: null,
+      createdAt: '2026-08-15T07:00:00.000Z',
+      updatedAt: '2026-08-15T07:00:00.000Z',
+      images: [],
+    });
+  }
+  harness.setCurrentUser('usr_b');
+  const first = await harness.handler({
+    action: 'listFriendRecentMap',
+    payload: { mapAssetVersion: 'campus-map-v3' },
+  });
+  const second = await harness.handler({
+    action: 'listFriendRecentMap',
+    payload: { cursor: first.data.nextCursor, mapAssetVersion: 'campus-map-v3' },
+  });
+  assert.equal(first.data.points.length, 50);
+  assert.equal(second.data.points.length, 5);
+  assert.equal(
+    first.data.points.some((point) => second.data.points.some((other) => other.id === point.id)),
+    false,
+  );
 });
 
 test('sanitizes unexpected storage failures', async () => {

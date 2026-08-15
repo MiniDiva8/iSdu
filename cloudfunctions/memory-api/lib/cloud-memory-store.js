@@ -182,6 +182,19 @@ function createCloudMemoryStore(database) {
         return { likeCount, likedByMe: input.liked };
       });
     },
+    async listRecentMemoriesByOwners(ownerUserIds, since) {
+      if (!Array.isArray(ownerUserIds) || ownerUserIds.length === 0) return [];
+      const result = await memories
+        .where({
+          ownerUserId: database.command.in(ownerUserIds),
+          deletedAt: null,
+          publishedAt: database.command.gte(since),
+        })
+        .orderBy('publishedAt', 'desc')
+        .limit(100)
+        .get();
+      return result.data;
+    },
   };
 }
 

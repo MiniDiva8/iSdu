@@ -14,6 +14,9 @@ import {
 import { campusMapConfig } from '../../config/campus-map';
 import { consumeMapFocusIntent, type MapFocusIntent } from '../../services/map-focus-intent';
 import { memoryRepository } from '../../services/repository/index';
+import type { FriendMapPoint } from '../../models/friend-map-point';
+import { cloudModeService } from '../../services/cloud/cloud-mode-service';
+import { cloudMemoryRepository } from '../../services/repository/cloud-memory-repository';
 import {
   calculateCenteredOffset,
   calculateCoverSize,
@@ -44,6 +47,7 @@ const MAP_BOUNDARY_SETTLE_DELAY_MS = 80;
 const MAP_EDGE_BLANK_ALLOWANCE_PX = 10;
 type ScaleBoundary = 'maximum' | 'minimum' | 'normal';
 type MarkerMode = 'dot' | 'photo';
+type MapLayer = 'friends' | 'mine';
 interface FilterOption<T extends string> {
   label: string;
   value: T;
@@ -70,6 +74,14 @@ interface MemoryMarker extends MapPosition {
   showThumbnail: boolean;
   thumbnail: string;
   thumbnailFailed: boolean;
+  title: string;
+}
+
+interface FriendMemoryMarker extends MapPosition {
+  id: string;
+  moodClass: MemoryMood;
+  ownerDisplayName: string;
+  renderKey: string;
   title: string;
 }
 
@@ -114,6 +126,9 @@ function getInitialMarkerMode(): MarkerMode {
 }
 function getInitialMoodFilter(): 'all' | MemoryMood {
   return 'all';
+}
+function getInitialMapLayer(): MapLayer {
+  return 'mine';
 }
 
 function createFilterCriteria(filterState: MapFilterState): MemoryFilterCriteria {
@@ -268,6 +283,31 @@ function createMemoryMarkers(
     markers,
   };
 }
+
+function createFriendMarkers(
+  points: readonly FriendMapPoint[],
+  mapSize: MapSize,
+): FriendMemoryMarker[] {
+  return points
+    .filter(
+      (point) =>
+        point.mapAssetVersion === campusMapConfig.assetVersion &&
+        validateRatio(point.mapXRatio) &&
+        validateRatio(point.mapYRatio) &&
+        isRatioPointInPolygon(
+          { xRatio: point.mapXRatio, yRatio: point.mapYRatio },
+          campusMapConfig.validAreaPolygon,
+        ),
+    )
+    .map((point) => ({
+      ...ratioToMapPosition({ xRatio: point.mapXRatio, yRatio: point.mapYRatio }, mapSize),
+      id: point.id,
+      moodClass: point.mood,
+      ownerDisplayName: point.ownerDisplayName,
+      renderKey: `friend|${point.publishedAt}|${point.id}`,
+      title: `${point.ownerDisplayName} · ${point.placeName || '校园中的某处'}`,
+    }));
+}
 function getScaleBoundary(scale: number): ScaleBoundary {
   if (scale <= MIN_SCALE + 0.01) {
     return 'minimum';
@@ -316,12 +356,16 @@ Page({
     filterDatePreset: getInitialDateFilter(),
     filterMood: getInitialMoodFilter(),
     filterPanelOpen: false,
+    friendLoadError: '',
+    friendMarkers: [] as FriendMemoryMarker[],
+    friendPoints: [] as FriendMapPoint[],
     invalidMarkerCount: 0,
     incompatibleMapMemoryCount: 0,
     isMapError: false,
     isMapLoading: true,
     isMapReady: false,
     isMemoryLoading: true,
+    isFriendLayerLoading: false,
     isNavigatingToEditor: false,
     isPickingLocation: false,
     mapCanvasHeight: initialLayout.canvasSize.height,
@@ -333,6 +377,7 @@ Page({
     mapSource: MAP_SOURCE,
     markerMode: getInitialMarkerMode(),
     markerVisualScale: getMarkerVisualScale(MIN_SCALE),
+    mapLayer: getInitialMapLayer(),
     markers: [] as MemoryMarker[],
     maxScale: MAX_SCALE,
     memories: [] as Memory[],
@@ -341,6 +386,7 @@ Page({
     repositoryErrorMessage: '',
     scaleStatus: getScaleStatus('minimum'),
     selectedMemory: null as MemoryCardView | null,
+    selectedMemorySource: getInitialMapLayer(),
     viewportHeight: initialLayout.viewportSize.height,
     viewportWidth: initialLayout.viewportSize.width,
     viewScale: MIN_SCALE,
@@ -377,6 +423,7 @@ Page({
       this.data.markerMode,
       this.data,
     );
+    const friendMarkers = createFriendMarkers(this.data.friendPoints, layout.mapSize);
     latestViewPosition = layout.defaultPosition;
     latestViewScale = MIN_SCALE;
     lastScaleBoundary = 'minimum';
@@ -384,6 +431,7 @@ Page({
       defaultViewMessage: message,
       defaultViewX: layout.defaultPosition.x,
       defaultViewY: layout.defaultPosition.y,
+      friendMarkers,
       hasInvalidMarkers: markerResult.invalidCount > 0,
       hasIncompatibleMapMemories: markerResult.incompatibleMapCount > 0,
       hasNoMarkers: markerResult.markers.length === 0,
@@ -451,6 +499,46 @@ Page({
         selectedMemory: null,
       });
     }
+  },
+  async refreshFriendLayer() {
+    if (cloudModeService.getState().mode !== 'cloud') {
+      this.setData({
+        friendLoadError: '请先在“时光 → 数据管理”中开启云端与好友功能。',
+        friendMarkers: [],
+        friendPoints: [],
+        isFriendLayerLoading: false,
+      });
+      return;
+    }
+    this.setData({ friendLoadError: '', isFriendLayerLoading: true });
+    try {
+      const points = await cloudMemoryRepository.listFriendRecentMapPoints(
+        campusMapConfig.assetVersion,
+      );
+      const friendMarkers = createFriendMarkers(points, {
+        height: this.data.mapRenderHeight,
+        width: this.data.mapRenderWidth,
+      });
+      this.setData({ friendMarkers, friendPoints: points, isFriendLayerLoading: false });
+    } catch (error: unknown) {
+      this.setData({
+        friendLoadError: error instanceof Error ? error.message : '好友 24 小时地图暂时无法读取。',
+        friendMarkers: [],
+        friendPoints: [],
+        isFriendLayerLoading: false,
+      });
+    }
+  },
+  handleMapLayerTap(event: WechatMiniprogram.BaseEvent) {
+    const layer = (event.currentTarget.dataset as { layer?: unknown }).layer;
+    if (layer !== 'mine' && layer !== 'friends') return;
+    this.setData({
+      filterPanelOpen: false,
+      mapLayer: layer,
+      selectedMemory: null,
+      selectedMemorySource: layer,
+    });
+    if (layer === 'friends') void this.refreshFriendLayer();
   },
   applyPendingFocusIntent() {
     const intent = pendingFocusIntent;
@@ -914,7 +1002,29 @@ Page({
     this.setData({
       defaultViewMessage: `已选择：${memory.placeName || '校园中的某处'}`,
       selectedMemory: createMemoryCard(memory),
+      selectedMemorySource: 'mine',
     });
+  },
+  async handleFriendMarkerTap(event: WechatMiniprogram.BaseEvent) {
+    if (this.data.isPickingLocation) return;
+    const memoryId = (event.currentTarget.dataset as { memoryId?: unknown }).memoryId;
+    if (typeof memoryId !== 'string') return;
+    this.setData({ defaultViewMessage: '正在确认好友回忆权限…', selectedMemory: null });
+    try {
+      const memory = await cloudMemoryRepository.getSharedMemoryById(memoryId);
+      this.setData({
+        defaultViewMessage: `已选择 ${memory.ownerDisplayName} 的回忆`,
+        selectedMemory: createMemoryCard(memory),
+        selectedMemorySource: 'friends',
+      });
+    } catch (error: unknown) {
+      this.setData({
+        defaultViewMessage:
+          error instanceof Error ? error.message : '这段好友回忆的权限可能已经改变。',
+        selectedMemory: null,
+      });
+      void this.refreshFriendLayer();
+    }
   },
   handleMarkerImageError(event: WechatMiniprogram.BaseEvent) {
     const dataset = event.currentTarget.dataset as { memoryId?: unknown };
@@ -948,7 +1058,9 @@ Page({
       return;
     }
     void wx.navigateTo({
-      url: `/pages/detail/index?memoryId=${encodeURIComponent(selectedMemory.id)}`,
+      url: `/pages/detail/index?memoryId=${encodeURIComponent(selectedMemory.id)}${
+        this.data.selectedMemorySource === 'friends' ? '&source=friend' : ''
+      }`,
       fail: () => this.setData({ defaultViewMessage: '详情页打开失败，请稍后重试' }),
     });
   },
