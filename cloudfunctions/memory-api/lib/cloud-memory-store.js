@@ -21,6 +21,38 @@ function createCloudMemoryStore(database) {
       const result = await users.where({ identityHash, status: 'active' }).limit(1).get();
       return result.data[0] ?? null;
     },
+    async consumeRateLimit(userId, key, now, windowMs, maximum) {
+      return database.runTransaction(async (transaction) => {
+        const result = await transaction.collection('users').doc(userId).get();
+        const user = result.data;
+        if (!user || user.status !== 'active') return false;
+
+        const rateLimits =
+          user.rateLimits && typeof user.rateLimits === 'object' ? user.rateLimits : {};
+        const previous = rateLimits[key];
+        const previousStart = Date.parse(previous?.windowStartedAt ?? '');
+        const nowMs = Date.parse(now);
+        const withinWindow = Number.isFinite(previousStart) && nowMs - previousStart < windowMs;
+        const count = withinWindow && Number.isInteger(previous?.count) ? previous.count : 0;
+        if (count >= maximum) return false;
+
+        await transaction
+          .collection('users')
+          .doc(userId)
+          .update({
+            data: {
+              rateLimits: {
+                ...rateLimits,
+                [key]: {
+                  count: count + 1,
+                  windowStartedAt: withinWindow ? previous.windowStartedAt : now,
+                },
+              },
+            },
+          });
+        return true;
+      });
+    },
     async createUploadPlan(plan) {
       await uploadPlans.add({ data: plan });
       return plan;

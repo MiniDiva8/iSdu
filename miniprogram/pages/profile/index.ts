@@ -34,12 +34,28 @@ function confirmCloudBackup(): Promise<boolean> {
   });
 }
 
+function confirmDeleteCloudData(): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    wx.showModal({
+      title: '删除全部 iSdu 云端数据？',
+      content:
+        '这会删除你的云端回忆、云端照片、点赞、好友关系和云端资料，且无法恢复。本机迁移前备份不会自动删除，完成后将切回本地模式。',
+      confirmText: '删除云端数据',
+      confirmColor: '#c65a55',
+      cancelText: '取消',
+      success: (result) => resolve(result.confirm),
+      fail: (result) => reject(new Error(result.errMsg)),
+    });
+  });
+}
+
 Page({
   data: {
     actionMessage: '',
     cloudModeActive: false,
     cloudStatusLabel: '尚未开启',
     isMigrating: false,
+    isDeletingCloud: false,
     migrationProgressLabel: '',
     isClearing: false,
   },
@@ -179,6 +195,29 @@ Page({
 
     if (cleanupWarnings.length === 0) {
       void wx.showToast({ title: '本机数据已清除', icon: 'success' });
+    }
+  },
+
+  async deleteAllCloudData() {
+    if (this.data.isDeletingCloud || !this.data.cloudModeActive) return;
+    try {
+      if (!(await confirmDeleteCloudData())) return;
+      this.setData({ actionMessage: '正在删除全部云端数据…', isDeletingCloud: true });
+      const result = await cloudAuthRepository.deleteCloudAccount();
+      cloudModeService.resetToLocal();
+      this.setData({
+        actionMessage:
+          result.orphanFileCount > 0
+            ? `云端业务数据已删除，但 ${result.orphanFileCount} 个云存储文件未能确认清理，请联系运营者处理。`
+            : '全部云端数据已删除，已切回本地模式；本机备份仍保留。',
+        isDeletingCloud: false,
+      });
+      this.refreshCloudStatus();
+    } catch (error: unknown) {
+      this.setData({
+        actionMessage: error instanceof Error ? error.message : '云端数据删除失败，请稍后重试。',
+        isDeletingCloud: false,
+      });
     }
   },
 

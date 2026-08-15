@@ -83,3 +83,20 @@ test('rejects malformed success data and identity-looking user ids', async () =>
 
   await assert.rejects(repository.bootstrap(), /用户标识无效/u);
 });
+
+test('deletes cloud data with a fixed confirmation value only', async () => {
+  const gateway = createClient({
+    data: { deleted: true, orphanFileCount: 0 },
+    ok: true,
+    requestId: 'req_delete',
+  });
+  const repository = new CloudAuthRepository(gateway.client);
+  assert.deepEqual(await repository.deleteCloudAccount(), { deleted: true, orphanFileCount: 0 });
+  assert.deepEqual(gateway.calls, [
+    {
+      action: 'deleteCloudAccount',
+      functionName: 'auth-api',
+      payload: { confirmation: 'DELETE_MY_CLOUD_DATA' },
+    },
+  ]);
+});

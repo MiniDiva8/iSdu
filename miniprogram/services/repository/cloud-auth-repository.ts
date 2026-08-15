@@ -86,6 +86,21 @@ function parseProfileData(value: unknown): CloudUserProfile {
   return parseCloudUserProfile(value.user);
 }
 
+function parseDeletionData(value: unknown): {
+  readonly deleted: true;
+  readonly orphanFileCount: number;
+} {
+  if (
+    !isRecord(value) ||
+    value.deleted !== true ||
+    !Number.isInteger(value.orphanFileCount) ||
+    (value.orphanFileCount as number) < 0
+  ) {
+    throw new CloudAuthRepositoryError('INVALID_RESPONSE', '云端数据删除结果格式错误');
+  }
+  return { deleted: true, orphanFileCount: value.orphanFileCount as number };
+}
+
 export class CloudAuthRepository implements AuthRepository {
   private readonly client: CloudFunctionClient;
 
@@ -96,6 +111,16 @@ export class CloudAuthRepository implements AuthRepository {
   async bootstrap(): Promise<AuthBootstrapResult> {
     const response = await this.client.call('auth-api', 'bootstrap');
     return parseCloudResponse(response, parseBootstrapData).data;
+  }
+
+  async deleteCloudAccount(): Promise<{
+    readonly deleted: true;
+    readonly orphanFileCount: number;
+  }> {
+    const response = await this.client.call('auth-api', 'deleteCloudAccount', {
+      confirmation: 'DELETE_MY_CLOUD_DATA',
+    });
+    return parseCloudResponse(response, parseDeletionData).data;
   }
 
   async getMyProfile(): Promise<CloudUserProfile> {

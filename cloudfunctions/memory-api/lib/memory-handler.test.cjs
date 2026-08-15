@@ -22,6 +22,7 @@ function createHarness() {
   ];
   const migrations = new Map();
   const plans = new Map();
+  const blockedRateLimitKeys = new Set();
   let currentOpenId = 'open-a';
   let sequence = 0;
   const options = {
@@ -39,6 +40,7 @@ function createHarness() {
     store: {
       findUserByIdentityHash: async (identityHash) =>
         users.find((user) => user.identityHash === identityHash) ?? null,
+      consumeRateLimit: async (_userId, key) => !blockedRateLimitKeys.has(key),
       createUploadPlan: async (plan) => {
         plans.set(plan._id, { ...plan });
         return plan;
@@ -137,6 +139,9 @@ function createHarness() {
     },
   };
   return {
+    blockRateLimit(key) {
+      blockedRateLimitKeys.add(key);
+    },
     friendships,
     handler: createMemoryHandler(options),
     likes,
@@ -242,6 +247,18 @@ test('requires an unexpired upload plan and exact cloud path', async () => {
   });
   assert.equal(result.ok, false);
   assert.equal(result.code, 'UPLOAD_PLAN_INVALID');
+});
+
+test('rate limits image upload plans before creating cloud paths', async () => {
+  const harness = createHarness();
+  harness.blockRateLimit('uploadPlan');
+  const result = await harness.handler({
+    action: 'createImageUploadPlan',
+    payload: { imageCount: 1, operationId: 'rate-limited-upload' },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'RATE_LIMITED');
+  assert.equal(harness.plans.size, 0);
 });
 
 test('owner list returns temporary URLs but never fileIDs', async () => {
@@ -462,6 +479,28 @@ test('like and unlike are idempotent and keep one unique pair', async () => {
   assert.equal(repeated.data.likeCount, 1);
   assert.equal(harness.likes.size, 0);
   assert.equal(removed.data.likeCount, 0);
+});
+
+test('rate limits authorized like mutations without changing the count', async () => {
+  const harness = createHarness();
+  const created = await harness.handler({
+    action: 'create',
+    payload: { clientRequestId: 'rate-limited-like', content, uploaded: [] },
+  });
+  await harness.handler({
+    action: 'setVisibility',
+    payload: { memoryId: created.data.memory.id, visibility: 'friends' },
+  });
+  harness.setCurrentUser('usr_b');
+  harness.blockRateLimit('like');
+  const result = await harness.handler({
+    action: 'setLike',
+    payload: { liked: true, memoryId: created.data.memory.id },
+  });
+  assert.equal(result.ok, false);
+  assert.equal(result.code, 'RATE_LIMITED');
+  assert.equal(harness.likes.size, 0);
+  assert.equal(harness.memories.get(created.data.memory.id).likeCount, 0);
 });
 
 test('friend map includes only authorized valid points from the last 24 hours', async () => {

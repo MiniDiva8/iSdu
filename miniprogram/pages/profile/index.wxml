@@ -23,6 +23,15 @@
     >
       {{isMigrating ? (migrationProgressLabel || '正在连接云端…') : '开启云端并备份本机回忆'}}
     </button>
+    <button
+      wx:if="{{cloudModeActive}}"
+      class="profile-clear-action profile-cloud-delete-action"
+      loading="{{isDeletingCloud}}"
+      disabled="{{isDeletingCloud}}"
+      bindtap="deleteAllCloudData"
+    >
+      {{isDeletingCloud ? '正在删除云端数据…' : '删除全部云端数据'}}
+    </button>
   </view>
   <view class="profile-danger-zone">
     <text class="profile-danger-zone__title">本机数据管理</text>

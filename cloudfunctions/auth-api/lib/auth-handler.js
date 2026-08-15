@@ -88,7 +88,8 @@ function failure(error, requestId) {
 }
 
 function createAuthHandler(dependencies) {
-  const { getTrustedContext, hashIdentity, newRequestId, newUserId, now, userStore } = dependencies;
+  const { deleteFiles, getTrustedContext, hashIdentity, newRequestId, newUserId, now, userStore } =
+    dependencies;
 
   async function findRequiredUser(identityHash) {
     const user = await userStore.findByIdentityHash(identityHash);
@@ -178,6 +179,23 @@ function createAuthHandler(dependencies) {
         const updatedAt = now();
         await userStore.updateProfile(user.userId, { ...profile, updatedAt });
         return success({ user: toPublicUser({ ...user, ...profile, updatedAt }) }, requestId);
+      }
+
+      if (action === 'deleteCloudAccount') {
+        const user = await findRequiredUser(identityHash);
+        if (!isRecord(payload) || payload.confirmation !== 'DELETE_MY_CLOUD_DATA') {
+          throw new PublicAuthError('CONFIRMATION_REQUIRED', '请再次确认删除全部云端数据');
+        }
+        const deletion = await userStore.deleteAccount(user.userId);
+        let orphanFileCount = 0;
+        if (deletion.fileIds.length > 0) {
+          try {
+            await deleteFiles(deletion.fileIds);
+          } catch {
+            orphanFileCount = deletion.fileIds.length;
+          }
+        }
+        return success({ deleted: true, orphanFileCount }, requestId);
       }
 
       throw new PublicAuthError('UNSUPPORTED_ACTION', '不支持的身份操作');

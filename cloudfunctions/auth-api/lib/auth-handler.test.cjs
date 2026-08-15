@@ -14,6 +14,7 @@ function hashIdentity(appId, openId) {
 
 function createMemoryStore(initialUsers = []) {
   const users = new Map(initialUsers.map((user) => [user.identityHash, { ...user }]));
+  const deletedUserIds = [];
 
   return {
     store: {
@@ -34,7 +35,15 @@ function createMemoryStore(initialUsers = []) {
         }
         users.set(entry[0], { ...entry[1], ...profile });
       },
+      async deleteAccount(userId) {
+        const entry = [...users.entries()].find(([, user]) => user.userId === userId);
+        if (!entry) throw new Error('missing user');
+        users.delete(entry[0]);
+        deletedUserIds.push(userId);
+        return { fileIds: ['cloud://env/private-photo.jpg'] };
+      },
     },
+    deletedUserIds,
     users,
   };
 }
@@ -46,6 +55,7 @@ function createHandler(options = {}) {
 
   return {
     handler: createAuthHandler({
+      deleteFiles: options.deleteFiles ?? (async () => undefined),
       getTrustedContext:
         options.getTrustedContext ?? (() => ({ APPID: 'wx-app', OPENID: 'openid-a' })),
       hashIdentity,
@@ -175,6 +185,40 @@ test('rejects unsupported actions without exposing internal details', async () =
   assert.equal(result.code, 'UNSUPPORTED_ACTION');
   assert.equal(result.message, '不支持的身份操作');
   assert.match(result.requestId, /^req_/u);
+});
+
+test('requires explicit confirmation then deletes only the trusted current account', async () => {
+  const deletedFiles = [];
+  const { handler, memory } = createHandler({
+    deleteFiles: async (fileIds) => deletedFiles.push(...fileIds),
+  });
+  const bootstrapped = await handler({ action: 'bootstrap' });
+  const denied = await handler({ action: 'deleteCloudAccount', payload: {} });
+  const deleted = await handler({
+    action: 'deleteCloudAccount',
+    payload: { confirmation: 'DELETE_MY_CLOUD_DATA', userId: 'usr_attacker' },
+  });
+  assert.equal(denied.code, 'CONFIRMATION_REQUIRED');
+  assert.equal(deleted.ok, true);
+  assert.deepEqual(deleted.data, { deleted: true, orphanFileCount: 0 });
+  assert.deepEqual(memory.deletedUserIds, [bootstrapped.data.user.userId]);
+  assert.deepEqual(deletedFiles, ['cloud://env/private-photo.jpg']);
+  assert.equal(memory.users.size, 0);
+});
+
+test('reports orphan cloud files without exposing their addresses', async () => {
+  const { handler } = createHandler({
+    deleteFiles: async () => {
+      throw new Error('storage unavailable');
+    },
+  });
+  await handler({ action: 'bootstrap' });
+  const result = await handler({
+    action: 'deleteCloudAccount',
+    payload: { confirmation: 'DELETE_MY_CLOUD_DATA' },
+  });
+  assert.deepEqual(result.data, { deleted: true, orphanFileCount: 1 });
+  assert.equal(JSON.stringify(result).includes('cloud://'), false);
 });
 
 test('sanitizes unexpected storage errors', async () => {

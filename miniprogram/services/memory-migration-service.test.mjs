@@ -74,3 +74,31 @@ test('an empty real-memory set can switch without uploading demo data', async ()
   assert.equal(report.skippedDemo, 1);
   assert.equal(activated, true);
 });
+
+test('corrupt local data stops migration before any cloud write', async () => {
+  let cloudWrites = 0;
+  let activated = false;
+  const corruption = new Error('CORRUPT_DATA');
+  const service = new MemoryMigrationService(
+    {
+      listMemories: async () => {
+        throw corruption;
+      },
+    },
+    {
+      migrateMemory: async () => {
+        cloudWrites += 1;
+        return { cloudMemoryId: 'must-not-exist' };
+      },
+    },
+    {
+      activateCloud: () => {
+        activated = true;
+      },
+    },
+  );
+
+  await assert.rejects(service.migrateAll(), corruption);
+  assert.equal(cloudWrites, 0);
+  assert.equal(activated, false);
+});

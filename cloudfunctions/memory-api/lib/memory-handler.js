@@ -350,6 +350,16 @@ function createMemoryHandler(options) {
         if (!Number.isInteger(imageCount) || imageCount < 1 || imageCount > MAX_IMAGES) {
           throw new PublicError('INVALID_INPUT', '图片数量无效');
         }
+        const uploadAllowed = await options.store.consumeRateLimit(
+          user._id,
+          'uploadPlan',
+          now,
+          10 * 60 * 1000,
+          20,
+        );
+        if (!uploadAllowed) {
+          throw new PublicError('RATE_LIMITED', '图片上传请求过于频繁，请稍后再试');
+        }
         const planId = options.newId('upload');
         const expiresAt = new Date(Date.parse(now) + 10 * 60 * 1000).toISOString();
         const files = Array.from({ length: imageCount }, () => {
@@ -483,6 +493,16 @@ function createMemoryHandler(options) {
           throw new PublicError('INVALID_INPUT', '点赞状态无效');
         }
         const { friendshipPairKey } = await resolveSharedMemory(options, user, memoryId);
+        const likeAllowed = await options.store.consumeRateLimit(
+          user._id,
+          'like',
+          now,
+          60 * 1000,
+          60,
+        );
+        if (!likeAllowed) {
+          throw new PublicError('RATE_LIMITED', '点赞操作过于频繁，请稍后再试');
+        }
         const result = await options.store.setLikeState({
           friendshipPairKey,
           likeId: options.newId('like'),
