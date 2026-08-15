@@ -1,5 +1,9 @@
 import { localImageService } from '../../services/local-image-service';
-import { memoryRepository, userProfileRepository } from '../../services/repository/index';
+import { memoryMigrationService } from '../../services/memory-migration-service';
+import { cloudModeService } from '../../services/cloud/cloud-mode-service';
+import { cloudAuthRepository } from '../../services/repository/cloud-auth-repository';
+import { localMemoryRepository } from '../../services/repository/local-memory-repository';
+import { userProfileRepository } from '../../services/repository/index';
 
 function confirmClearAllData(): Promise<boolean> {
   return new Promise((resolve, reject) => {
@@ -16,10 +20,110 @@ function confirmClearAllData(): Promise<boolean> {
   });
 }
 
+function confirmCloudBackup(): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    wx.showModal({
+      title: '开启云端与好友功能？',
+      content:
+        '开启后，iSdu 会在你确认时把本机回忆、照片、正文和插画地图比例位置备份到 CloudBase。所有迁移回忆默认仅自己可见；不会读取微信好友、通讯录、手机号或 GPS。',
+      confirmText: '同意并继续',
+      cancelText: '暂不开启',
+      success: (result) => resolve(result.confirm),
+      fail: (result) => reject(new Error(result.errMsg)),
+    });
+  });
+}
+
 Page({
   data: {
     actionMessage: '',
+    cloudModeActive: false,
+    cloudStatusLabel: '尚未开启',
+    isMigrating: false,
+    migrationProgressLabel: '',
     isClearing: false,
+  },
+
+  onShow() {
+    this.refreshCloudStatus();
+  },
+
+  refreshCloudStatus() {
+    const state = cloudModeService.getState();
+    this.setData({
+      cloudModeActive: state.mode === 'cloud',
+      cloudStatusLabel:
+        state.mode === 'cloud' && state.migrationCompletedAt
+          ? `云端主数据已启用 · 本机备份保留于 ${state.migrationCompletedAt.slice(0, 10)}`
+          : '尚未开启，回忆仍只保存在本机',
+    });
+  },
+
+  async enableCloudAndMigrate() {
+    if (this.data.isMigrating || this.data.cloudModeActive) {
+      return;
+    }
+
+    try {
+      if (!(await confirmCloudBackup())) {
+        return;
+      }
+    } catch (error: unknown) {
+      this.setData({
+        actionMessage: error instanceof Error ? error.message : '隐私确认窗口打开失败。',
+      });
+      return;
+    }
+
+    cloudModeService.acceptPrivacy();
+    this.setData({
+      actionMessage: '正在确认云端身份…',
+      isMigrating: true,
+      migrationProgressLabel: '',
+    });
+
+    try {
+      await cloudAuthRepository.bootstrap();
+      const localProfile = await userProfileRepository.getProfile();
+      if (localProfile?.displayName) {
+        await cloudAuthRepository.updateMyProfile({
+          displayName: localProfile.displayName,
+          signature: localProfile.signature,
+        });
+      }
+
+      const report = await memoryMigrationService.migrateAll((progress) => {
+        this.setData({
+          migrationProgressLabel: `正在备份 ${progress.completed + 1}/${progress.total}`,
+        });
+      });
+
+      if (report.failed.length > 0) {
+        this.setData({
+          actionMessage: `已备份 ${report.migrated}/${report.total} 条，${report.failed.length} 条失败。本机数据完整保留，请检查照片后重试。`,
+          isMigrating: false,
+          migrationProgressLabel: '',
+        });
+        return;
+      }
+
+      this.setData({
+        actionMessage: `云端备份核验完成：${report.migrated} 条用户回忆；${report.skippedDemo} 条演示数据未上传。`,
+        isMigrating: false,
+        migrationProgressLabel: '',
+      });
+      this.refreshCloudStatus();
+      void wx.showToast({ title: '云端备份完成', icon: 'success' });
+    } catch (error: unknown) {
+      this.setData({
+        actionMessage:
+          error instanceof Error
+            ? `云端开启失败：${error.message}。本机数据没有被清除。`
+            : '云端开启失败，本机数据没有被清除。',
+        isMigrating: false,
+        migrationProgressLabel: '',
+      });
+    }
   },
 
   async clearAllLocalData() {
@@ -40,7 +144,7 @@ Page({
 
     this.setData({ actionMessage: '正在清除本机数据…', isClearing: true });
     try {
-      await memoryRepository.clearMemories();
+      await localMemoryRepository.clearMemories();
     } catch (error: unknown) {
       this.setData({
         actionMessage:

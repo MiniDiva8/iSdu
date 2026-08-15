@@ -19,6 +19,7 @@ import {
 import { CURRENT_MAP_ASSET_VERSION } from '../../config/campus-map';
 import { LocalImageServiceError, localImageService } from '../../services/local-image-service';
 import { memoryRepository } from '../../services/repository/index';
+import { cloudModeService } from '../../services/cloud/cloud-mode-service';
 import { validateRatio } from '../../utils/map-coordinates';
 import { formatMemoryDateTime } from '../../utils/date-format';
 
@@ -73,11 +74,13 @@ function showEditorNotice(title: string, content: string): Promise<void> {
 }
 
 function confirmPhotoUse(): Promise<boolean> {
+  const cloudMode = cloudModeService.getState().mode === 'cloud';
   return new Promise((resolve, reject) => {
     wx.showModal({
       title: '添加本机照片',
-      content:
-        '你选择的照片只用于创建这段回忆，并保存在当前设备；不会上传到 iSdu 云端。你也可以取消并只写文字。',
+      content: cloudMode
+        ? '你选择的照片只用于这段回忆，并会随保存上传到你的 iSdu 云端空间；可见范围默认仅自己。你也可以取消并只写文字。'
+        : '你选择的照片只用于创建这段回忆，并保存在当前设备；不会上传到 iSdu 云端。你也可以取消并只写文字。',
       confirmText: '继续选择',
       cancelText: '暂不添加',
       success: (result) => resolve(result.confirm),
@@ -483,6 +486,7 @@ Page({
       .map((image) => image.path);
     const wasEditMode = this.data.isEditMode;
     let newlySavedPaths: string[] = [];
+    let savedMemory: Memory;
 
     try {
       if (temporaryPaths.length > 0) {
@@ -496,9 +500,9 @@ Page({
       const content = this.buildMemoryContent(finalImagePaths);
 
       if (wasEditMode) {
-        await memoryRepository.updateMemory(this.data.memoryId, content);
+        savedMemory = await memoryRepository.updateMemory(this.data.memoryId, content);
       } else {
-        await memoryRepository.createMemory({ id: this.data.memoryId, ...content });
+        savedMemory = await memoryRepository.createMemory({ id: this.data.memoryId, ...content });
       }
 
       const removedOriginalPaths = this.data.originalImagePaths.filter(
@@ -510,13 +514,18 @@ Page({
       this.setData({
         formError:
           cleanupFailures.length > 0 ? '回忆已保存，但部分旧照片未能清理，可稍后重试。' : '',
-        images: finalImagePaths.map((path, index) => createEditorImage(path, index, false)),
+        images: (savedMemory?.imagePaths ?? finalImagePaths).map((path, index) =>
+          createEditorImage(path, index, false),
+        ),
         hasSaved: true,
         isDirty: false,
         isEditMode: true,
         isSaving: false,
-        originalImagePaths: [...finalImagePaths],
-        pageSubtitle: '这段回忆已经保存在本机，可以继续修改。',
+        originalImagePaths: [...(savedMemory?.imagePaths ?? finalImagePaths)],
+        pageSubtitle:
+          cloudModeService.getState().mode === 'cloud'
+            ? '这段回忆已经安全保存到云端，可以继续修改。'
+            : '这段回忆已经保存在本机，可以继续修改。',
         pageTitle: '编辑校园回忆',
       });
 

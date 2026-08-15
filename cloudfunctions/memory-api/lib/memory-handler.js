@@ -1,0 +1,376 @@
+'use strict';
+
+const MAX_IMAGES = 3;
+const MAX_TEXT = 2000;
+const MAX_PLACE = 60;
+const VALID_VISIBILITY = new Set(['private', 'selected_friends', 'friends']);
+const VALID_MOODS = new Set([
+  'happy',
+  'calm',
+  'excited',
+  'grateful',
+  'relaxed',
+  'nostalgic',
+  'inspired',
+  'proud',
+  'lonely',
+  'sad',
+  'tired',
+  'custom',
+]);
+const VALID_CATEGORIES = new Set([
+  'campus-life',
+  'friendship',
+  'study',
+  'nature',
+  'food',
+  'club',
+  'event',
+  'graduation',
+  'custom',
+]);
+
+class PublicError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.code = code;
+  }
+}
+
+function isRecord(value) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function requireString(value, field, maxLength, allowEmpty = true) {
+  if (typeof value !== 'string') {
+    throw new PublicError('INVALID_INPUT', `${field} 格式无效`);
+  }
+  const normalized = value.trim();
+  if ((!allowEmpty && !normalized) || normalized.length > maxLength) {
+    throw new PublicError('INVALID_INPUT', `${field} 长度无效`);
+  }
+  return normalized;
+}
+
+function requireIso(value, field) {
+  if (
+    typeof value !== 'string' ||
+    !Number.isFinite(Date.parse(value)) ||
+    new Date(value).toISOString() !== value
+  ) {
+    throw new PublicError('INVALID_INPUT', `${field} 时间无效`);
+  }
+  return value;
+}
+
+function normalizeContent(value, imageCount) {
+  if (!isRecord(value)) {
+    throw new PublicError('INVALID_INPUT', '回忆内容无效');
+  }
+  const text = requireString(value.text, '正文', MAX_TEXT);
+  const placeName = requireString(value.placeName, '地点', MAX_PLACE);
+  const customMood = requireString(value.customMood, '自定义心情', 20);
+  const customCategory = requireString(value.customCategory, '自定义分类', 20);
+  if (!VALID_MOODS.has(value.mood) || !VALID_CATEGORIES.has(value.category)) {
+    throw new PublicError('INVALID_INPUT', '心情或分类无效');
+  }
+  if (value.mood === 'custom' && !customMood) {
+    throw new PublicError('INVALID_INPUT', '请填写自定义心情');
+  }
+  if (value.category === 'custom' && !customCategory) {
+    throw new PublicError('INVALID_INPUT', '请填写自定义分类');
+  }
+  if (!Number.isFinite(value.mapXRatio) || !Number.isFinite(value.mapYRatio)) {
+    throw new PublicError('INVALID_INPUT', '地图坐标无效');
+  }
+  if (value.mapXRatio < 0 || value.mapXRatio > 1 || value.mapYRatio < 0 || value.mapYRatio > 1) {
+    throw new PublicError('INVALID_INPUT', '地图坐标越界');
+  }
+  if (!text && imageCount === 0) {
+    throw new PublicError('INVALID_INPUT', '请至少填写文字或选择照片');
+  }
+  return {
+    text,
+    placeName,
+    mood: value.mood,
+    customMood: value.mood === 'custom' ? customMood : '',
+    category: value.category,
+    customCategory: value.category === 'custom' ? customCategory : '',
+    mapAssetVersion: requireString(value.mapAssetVersion, '地图版本', 80, false),
+    mapXRatio: value.mapXRatio,
+    mapYRatio: value.mapYRatio,
+    recordedAt: requireIso(value.recordedAt, '记录'),
+  };
+}
+
+function normalizeUploaded(value) {
+  if (!Array.isArray(value) || value.length > MAX_IMAGES) {
+    throw new PublicError('INVALID_INPUT', '上传图片数量无效');
+  }
+  return value.map((item) => {
+    if (!isRecord(item)) {
+      throw new PublicError('INVALID_INPUT', '上传图片格式无效');
+    }
+    return {
+      fileId: requireString(item.fileId, 'fileID', 1000, false),
+      imageId: requireString(item.imageId, '图片 ID', 80, false),
+    };
+  });
+}
+
+async function resolveUser(options) {
+  const context = options.getTrustedContext();
+  if (!context || !context.APPID || !context.OPENID) {
+    throw new PublicError('UNAUTHENTICATED', '无法确认当前微信用户');
+  }
+  const identityHash = options.hash(`${context.APPID}\0${context.OPENID}`);
+  const user = await options.store.findUserByIdentityHash(identityHash);
+  if (!user) {
+    throw new PublicError('PROFILE_REQUIRED', '请先开启云端身份');
+  }
+  return user;
+}
+
+async function resolveImages(options, ownerUserId, payload, now) {
+  const uploaded = normalizeUploaded(payload.uploaded ?? []);
+  if (uploaded.length === 0) {
+    if (payload.planId) {
+      throw new PublicError('INVALID_INPUT', '空图片不需要上传计划');
+    }
+    return [];
+  }
+  const planId = requireString(payload.planId, '上传计划', 80, false);
+  const plan = await options.store.consumeUploadPlan(planId, ownerUserId, now);
+  if (!plan || !Array.isArray(plan.files) || plan.files.length !== uploaded.length) {
+    throw new PublicError('UPLOAD_PLAN_INVALID', '图片上传计划无效或已过期');
+  }
+  return plan.files.map((expected) => {
+    const actual = uploaded.find((item) => item.imageId === expected.imageId);
+    if (!actual || !actual.fileId.endsWith(`/${expected.cloudPath}`)) {
+      throw new PublicError('UPLOAD_PLAN_INVALID', '上传图片与计划不匹配');
+    }
+    return { fileId: actual.fileId, imageId: expected.imageId };
+  });
+}
+
+async function toOwnerView(options, user, memory) {
+  const images = Array.isArray(memory.images) ? memory.images : [];
+  const urls = await options.getTempUrls(images.map((image) => image.fileId));
+  return {
+    id: memory._id,
+    text: memory.text,
+    imagePaths: urls,
+    imageIds: images.map((image) => image.imageId),
+    placeName: memory.placeName,
+    mood: memory.mood,
+    customMood: memory.customMood,
+    category: memory.category,
+    customCategory: memory.customCategory,
+    mapAssetVersion: memory.mapAssetVersion,
+    mapXRatio: memory.mapXRatio,
+    mapYRatio: memory.mapYRatio,
+    recordedAt: memory.recordedAt,
+    origin: 'user',
+    createdAt: memory.createdAt,
+    updatedAt: memory.updatedAt,
+    canEdit: true,
+    likeCount: memory.likeCount ?? 0,
+    likedByMe: false,
+    ownerDisplayName: user.displayName || 'iSdu 用户',
+    ownerUserId: user._id,
+    publishedAt: memory.publishedAt ?? null,
+    selectedFriendIds: [],
+    visibility: VALID_VISIBILITY.has(memory.visibility) ? memory.visibility : 'private',
+  };
+}
+
+function createMemoryDocument(options, user, content, images, payload, now) {
+  return {
+    _id: options.newId('memory'),
+    ownerUserId: user._id,
+    clientRequestId: requireString(
+      payload.clientRequestId ?? options.newId('request'),
+      '请求 ID',
+      100,
+    ),
+    ...content,
+    images,
+    visibility: 'private',
+    selectedGrants: [],
+    publishedAt: null,
+    likeCount: 0,
+    schemaVersion: 2,
+    deletedAt: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
+function createMemoryHandler(options) {
+  return async function handle(event) {
+    const requestId = options.newRequestId();
+    try {
+      if (!isRecord(event) || typeof event.action !== 'string') {
+        throw new PublicError('INVALID_REQUEST', '请求格式无效');
+      }
+      const payload = isRecord(event.payload) ? event.payload : {};
+      const user = await resolveUser(options);
+      const now = options.now();
+
+      if (event.action === 'createImageUploadPlan') {
+        const imageCount = Number(payload.imageCount);
+        if (!Number.isInteger(imageCount) || imageCount < 1 || imageCount > MAX_IMAGES) {
+          throw new PublicError('INVALID_INPUT', '图片数量无效');
+        }
+        const planId = options.newId('upload');
+        const expiresAt = new Date(Date.parse(now) + 10 * 60 * 1000).toISOString();
+        const files = Array.from({ length: imageCount }, () => {
+          const imageId = options.newId('image');
+          return {
+            imageId,
+            cloudPath: `users/${user._id}/memories/${planId}/${imageId}.jpg`,
+          };
+        });
+        await options.store.createUploadPlan({
+          _id: planId,
+          ownerUserId: user._id,
+          files,
+          expiresAt,
+          usedAt: null,
+          createdAt: now,
+        });
+        return { ok: true, data: { planId, expiresAt, files }, requestId };
+      }
+
+      if (event.action === 'migrate') {
+        const localMemoryId = requireString(payload.sourceLocalMemoryId, '本地回忆 ID', 100, false);
+        const migrationKey = options.hash(`${user._id}\0${localMemoryId}`);
+        const existing = await options.store.findMigration(migrationKey);
+        if (existing) {
+          return {
+            ok: true,
+            data: { cloudMemoryId: existing.cloudMemoryId, localMemoryId, status: 'existing' },
+            requestId,
+          };
+        }
+        const images = await resolveImages(options, user._id, payload, now);
+        const content = normalizeContent(payload.content, images.length);
+        const timestamps = isRecord(payload.localTimestamps) ? payload.localTimestamps : {};
+        const memory = createMemoryDocument(
+          options,
+          user,
+          content,
+          images,
+          { clientRequestId: localMemoryId },
+          now,
+        );
+        memory.createdAt = requireIso(timestamps.createdAt, '创建');
+        memory.updatedAt = requireIso(timestamps.updatedAt, '更新');
+        const result = await options.store.createMigratedMemory(memory, {
+          _id: options.newId('migration'),
+          migrationKey,
+          ownerUserId: user._id,
+          sourceLocalMemoryId: localMemoryId,
+          cloudMemoryId: memory._id,
+          createdAt: now,
+        });
+        return {
+          ok: true,
+          data: { cloudMemoryId: result.memoryId, localMemoryId, status: result.status },
+          requestId,
+        };
+      }
+
+      if (event.action === 'create') {
+        const images = await resolveImages(options, user._id, payload, now);
+        const content = normalizeContent(payload.content, images.length);
+        const memory = createMemoryDocument(options, user, content, images, payload, now);
+        const created = await options.store.createMemory(memory);
+        return { ok: true, data: { memory: await toOwnerView(options, user, created) }, requestId };
+      }
+
+      if (event.action === 'listMine') {
+        const items = await options.store.listMine(user._id);
+        const views = [];
+        for (const item of items) {
+          views.push(await toOwnerView(options, user, item));
+        }
+        return { ok: true, data: { memories: views }, requestId };
+      }
+
+      if (event.action === 'getMineById') {
+        const memoryId = requireString(payload.memoryId, '回忆 ID', 80, false);
+        const memory = await options.store.getMine(user._id, memoryId);
+        if (!memory) {
+          throw new PublicError('NOT_FOUND', '没有找到这段云端回忆');
+        }
+        return { ok: true, data: { memory: await toOwnerView(options, user, memory) }, requestId };
+      }
+
+      if (event.action === 'update') {
+        const memoryId = requireString(payload.memoryId, '回忆 ID', 80, false);
+        const current = await options.store.getMine(user._id, memoryId);
+        if (!current) {
+          throw new PublicError('NOT_FOUND', '没有找到这段云端回忆');
+        }
+        const keepIds = Array.isArray(payload.keepImageIds) ? payload.keepImageIds : [];
+        if (keepIds.some((id) => typeof id !== 'string')) {
+          throw new PublicError('INVALID_INPUT', '保留图片列表无效');
+        }
+        const kept = current.images.filter((image) => keepIds.includes(image.imageId));
+        const added = await resolveImages(options, user._id, payload, now);
+        const images = [...kept, ...added];
+        if (images.length > MAX_IMAGES) {
+          throw new PublicError('INVALID_INPUT', '照片不能超过 3 张');
+        }
+        const content = normalizeContent(payload.content, images.length);
+        const updated = await options.store.updateMine(user._id, memoryId, {
+          ...content,
+          images,
+          updatedAt: now,
+        });
+        return { ok: true, data: { memory: await toOwnerView(options, user, updated) }, requestId };
+      }
+
+      if (event.action === 'delete' || event.action === 'clearMine') {
+        const removed =
+          event.action === 'delete'
+            ? [
+                await options.store.deleteMine(
+                  user._id,
+                  requireString(payload.memoryId, '回忆 ID', 80, false),
+                  now,
+                ),
+              ].filter(Boolean)
+            : await options.store.clearMine(user._id, now);
+        if (event.action === 'delete' && removed.length === 0) {
+          throw new PublicError('NOT_FOUND', '没有找到这段云端回忆');
+        }
+        const fileIds = removed.flatMap((item) => item.images.map((image) => image.fileId));
+        try {
+          await options.deleteFiles(fileIds);
+        } catch {
+          return {
+            ok: true,
+            data: { cleanupWarning: true, deletedCount: removed.length },
+            requestId,
+          };
+        }
+        return {
+          ok: true,
+          data: { cleanupWarning: false, deletedCount: removed.length },
+          requestId,
+        };
+      }
+
+      throw new PublicError('UNSUPPORTED_ACTION', '暂不支持这个云端回忆操作');
+    } catch (error) {
+      if (error instanceof PublicError) {
+        return { ok: false, code: error.code, message: error.message, requestId };
+      }
+      return { ok: false, code: 'INTERNAL_ERROR', message: '云端回忆服务暂时不可用', requestId };
+    }
+  };
+}
+
+module.exports = { createMemoryHandler };

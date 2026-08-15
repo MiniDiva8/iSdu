@@ -10,7 +10,7 @@
 
 第二阶段第一个里程碑“社交 V2 规则与技术设计”已经验收并提交为 `7226d69 docs: define social v2 architecture and security rules`。
 
-当前执行第二个里程碑：“CloudBase 环境与可信身份基础”。代码已经完成，等待用户在微信开发者工具中创建测试环境、配置 `users` 集合、部署 `auth-api` 并进行单账号和双账号人工验证。当前没有创建或部署任何真实云资源。
+可信身份代码已提交为 `9189c1a feat: establish trusted CloudBase identity`。当前连续实施“本机私密迁移、iSdu 好友、权限、点赞与好友 24 小时地图”；真实 CloudBase 创建/部署与双账号真机安全测试仍是人工验收门槛，当前没有创建或部署任何真实云资源。
 
 第二阶段已经确认的产品范围只有：
 
@@ -26,8 +26,7 @@
 
 - 比赛第一版基线：`main` / `4f517e9 feat: finalize competition v1`。
 - 当前开发分支：`codex/social-v2`。
-- 当前 HEAD：`7226d69 docs: define social v2 architecture and security rules`。
-- 当前未提交工作区只包含可信身份代码、专项测试和配置文档；尚未推送。
+- 当前 HEAD 至少包含 `9189c1a feat: establish trusted CloudBase identity`；后续里程碑在 `codex/social-v2` 分阶段提交且不推送。
 - 尚未创建 CloudBase 集合、存储桶、索引或真实环境，也没有部署云函数、迁移本地数据或上传照片。
 - 公共工程配置继续使用安全占位 AppID；真实 AppID、环境 ID、OpenID、密钥和私人配置不得进入 Git。
 - `node_modules`、构建生成的 `miniprogram_npm` 和 `project.private.config.json` 均不应提交。
@@ -176,8 +175,18 @@
 - 地图源 PNG 已从 Git 候选范围排除；开发者工具上传包排除 Demo Seed、纯逻辑测试和目录说明文件。
 - 当前仍是本地数据公测候选，不含登录、CloudBase、GPS、社交或跨设备备份。
 
+## 已完成：本机回忆私密迁移代码
+
+- 保留 `LocalMemoryRepository`，新增 `CloudMemoryRepository` 与运行时 `MemoryService`；用户未主动开启云功能时继续使用本地数据。
+- 数据管理页提供主动“备份本机回忆到云端”入口，不在启动时自动上传。
+- 迁移会校验 Memory、比例坐标、地图版本与本地图片；Demo 数据不会迁移。
+- 每条迁移使用 `migrationKey` 幂等去重，重复重试不会创建第二条云回忆。
+- 图片先取得一次性上传计划，再通过 `wx.cloud.uploadFile` 上传；服务端验证 fileID 属于当前用户与本次计划。
+- 所有迁移回忆默认 `private`；只有全部成功且回读核验通过，运行时才切换为云端主数据。本地副本继续保留。
+- 部分失败会列出失败记录并保持本地模式；云端故障不会静默回写本地。
+- `memory-api` 与迁移服务专项自动测试共 10 项通过；真实云存储、弱网和双平台表现待人工验收。
+- 人工集合、索引、存储规则与部署步骤见 `docs/CLOUDBASE_MEMORY_SETUP.md`。
+
 ## 下一步
 
-先严格按照 `docs/CLOUDBASE_IDENTITY_SETUP.md` 完成真实测试环境、`users` 安全规则、唯一索引、`auth-api` 部署以及双账号身份隔离验证。未经过真实微信调用前，不得声称微信登录已经上线。
-
-身份里程碑人工通过后的唯一下一里程碑是“本地回忆到云端的私密迁移”。在本轮通过前，不实现好友、点赞、云端共享或 24 小时好友地图，也不自动上传任何本地数据。
+继续在同一分支按独立提交完成 iSdu 双向好友、回忆可见范围、点赞和好友 24 小时地图。完成代码后必须按照 CloudBase 配置文档创建测试环境，并使用两个微信账号、iOS 与 Android 验证越权、删好友、权限撤销、重复点赞与图片访问；在此之前状态只能是“代码与自动测试完成，真实社交安全待验收”。

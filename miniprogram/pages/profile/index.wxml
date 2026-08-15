@@ -2,17 +2,27 @@
   <view class="page-hero">
     <text class="eyebrow">私人记忆册</text>
     <text class="page-title">我的校园记忆</text>
-    <text class="page-subtitle">个人资料可以在“时光”页设置，回忆始终只属于你。</text>
+    <text class="page-subtitle">个人资料可以在“时光”页设置；云端与好友功能由你主动开启。</text>
   </view>
-  <view class="profile-note">
-    <text class="profile-note__title">数据只保存在这台设备</text>
+  <view class="profile-note profile-cloud-zone">
+    <text class="profile-note__title">云端与好友功能</text>
+    <text class="profile-note__status">{{cloudStatusLabel}}</text>
     <text class="profile-note__copy">
-      回忆、照片、名字和签名不会上传到 iSdu
-      的服务器或云端。更换设备、清除微信数据或卸载相关应用后，记录可能永久丢失，运营者也无法代为找回。
+      只有点击下方按钮并确认隐私说明后，iSdu
+      才会创建云端身份并备份本机回忆。备份默认全部私密，成功核验前不会切换数据源或删除本机副本。
     </text>
     <text class="profile-note__copy">
-      地图位置是你在插画地图上手动选择的比例位置，不是 GPS、经纬度或实时定位。
+      不读取微信好友列表、通讯录、手机号或 GPS；地图位置仍是插画地图上的比例位置。
     </text>
+    <button
+      wx:if="{{!cloudModeActive}}"
+      class="profile-cloud-action"
+      loading="{{isMigrating}}"
+      disabled="{{isMigrating}}"
+      bindtap="enableCloudAndMigrate"
+    >
+      {{isMigrating ? (migrationProgressLabel || '正在连接云端…') : '开启云端并备份本机回忆'}}
+    </button>
   </view>
   <view class="profile-danger-zone">
     <text class="profile-danger-zone__title">本机数据管理</text>
@@ -31,8 +41,8 @@
   <view class="profile-about">
     <text class="profile-about__title">关于 iSdu</text>
     <text class="profile-about__copy">
-      iSdu 是非官方的个人校园记忆工具，不代表山东大学官方应用。当前版本不含登录、好友、公开发布、GPS
-      定位和云同步。
+      iSdu 是非官方的个人校园记忆工具，不代表山东大学官方应用。第二阶段只提供用户主动建立的 iSdu
+      好友、严格权限分享和云端备份，不提供公开广场、通讯录匹配或 GPS。
     </text>
   </view>
   <text wx:if="{{actionMessage}}" class="profile-message">{{actionMessage}}</text>

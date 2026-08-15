@@ -1,5 +1,6 @@
 import { getMemoryCategoryLabel, getMemoryMoodLabel, type Memory } from '../../models/memory';
 import { localImageService } from '../../services/local-image-service';
+import { cloudModeService } from '../../services/cloud/cloud-mode-service';
 import { memoryRepository } from '../../services/repository/index';
 import { formatMemoryDateTime } from '../../utils/date-format';
 import { campusMapConfig } from '../../config/campus-map';
@@ -18,7 +19,10 @@ function confirmDelete(): Promise<boolean> {
   return new Promise<boolean>((resolve, reject) => {
     wx.showModal({
       title: '删除这段校园记忆？',
-      content: '删除后，日记和不再被其他日记使用的本地照片将被清理，且无法恢复。',
+      content:
+        cloudModeService.getState().mode === 'cloud'
+          ? '删除后，云端回忆和关联云端照片将被清理，且无法恢复；本机迁移前备份不受影响。'
+          : '删除后，日记和不再被其他日记使用的本地照片将被清理，且无法恢复。',
       confirmText: '删除',
       confirmColor: '#a85f62',
       cancelText: '保留',
@@ -226,7 +230,10 @@ Page({
     }
 
     this.setData({
-      actionMessage: '正在删除日记并清理本地照片…',
+      actionMessage:
+        cloudModeService.getState().mode === 'cloud'
+          ? '正在删除云端回忆并清理照片…'
+          : '正在删除日记并清理本地照片…',
       isDeleting: true,
     });
 
@@ -234,7 +241,7 @@ Page({
       await memoryRepository.deleteMemory(memory.id);
     } catch (error: unknown) {
       this.setData({
-        actionMessage: describeError(error, '删除本地日记失败，请稍后重试。'),
+        actionMessage: describeError(error, '删除回忆失败，请稍后重试。'),
         isDeleting: false,
       });
       return;

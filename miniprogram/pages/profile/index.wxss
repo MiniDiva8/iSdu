@@ -13,6 +13,33 @@
   margin-top: 12px;
 }
 
+.profile-note__status {
+  display: block;
+  margin-top: 8px;
+  color: var(--ui-color-primary);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+.profile-cloud-action {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 20px;
+  margin: 20px 0 0;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 46px;
+  background: var(--ui-color-primary);
+  border: 0;
+  border-radius: 14px;
+}
+
+.profile-cloud-action::after {
+  border: 0;
+}
+
 .profile-danger-zone,
 .profile-about {
   padding: 24px 0;
