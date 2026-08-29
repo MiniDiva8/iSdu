@@ -20,6 +20,12 @@ import {
   type FriendMapCursor,
   type FriendMapPoint,
 } from '../../models/friend-map-point';
+import {
+  parseFriendTimelineCursor,
+  parseFriendTimelineItem,
+  type FriendTimelineCursor,
+  type FriendTimelinePage,
+} from '../../models/friend-timeline-item';
 import { cloudImageService, type CloudImageServiceApi } from '../cloud/cloud-image-service';
 import {
   wechatCloudFunctionClient,
@@ -122,6 +128,16 @@ function parseFriendMapPage(value: unknown): {
   };
 }
 
+function parseFriendTimelinePage(value: unknown): FriendTimelinePage {
+  if (!isRecord(value) || !Array.isArray(value.items) || !('nextCursor' in value)) {
+    throw new CloudMemoryRepositoryError('INVALID_RESPONSE', '好友时光结果格式无效');
+  }
+  return {
+    items: value.items.map(parseFriendTimelineItem),
+    nextCursor: parseFriendTimelineCursor(value.nextCursor),
+  };
+}
+
 export class CloudMemoryRepository implements MemoryRepository {
   private readonly client: CloudFunctionClient;
   private readonly imageIdsByMemory = new Map<string, Map<string, string>>();
@@ -171,6 +187,13 @@ export class CloudMemoryRepository implements MemoryRepository {
       if (!cursor) break;
     }
     return points;
+  }
+
+  async listFriendTimeline(
+    cursor: FriendTimelineCursor | null = null,
+  ): Promise<FriendTimelinePage> {
+    const response = await this.client.call('memory-api', 'listFriendTimeline', { cursor });
+    return parseResult(response, parseFriendTimelinePage);
   }
 
   async createMemory(input: CreateMemoryInput): Promise<Memory> {

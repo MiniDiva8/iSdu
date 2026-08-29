@@ -214,13 +214,16 @@ function createCloudMemoryStore(database) {
         return { likeCount, likedByMe: input.liked };
       });
     },
-    async listRecentMemoriesByOwners(ownerUserIds, since) {
+    async listRecentMemoriesByOwners(ownerUserIds, since, until = null) {
       if (!Array.isArray(ownerUserIds) || ownerUserIds.length === 0) return [];
+      const publishedAt = until
+        ? database.command.gte(since).and(database.command.lte(until))
+        : database.command.gte(since);
       const result = await memories
         .where({
           ownerUserId: database.command.in(ownerUserIds),
           deletedAt: null,
-          publishedAt: database.command.gte(since),
+          publishedAt,
         })
         .orderBy('publishedAt', 'desc')
         .limit(100)

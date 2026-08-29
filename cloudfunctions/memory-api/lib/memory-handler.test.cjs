@@ -583,6 +583,121 @@ test('friend map paginates at 50 points without repeating the first page', async
   );
 });
 
+test('friend timeline returns only authorized memories and signs thumbnails after filtering', async () => {
+  const harness = createHarness();
+  const base = {
+    ...content,
+    _id: 'memory-shared-photo',
+    ownerUserId: 'usr_a',
+    visibility: 'friends',
+    selectedGrants: [],
+    publishedAt: '2026-07-01T08:00:00.000Z',
+    likeCount: 2,
+    deletedAt: null,
+    createdAt: '2026-07-01T08:00:00.000Z',
+    updatedAt: '2026-07-01T08:00:00.000Z',
+    images: [{ imageId: 'image-shared', fileId: 'cloud://env/private/shared.jpg' }],
+  };
+  harness.memories.set(base._id, base);
+  harness.memories.set('memory-selected', {
+    ...base,
+    _id: 'memory-selected',
+    text: '只分享给当前关系中的好友',
+    images: [],
+    visibility: 'selected_friends',
+    selectedGrants: [{ friendUserId: 'usr_b', relationshipId: 'relationship-original' }],
+    publishedAt: '2026-07-02T08:00:00.000Z',
+  });
+  harness.memories.set('memory-private', {
+    ...base,
+    _id: 'memory-private',
+    visibility: 'private',
+    publishedAt: '2026-07-03T08:00:00.000Z',
+  });
+  harness.memories.set('memory-stale-grant', {
+    ...base,
+    _id: 'memory-stale-grant',
+    visibility: 'selected_friends',
+    selectedGrants: [{ friendUserId: 'usr_b', relationshipId: 'relationship-old' }],
+    publishedAt: '2026-07-04T08:00:00.000Z',
+  });
+  harness.setCurrentUser('usr_b');
+  const result = await harness.handler({ action: 'listFriendTimeline', payload: {} });
+  assert.equal(result.ok, true);
+  assert.deepEqual(
+    result.data.items.map((item) => item.id),
+    ['memory-selected', 'memory-shared-photo'],
+  );
+  const photo = result.data.items.find((item) => item.id === 'memory-shared-photo');
+  assert.equal(photo.hasImage, true);
+  assert.match(photo.thumbnailUrl, /^https:\/\//u);
+  assert.equal(photo.mapAssetVersion, 'campus-map-v3');
+  assert.equal(photo.likeCount, 2);
+  assert.equal(JSON.stringify(result).includes('cloud://'), false);
+  assert.equal(JSON.stringify(result).includes('images'), false);
+  assert.equal(JSON.stringify(result).includes('fileId'), false);
+  assert.equal(JSON.stringify(result).includes('只分享给当前关系中的好友'), true);
+});
+
+test('friend timeline includes readable old-map memories but denies inactive friendships', async () => {
+  const harness = createHarness();
+  harness.memories.set('memory-old-map', {
+    ...content,
+    _id: 'memory-old-map',
+    ownerUserId: 'usr_a',
+    visibility: 'friends',
+    selectedGrants: [],
+    publishedAt: '2025-01-01T08:00:00.000Z',
+    likeCount: 0,
+    deletedAt: null,
+    createdAt: '2025-01-01T08:00:00.000Z',
+    updatedAt: '2025-01-01T08:00:00.000Z',
+    images: [],
+    mapAssetVersion: 'campus-map-v1',
+  });
+  harness.setCurrentUser('usr_b');
+  const visible = await harness.handler({ action: 'listFriendTimeline', payload: {} });
+  assert.deepEqual(
+    visible.data.items.map((item) => item.id),
+    ['memory-old-map'],
+  );
+  harness.friendships[0].status = 'deleted';
+  const denied = await harness.handler({ action: 'listFriendTimeline', payload: {} });
+  assert.deepEqual(denied.data.items, []);
+});
+
+test('friend timeline paginates at 20 memories without repeating the first page', async () => {
+  const harness = createHarness();
+  for (let index = 0; index < 25; index += 1) {
+    const id = `memory-timeline-${String(index).padStart(2, '0')}`;
+    harness.memories.set(id, {
+      ...content,
+      _id: id,
+      ownerUserId: 'usr_a',
+      visibility: 'friends',
+      selectedGrants: [],
+      publishedAt: `2026-08-15T07:${String(index).padStart(2, '0')}:00.000Z`,
+      likeCount: index,
+      deletedAt: null,
+      createdAt: '2026-08-15T07:00:00.000Z',
+      updatedAt: '2026-08-15T07:00:00.000Z',
+      images: [],
+    });
+  }
+  harness.setCurrentUser('usr_b');
+  const first = await harness.handler({ action: 'listFriendTimeline', payload: {} });
+  const second = await harness.handler({
+    action: 'listFriendTimeline',
+    payload: { cursor: first.data.nextCursor },
+  });
+  assert.equal(first.data.items.length, 20);
+  assert.equal(second.data.items.length, 5);
+  assert.equal(
+    first.data.items.some((item) => second.data.items.some((other) => other.id === item.id)),
+    false,
+  );
+});
+
 test('sanitizes unexpected storage failures', async () => {
   const harness = createHarness();
   harness.handler = createMemoryHandler({

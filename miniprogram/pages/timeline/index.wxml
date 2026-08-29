@@ -1,8 +1,13 @@
 <view class="page-shell timeline-page">
   <view class="timeline-heading page-hero">
     <text class="eyebrow">沿着时间慢慢回看</text>
-    <text class="page-title">{{timelineTitle}}</text>
-    <text class="page-subtitle">按时间整理，也能回到地图上的原位置。</text>
+    <text class="page-title"
+      >{{timelineMode === 'friends' ? friendTimelineTitle : timelineTitle}}</text
+    >
+    <text class="page-subtitle"
+      >{{timelineMode === 'friends' ? '翻阅好友愿意与你分享的校园故事。' :
+      '按时间整理，也能回到地图上的原位置。'}}</text
+    >
   </view>
 
   <view class="timeline-profile">
@@ -25,7 +30,9 @@
     <view class="timeline-profile-editor__heading">
       <view>
         <text class="timeline-profile-editor__title">编辑个人资料</text>
-        <text class="timeline-profile-editor__hint">资料只保存在这台设备。</text>
+        <text class="timeline-profile-editor__hint"
+          >资料先保存在本机；开启云端后会同步到 iSdu 好友身份。</text
+        >
       </view>
       <button
         class="timeline-profile-editor__close"
@@ -89,127 +96,270 @@
 
   <view class="timeline-data-note">
     <view>
-      <text class="timeline-data-note__title">仅保存在这台设备</text>
-      <text class="timeline-data-note__copy">没有云端备份；换设备或清除数据后可能无法恢复。</text>
+      <text class="timeline-data-note__title"
+        >{{isCloudActive ? '云端与好友功能已开启' : '仅保存在这台设备'}}</text
+      >
+      <text class="timeline-data-note__copy"
+        >{{isCloudActive ? '云端回忆按你设置的范围分享；好友访问仍会再次鉴权。' :
+        '没有云端备份；换设备或清除数据后可能无法恢复。'}}</text
+      >
     </view>
     <button class="ui-text-button" bindtap="openDataManagement">数据管理</button>
   </view>
 
-  <view wx:if="{{!isLoading && !errorMessage && !isEmpty}}" class="timeline-search">
-    <view class="timeline-search__field">
-      <text class="timeline-search__icon">⌕</text>
-      <input
-        class="timeline-search__input"
-        value="{{keyword}}"
-        maxlength="50"
-        confirm-type="search"
-        placeholder="搜索地点、文字或心情"
-        bindinput="handleKeywordInput"
-      />
-      <button
-        wx:if="{{keyword}}"
-        class="timeline-search__clear"
-        aria-label="清除搜索"
-        bindtap="clearKeyword"
-      >
-        ×
-      </button>
-    </view>
-    <text class="timeline-search__result">
-      {{keyword ? '找到 ' + resultCount + ' 条回忆' : '共 ' + resultCount + ' 条回忆'}}
-    </text>
-  </view>
-
-  <view wx:if="{{isLoading}}" class="timeline-skeleton" aria-label="正在整理时光">
-    <view class="timeline-skeleton__month"></view>
-    <view class="timeline-skeleton__card">
-      <view class="timeline-skeleton__image"></view>
-      <view class="timeline-skeleton__lines"> <view></view><view></view><view></view> </view>
-    </view>
-    <view class="timeline-skeleton__card">
-      <view class="timeline-skeleton__image"></view>
-      <view class="timeline-skeleton__lines"> <view></view><view></view><view></view> </view>
-    </view>
-  </view>
-
-  <view wx:elif="{{errorMessage}}" class="ui-state timeline-state">
-    <text class="timeline-state__symbol timeline-state__symbol--error">!</text>
-    <text class="ui-state__title">时光暂时没有打开</text>
-    <text class="ui-state__copy">{{errorMessage}}</text>
-    <view class="timeline-state__action">
-      <t-button theme="primary" bind:tap="loadTimeline">重新读取</t-button>
-    </view>
-  </view>
-
-  <view wx:elif="{{isEmpty}}" class="ui-state timeline-state">
-    <text class="timeline-state__symbol">记</text>
-    <text class="ui-state__title">这里还没有留下记忆</text>
-    <text class="ui-state__copy">去地图上标记属于你的第一段校园时光。</text>
-    <view class="timeline-state__action">
-      <t-button theme="primary" bind:tap="goToRecord">去地图记录</t-button>
-    </view>
-  </view>
-
-  <view wx:elif="{{isSearchEmpty}}" class="ui-state timeline-state">
-    <text class="timeline-state__symbol">⌕</text>
-    <text class="ui-state__title">没有找到相关回忆</text>
-    <text class="ui-state__copy">换一个关键词，或者清除搜索看看。</text>
-    <button class="ui-text-button timeline-state__text-action" bindtap="clearKeyword">
-      清除搜索
+  <view class="timeline-mode" aria-label="时光查看范围">
+    <button
+      class="timeline-mode__button {{timelineMode === 'mine' ? 'timeline-mode__button--active' : ''}}"
+      data-mode="mine"
+      bindtap="switchTimelineMode"
+    >
+      我的时光
+    </button>
+    <button
+      class="timeline-mode__button {{timelineMode === 'friends' ? 'timeline-mode__button--active' : ''}}"
+      data-mode="friends"
+      bindtap="switchTimelineMode"
+    >
+      好友时光
     </button>
   </view>
 
-  <block wx:else>
-    <view wx:for="{{groups}}" wx:key="key" class="timeline-month">
-      <view class="timeline-month__heading">
-        <text class="timeline-month__title">{{item.title}}</text>
-        <text class="timeline-month__count">{{item.countLabel}}</text>
-      </view>
-
-      <view class="timeline-list">
-        <view
-          wx:for="{{item.items}}"
-          wx:for-item="memory"
-          wx:key="id"
-          class="timeline-card"
-          data-memory-id="{{memory.id}}"
-          bindtap="openDetail"
+  <block wx:if="{{timelineMode === 'mine'}}">
+    <view wx:if="{{!isLoading && !errorMessage && !isEmpty}}" class="timeline-search">
+      <view class="timeline-search__field">
+        <text class="timeline-search__icon">⌕</text>
+        <input
+          class="timeline-search__input"
+          value="{{keyword}}"
+          maxlength="50"
+          confirm-type="search"
+          placeholder="搜索地点、文字或心情"
+          bindinput="handleKeywordInput"
+        />
+        <button
+          wx:if="{{keyword}}"
+          class="timeline-search__clear"
+          aria-label="清除搜索"
+          bindtap="clearKeyword"
         >
-          <image
-            wx:if="{{memory.hasImage && !memory.imageFailed}}"
-            class="timeline-card__image"
-            src="{{memory.imagePath}}"
-            mode="aspectFill"
-            lazy-load="{{true}}"
-            data-memory-id="{{memory.id}}"
-            catchtap="openDetail"
-            binderror="handleImageError"
-          />
-          <view wx:else class="timeline-card__placeholder"><text>记</text></view>
+          ×
+        </button>
+      </view>
+      <text class="timeline-search__result">
+        {{keyword ? '找到 ' + resultCount + ' 条回忆' : '共 ' + resultCount + ' 条回忆'}}
+      </text>
+    </view>
 
-          <view class="timeline-card__body">
-            <view class="timeline-card__topline">
-              <text class="timeline-card__date">{{memory.dateLabel}}</text>
-              <text wx:if="{{memory.isDemo}}" class="timeline-card__demo">演示</text>
-            </view>
-            <text class="timeline-card__place">{{memory.placeLabel}}</text>
-            <text class="timeline-card__summary">{{memory.summary}}</text>
-            <view class="timeline-card__footer">
-              <view class="timeline-card__tags">
-                <text class="ui-chip">{{memory.categoryLabel}}</text>
-                <text class="ui-chip ui-chip--mood">{{memory.moodLabel}}</text>
+    <view wx:if="{{isLoading}}" class="timeline-skeleton" aria-label="正在整理时光">
+      <view class="timeline-skeleton__month"></view>
+      <view class="timeline-skeleton__card">
+        <view class="timeline-skeleton__image"></view>
+        <view class="timeline-skeleton__lines"> <view></view><view></view><view></view> </view>
+      </view>
+      <view class="timeline-skeleton__card">
+        <view class="timeline-skeleton__image"></view>
+        <view class="timeline-skeleton__lines"> <view></view><view></view><view></view> </view>
+      </view>
+    </view>
+
+    <view wx:elif="{{errorMessage}}" class="ui-state timeline-state">
+      <text class="timeline-state__symbol timeline-state__symbol--error">!</text>
+      <text class="ui-state__title">时光暂时没有打开</text>
+      <text class="ui-state__copy">{{errorMessage}}</text>
+      <view class="timeline-state__action">
+        <t-button theme="primary" bind:tap="loadTimeline">重新读取</t-button>
+      </view>
+    </view>
+
+    <view wx:elif="{{isEmpty}}" class="ui-state timeline-state">
+      <text class="timeline-state__symbol">记</text>
+      <text class="ui-state__title">这里还没有留下记忆</text>
+      <text class="ui-state__copy">去地图上标记属于你的第一段校园时光。</text>
+      <view class="timeline-state__action">
+        <t-button theme="primary" bind:tap="goToRecord">去地图记录</t-button>
+      </view>
+    </view>
+
+    <view wx:elif="{{isSearchEmpty}}" class="ui-state timeline-state">
+      <text class="timeline-state__symbol">⌕</text>
+      <text class="ui-state__title">没有找到相关回忆</text>
+      <text class="ui-state__copy">换一个关键词，或者清除搜索看看。</text>
+      <button class="ui-text-button timeline-state__text-action" bindtap="clearKeyword">
+        清除搜索
+      </button>
+    </view>
+
+    <block wx:else>
+      <view wx:for="{{groups}}" wx:key="key" class="timeline-month">
+        <view class="timeline-month__heading">
+          <text class="timeline-month__title">{{item.title}}</text>
+          <text class="timeline-month__count">{{item.countLabel}}</text>
+        </view>
+
+        <view class="timeline-list">
+          <view
+            wx:for="{{item.items}}"
+            wx:for-item="memory"
+            wx:key="id"
+            class="timeline-card"
+            data-memory-id="{{memory.id}}"
+            bindtap="openDetail"
+          >
+            <image
+              wx:if="{{memory.hasImage && !memory.imageFailed}}"
+              class="timeline-card__image"
+              src="{{memory.imagePath}}"
+              mode="aspectFill"
+              lazy-load="{{true}}"
+              data-memory-id="{{memory.id}}"
+              catchtap="openDetail"
+              binderror="handleImageError"
+            />
+            <view wx:else class="timeline-card__placeholder"><text>记</text></view>
+
+            <view class="timeline-card__body">
+              <view class="timeline-card__topline">
+                <text class="timeline-card__date">{{memory.dateLabel}}</text>
+                <text wx:if="{{memory.isDemo}}" class="timeline-card__demo">演示</text>
               </view>
-              <button
-                class="timeline-card__map-action"
-                data-memory-id="{{memory.id}}"
-                catchtap="showOnMap"
-              >
-                在地图中查看
-              </button>
+              <text class="timeline-card__place">{{memory.placeLabel}}</text>
+              <text class="timeline-card__summary">{{memory.summary}}</text>
+              <view class="timeline-card__footer">
+                <view class="timeline-card__tags">
+                  <text class="ui-chip">{{memory.categoryLabel}}</text>
+                  <text class="ui-chip ui-chip--mood">{{memory.moodLabel}}</text>
+                </view>
+                <button
+                  class="timeline-card__map-action"
+                  data-memory-id="{{memory.id}}"
+                  catchtap="showOnMap"
+                >
+                  在地图中查看
+                </button>
+              </view>
             </view>
           </view>
         </view>
       </view>
+    </block>
+  </block>
+
+  <block wx:else>
+    <view
+      wx:if="{{isFriendLoading && friendItems.length === 0}}"
+      class="timeline-skeleton"
+      aria-label="正在读取好友时光"
+    >
+      <view class="timeline-skeleton__month"></view>
+      <view class="timeline-skeleton__card">
+        <view class="timeline-skeleton__image"></view>
+        <view class="timeline-skeleton__lines"> <view></view><view></view><view></view> </view>
+      </view>
+      <view class="timeline-skeleton__card">
+        <view class="timeline-skeleton__image"></view>
+        <view class="timeline-skeleton__lines"> <view></view><view></view><view></view> </view>
+      </view>
+    </view>
+
+    <view
+      wx:elif="{{friendErrorMessage && friendItems.length === 0}}"
+      class="ui-state timeline-state"
+    >
+      <text class="timeline-state__symbol timeline-state__symbol--error">!</text>
+      <text class="ui-state__title"
+        >{{isCloudActive ? '好友时光暂时没有打开' : '先开启云端与好友功能'}}</text
+      >
+      <text class="ui-state__copy">{{friendErrorMessage}}</text>
+      <view class="timeline-state__action">
+        <t-button wx:if="{{isCloudActive}}" theme="primary" bind:tap="refreshFriendTimeline"
+          >重新读取</t-button
+        >
+        <t-button wx:else theme="primary" bind:tap="openDataManagement">去开启云端</t-button>
+      </view>
+    </view>
+
+    <view wx:elif="{{friendLoaded && friendItems.length === 0}}" class="ui-state timeline-state">
+      <text class="timeline-state__symbol">友</text>
+      <text class="ui-state__title">还没有可翻阅的好友回忆</text>
+      <text class="ui-state__copy"
+        >好友需要把云端回忆设为“全部好友”或明确分享给你，才会出现在这里。</text
+      >
+      <view class="timeline-state__action">
+        <t-button theme="primary" bind:tap="refreshFriendTimeline">刷新好友时光</t-button>
+      </view>
+    </view>
+
+    <view wx:else class="friend-timeline">
+      <view class="timeline-month__heading">
+        <text class="timeline-month__title">好友分享</text>
+        <text class="timeline-month__count">已加载 {{friendItems.length}} 条</text>
+      </view>
+      <view class="timeline-list">
+        <view
+          wx:for="{{friendItems}}"
+          wx:key="id"
+          class="timeline-card friend-timeline-card"
+          data-memory-id="{{item.id}}"
+          bindtap="openFriendDetail"
+        >
+          <image
+            wx:if="{{item.hasImage && !item.imageFailed}}"
+            class="timeline-card__image"
+            src="{{item.imagePath}}"
+            mode="aspectFill"
+            lazy-load="{{true}}"
+            data-memory-id="{{item.id}}"
+            catchtap="openFriendDetail"
+            binderror="handleFriendImageError"
+          />
+          <view wx:else class="timeline-card__placeholder friend-timeline-card__placeholder">
+            <text>{{item.ownerInitial}}</text>
+          </view>
+
+          <view class="timeline-card__body">
+            <view class="friend-timeline-card__owner-row">
+              <text class="friend-timeline-card__owner">{{item.ownerDisplayName}}</text>
+              <text wx:if="{{item.likeLabel}}" class="friend-timeline-card__likes"
+                >{{item.likeLabel}}</text
+              >
+            </view>
+            <text class="timeline-card__date">{{item.dateLabel}}</text>
+            <text class="timeline-card__place">{{item.placeLabel}}</text>
+            <text class="timeline-card__summary">{{item.summary}}</text>
+            <view class="timeline-card__footer">
+              <view class="timeline-card__tags">
+                <text class="ui-chip">{{item.categoryLabel}}</text>
+                <text class="ui-chip ui-chip--mood">{{item.moodLabel}}</text>
+              </view>
+              <button
+                class="timeline-card__map-action {{item.isMapAvailable ? '' : 'timeline-card__map-action--disabled'}}"
+                data-memory-id="{{item.id}}"
+                catchtap="showFriendOnMap"
+              >
+                {{item.mapActionLabel}}
+              </button>
+            </view>
+            <text class="friend-timeline-card__shared-date">{{item.sharedDateLabel}}</text>
+          </view>
+        </view>
+      </view>
+
+      <view wx:if="{{friendErrorMessage}}" class="timeline-inline-error">
+        <text>{{friendErrorMessage}}</text>
+        <button bindtap="refreshFriendTimeline">重试</button>
+      </view>
+      <button
+        wx:if="{{friendHasMore}}"
+        class="friend-timeline__load-more"
+        loading="{{isFriendLoadingMore}}"
+        disabled="{{isFriendLoadingMore}}"
+        bindtap="loadMoreFriendTimeline"
+      >
+        {{isFriendLoadingMore ? '正在读取…' : '加载更多'}}
+      </button>
+      <text wx:elif="{{friendItems.length > 0}}" class="friend-timeline__end"
+        >已经看到当前可访问的全部好友回忆</text
+      >
     </view>
   </block>
 

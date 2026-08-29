@@ -236,6 +236,35 @@ function toFriendMapPoint(memory, owner) {
   };
 }
 
+function createFriendTimelineSummary(text, hasImage) {
+  const normalized = typeof text === 'string' ? text.trim().replace(/\s+/gu, ' ') : '';
+  if (!normalized) return hasImage ? '分享了一段照片回忆' : '分享了一段校园回忆';
+  return normalized.length > 120 ? `${normalized.slice(0, 120)}…` : normalized;
+}
+
+function toFriendTimelineItem(memory, owner, thumbnailUrl) {
+  const images = Array.isArray(memory.images) ? memory.images : [];
+  return {
+    id: memory._id,
+    ownerDisplayName: owner.displayName || 'iSdu 好友',
+    ownerUserId: owner._id,
+    placeName: memory.placeName,
+    summary: createFriendTimelineSummary(memory.text, images.length > 0),
+    mood: memory.mood,
+    customMood: memory.customMood,
+    category: memory.category,
+    customCategory: memory.customCategory,
+    mapAssetVersion: memory.mapAssetVersion,
+    mapXRatio: memory.mapXRatio,
+    mapYRatio: memory.mapYRatio,
+    recordedAt: memory.recordedAt,
+    publishedAt: memory.publishedAt,
+    hasImage: images.length > 0,
+    thumbnailUrl,
+    likeCount: Number.isInteger(memory.likeCount) && memory.likeCount >= 0 ? memory.likeCount : 0,
+  };
+}
+
 async function resolveSharedMemory(options, viewer, memoryId) {
   const memory = await options.store.getMemory(memoryId);
   if (!memory || memory.ownerUserId === viewer._id) {
@@ -568,6 +597,79 @@ function createMemoryHandler(options) {
           data: {
             nextCursor: last ? { id: last._id, publishedAt: last.publishedAt } : null,
             points,
+          },
+          requestId,
+        };
+      }
+
+      if (event.action === 'listFriendTimeline') {
+        const cursor = parseMapCursor(payload.cursor);
+        const friendships = await options.store.listActiveFriendships(user._id);
+        const relationshipByOwner = new Map();
+        for (const friendship of friendships) {
+          const friendUserId =
+            friendship.userAId === user._id ? friendship.userBId : friendship.userAId;
+          relationshipByOwner.set(friendUserId, friendship);
+        }
+        const ownerIds = [...relationshipByOwner.keys()];
+        const candidates = [];
+        for (let index = 0; index < ownerIds.length; index += 20) {
+          candidates.push(
+            ...(await options.store.listRecentMemoriesByOwners(
+              ownerIds.slice(index, index + 20),
+              '1970-01-01T00:00:00.000Z',
+              cursor?.publishedAt ?? now,
+            )),
+          );
+        }
+        const allowed = candidates
+          .filter(
+            (memory) =>
+              typeof memory.publishedAt === 'string' &&
+              Number.isFinite(Date.parse(memory.publishedAt)) &&
+              canFriendViewMemory(memory, user._id, relationshipByOwner.get(memory.ownerUserId)),
+          )
+          .sort(
+            (left, right) =>
+              right.publishedAt.localeCompare(left.publishedAt) ||
+              left._id.localeCompare(right._id),
+          )
+          .filter((memory) => isAfterCursor(memory, cursor));
+        const page = allowed.slice(0, 20);
+        const ownerById = new Map();
+        for (const ownerUserId of [...new Set(page.map((memory) => memory.ownerUserId))]) {
+          const owner = await options.store.getUser(ownerUserId);
+          if (owner) ownerById.set(ownerUserId, owner);
+        }
+        const thumbnailFileIds = page.map((memory) => {
+          const images = Array.isArray(memory.images) ? memory.images : [];
+          return images[0]?.fileId ?? '';
+        });
+        const signedIndexes = [];
+        const signedFileIds = [];
+        thumbnailFileIds.forEach((fileId, index) => {
+          if (fileId) {
+            signedIndexes.push(index);
+            signedFileIds.push(fileId);
+          }
+        });
+        const signedUrls = signedFileIds.length > 0 ? await options.getTempUrls(signedFileIds) : [];
+        const thumbnailUrls = page.map(() => '');
+        signedIndexes.forEach((pageIndex, signedIndex) => {
+          thumbnailUrls[pageIndex] = signedUrls[signedIndex] ?? '';
+        });
+        const items = page
+          .map((memory, index) => {
+            const owner = ownerById.get(memory.ownerUserId);
+            return owner ? toFriendTimelineItem(memory, owner, thumbnailUrls[index]) : null;
+          })
+          .filter(Boolean);
+        const last = allowed.length > page.length ? page[page.length - 1] : null;
+        return {
+          ok: true,
+          data: {
+            items,
+            nextCursor: last ? { id: last._id, publishedAt: last.publishedAt } : null,
           },
           requestId,
         };

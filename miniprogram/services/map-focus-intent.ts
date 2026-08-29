@@ -1,4 +1,4 @@
-export type MapFocusIntentSource = 'detail' | 'timeline';
+export type MapFocusIntentSource = 'detail' | 'friend-timeline' | 'timeline';
 
 export interface MapFocusIntent {
   readonly mapXRatio: number;

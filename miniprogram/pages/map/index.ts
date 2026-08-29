@@ -486,7 +486,7 @@ Page({
           selectedMemory: selected ? createMemoryCard(selected) : null,
           visibleMarkerCount: markerResult.markers.length,
         },
-        () => this.applyPendingFocusIntent(),
+        () => void this.applyPendingFocusIntent(),
       );
     } catch (error) {
       this.setData({
@@ -540,18 +540,7 @@ Page({
     });
     if (layer === 'friends') void this.refreshFriendLayer();
   },
-  applyPendingFocusIntent() {
-    const intent = pendingFocusIntent;
-    pendingFocusIntent = null;
-    if (!intent || this.data.isPickingLocation) {
-      return;
-    }
-
-    const memory = this.data.memories.find((item) => item.id === intent.memoryId);
-    if (!memory || memory.mapAssetVersion !== campusMapConfig.assetVersion) {
-      return;
-    }
-
+  focusOnMemory(intent: MapFocusIntent, memory: Memory, source: MapLayer, message: string) {
     const mapSize = { width: this.data.mapRenderWidth, height: this.data.mapRenderHeight };
     const canvasSize = { width: this.data.mapCanvasWidth, height: this.data.mapCanvasHeight };
     const mapOffset = { x: this.data.mapOffsetX, y: this.data.mapOffsetY };
@@ -581,12 +570,58 @@ Page({
 
     latestViewPosition = correctedPosition;
     this.setData({
-      defaultViewMessage: `已回到：${memory.placeName || '校园中的某处'}`,
+      defaultViewMessage: message,
+      mapLayer: source,
       selectedMemory: createMemoryCard(memory),
+      selectedMemorySource: source,
       viewScale: latestViewScale,
       viewX: correctedPosition.x,
       viewY: correctedPosition.y,
     });
+  },
+  async applyPendingFocusIntent() {
+    const intent = pendingFocusIntent;
+    pendingFocusIntent = null;
+    if (!intent || this.data.isPickingLocation) {
+      return;
+    }
+
+    if (intent.source === 'friend-timeline') {
+      this.setData({
+        defaultViewMessage: '正在定位好友回忆…',
+        filterPanelOpen: false,
+        mapLayer: 'friends',
+        selectedMemory: null,
+        selectedMemorySource: 'friends',
+      });
+      await this.refreshFriendLayer();
+      const point = this.data.friendPoints.find((item) => item.id === intent.memoryId);
+      if (!point || point.mapAssetVersion !== campusMapConfig.assetVersion) {
+        this.setData({ defaultViewMessage: '这段回忆已不在好友 24 小时地图中。' });
+        return;
+      }
+      try {
+        const sharedMemory = await cloudMemoryRepository.getSharedMemoryById(intent.memoryId);
+        this.focusOnMemory(
+          intent,
+          sharedMemory,
+          'friends',
+          `已回到 ${sharedMemory.ownerDisplayName} 分享的位置`,
+        );
+      } catch (error: unknown) {
+        this.setData({
+          defaultViewMessage: error instanceof Error ? error.message : '这段好友回忆当前无法访问。',
+          selectedMemory: null,
+        });
+      }
+      return;
+    }
+
+    const memory = this.data.memories.find((item) => item.id === intent.memoryId);
+    if (!memory || memory.mapAssetVersion !== campusMapConfig.assetVersion) {
+      return;
+    }
+    this.focusOnMemory(intent, memory, 'mine', `已回到：${memory.placeName || '校园中的某处'}`);
   },
   refreshVisibleMarkers(message = '') {
     const markerResult = createMemoryMarkers(

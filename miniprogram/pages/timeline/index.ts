@@ -1,4 +1,5 @@
 import { campusMapConfig } from '../../config/campus-map';
+import type { FriendTimelineCursor, FriendTimelineItem } from '../../models/friend-timeline-item';
 import { getMemoryCategoryLabel, getMemoryMoodLabel, type Memory } from '../../models/memory';
 import {
   USER_PROFILE_NAME_MAX_LENGTH,
@@ -9,6 +10,7 @@ import {
 import { cloudModeService } from '../../services/cloud/cloud-mode-service';
 import { consumeMapFocusIntent, setMapFocusIntent } from '../../services/map-focus-intent';
 import { cloudAuthRepository } from '../../services/repository/cloud-auth-repository';
+import { cloudMemoryRepository } from '../../services/repository/cloud-memory-repository';
 import { memoryRepository, userProfileRepository } from '../../services/repository/index';
 import { formatMemoryDateTime } from '../../utils/date-format';
 import { EMPTY_MEMORY_FILTERS, filterMemories } from '../../utils/memory-filters';
@@ -36,8 +38,35 @@ interface TimelineMonthView {
   title: string;
 }
 
+type TimelineMode = 'friends' | 'mine';
+
+function isTimelineMode(value: unknown): value is TimelineMode {
+  return value === 'friends' || value === 'mine';
+}
+
+interface FriendTimelineView {
+  categoryLabel: string;
+  dateLabel: string;
+  hasImage: boolean;
+  id: string;
+  imageFailed: boolean;
+  imagePath: string;
+  isMapAvailable: boolean;
+  likeLabel: string;
+  mapActionLabel: string;
+  mapXRatio: number;
+  mapYRatio: number;
+  moodLabel: string;
+  ownerDisplayName: string;
+  ownerInitial: string;
+  placeLabel: string;
+  sharedDateLabel: string;
+  summary: string;
+}
+
 const CAMPUS_NAME = campusMapConfig.displayName;
 const CAMPUS_SHORT_NAME = CAMPUS_NAME.replace(/^山东大学/u, '') || CAMPUS_NAME;
+const FRIEND_MAP_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 function createTimelineTitle(profile: UserProfile | null): string {
   return profile
@@ -82,14 +111,51 @@ function createMonthViews(memories: readonly Memory[]): TimelineMonthView[] {
   }));
 }
 
+function createFriendTimelineView(item: FriendTimelineItem): FriendTimelineView {
+  const publishedTimestamp = Date.parse(item.publishedAt);
+  const isRecent =
+    Number.isFinite(publishedTimestamp) && publishedTimestamp >= Date.now() - FRIEND_MAP_WINDOW_MS;
+  const isCurrentMap = item.mapAssetVersion === campusMapConfig.assetVersion;
+  const isMapAvailable = isRecent && isCurrentMap;
+
+  return {
+    categoryLabel: getMemoryCategoryLabel(item),
+    dateLabel: formatMemoryDateTime(item.recordedAt),
+    hasImage: item.hasImage && Boolean(item.thumbnailUrl),
+    id: item.id,
+    imageFailed: false,
+    imagePath: item.thumbnailUrl,
+    isMapAvailable,
+    likeLabel: item.likeCount > 0 ? `${item.likeCount} 个赞` : '',
+    mapActionLabel: !isCurrentMap ? '旧版地图回忆' : isRecent ? '在地图中查看' : '已超过 24 小时',
+    mapXRatio: item.mapXRatio,
+    mapYRatio: item.mapYRatio,
+    moodLabel: getMemoryMoodLabel(item),
+    ownerDisplayName: item.ownerDisplayName,
+    ownerInitial: createProfileInitial(item.ownerDisplayName),
+    placeLabel: item.placeName || '校园中的某处',
+    sharedDateLabel: `分享于 ${formatMemoryDateTime(item.publishedAt)}`,
+    summary: item.summary,
+  };
+}
+
 Page({
   data: {
     actionMessage: '',
     allMemories: [] as Memory[],
     campusName: CAMPUS_NAME,
     errorMessage: '',
+    friendCursor: null as FriendTimelineCursor | null,
+    friendErrorMessage: '',
+    friendHasMore: false,
+    friendItems: [] as FriendTimelineView[],
+    friendLoaded: false,
+    friendTimelineTitle: `好友的${CAMPUS_SHORT_NAME}时光`,
     groups: [] as TimelineMonthView[],
+    isCloudActive: false,
     isEmpty: false,
+    isFriendLoading: false,
+    isFriendLoadingMore: false,
     isLoading: true,
     isProfileEditorOpen: false,
     isProfileLoading: true,
@@ -106,12 +172,30 @@ Page({
     profileSignature: '',
     profileSignatureMaxLength: USER_PROFILE_SIGNATURE_MAX_LENGTH,
     resultCount: 0,
+    timelineMode: 'mine',
     timelineTitle: createTimelineTitle(null),
   },
 
   onShow() {
+    const isCloudActive = cloudModeService.getState().mode === 'cloud';
+    this.setData({ isCloudActive });
     void this.loadTimeline();
     void this.loadProfile();
+    if (this.data.timelineMode === 'friends') {
+      void this.loadFriendTimeline(true);
+    }
+  },
+
+  onPullDownRefresh() {
+    const task =
+      this.data.timelineMode === 'friends' ? this.loadFriendTimeline(true) : this.loadTimeline();
+    void task.finally(() => wx.stopPullDownRefresh());
+  },
+
+  onReachBottom() {
+    if (this.data.timelineMode === 'friends' && this.data.friendHasMore) {
+      void this.loadFriendTimeline(false);
+    }
   },
 
   async loadProfile() {
@@ -252,6 +336,77 @@ Page({
     }
   },
 
+  async loadFriendTimeline(reset = true) {
+    if (this.data.isFriendLoading || this.data.isFriendLoadingMore) {
+      return;
+    }
+
+    const isCloudActive = cloudModeService.getState().mode === 'cloud';
+    if (!isCloudActive) {
+      this.setData({
+        friendCursor: null,
+        friendErrorMessage: '请先在“数据管理”中开启云端与好友功能。',
+        friendHasMore: false,
+        friendItems: [],
+        friendLoaded: true,
+        isCloudActive: false,
+        isFriendLoading: false,
+        isFriendLoadingMore: false,
+      });
+      return;
+    }
+
+    this.setData({
+      friendErrorMessage: '',
+      isCloudActive: true,
+      isFriendLoading: reset,
+      isFriendLoadingMore: !reset,
+    });
+
+    try {
+      const page = await cloudMemoryRepository.listFriendTimeline(
+        reset ? null : this.data.friendCursor,
+      );
+      const nextItems = page.items.map(createFriendTimelineView);
+      this.setData({
+        friendCursor: page.nextCursor,
+        friendErrorMessage: '',
+        friendHasMore: Boolean(page.nextCursor),
+        friendItems: reset ? nextItems : [...this.data.friendItems, ...nextItems],
+        friendLoaded: true,
+        isFriendLoading: false,
+        isFriendLoadingMore: false,
+      });
+    } catch (error: unknown) {
+      this.setData({
+        friendErrorMessage:
+          error instanceof Error ? error.message : '好友时光暂时无法读取，请稍后重试。',
+        friendLoaded: true,
+        isFriendLoading: false,
+        isFriendLoadingMore: false,
+      });
+    }
+  },
+
+  loadMoreFriendTimeline() {
+    void this.loadFriendTimeline(false);
+  },
+
+  refreshFriendTimeline() {
+    void this.loadFriendTimeline(true);
+  },
+
+  switchTimelineMode(event: WechatMiniprogram.BaseEvent) {
+    const mode = (event.currentTarget.dataset as { mode?: unknown }).mode;
+    if (!isTimelineMode(mode) || mode === this.data.timelineMode) {
+      return;
+    }
+    this.setData({ actionMessage: '', timelineMode: mode });
+    if (mode === 'friends' && !this.data.friendLoaded) {
+      void this.loadFriendTimeline(true);
+    }
+  },
+
   applyKeywordSearch(
     memories: readonly Memory[],
     keyword: string,
@@ -335,6 +490,16 @@ Page({
     });
   },
 
+  handleFriendImageError(event: WechatMiniprogram.BaseEvent) {
+    const memoryId = (event.currentTarget.dataset as { memoryId?: unknown }).memoryId;
+    if (typeof memoryId !== 'string') return;
+    this.setData({
+      friendItems: this.data.friendItems.map((item) =>
+        item.id === memoryId ? { ...item, imageFailed: true } : item,
+      ),
+    });
+  },
+
   openDetail(event: WechatMiniprogram.BaseEvent) {
     const currentDataset = event.currentTarget.dataset as { memoryId?: unknown };
     const targetDataset = (event.target as { dataset?: { memoryId?: unknown } }).dataset;
@@ -351,6 +516,21 @@ Page({
       fail: () => {
         this.setData({ actionMessage: '详情页打开失败，请稍后重试。' });
       },
+    });
+  },
+
+  openFriendDetail(event: WechatMiniprogram.BaseEvent) {
+    const memoryId = (event.currentTarget.dataset as { memoryId?: unknown }).memoryId;
+    if (
+      typeof memoryId !== 'string' ||
+      !this.data.friendItems.some((item) => item.id === memoryId)
+    ) {
+      this.setData({ actionMessage: '这段好友回忆已不可访问，请刷新好友时光。' });
+      return;
+    }
+    void wx.navigateTo({
+      url: `/pages/detail/index?memoryId=${encodeURIComponent(memoryId)}&source=friend`,
+      fail: () => this.setData({ actionMessage: '好友回忆详情暂时无法打开。' }),
     });
   },
 
@@ -371,6 +551,31 @@ Page({
       source: 'timeline',
     });
 
+    void wx.switchTab({
+      url: '/pages/map/index',
+      fail: () => {
+        consumeMapFocusIntent();
+        this.setData({ actionMessage: '地图暂时无法打开，请稍后重试。' });
+      },
+    });
+  },
+
+  showFriendOnMap(event: WechatMiniprogram.BaseEvent) {
+    const memoryId = (event.currentTarget.dataset as { memoryId?: unknown }).memoryId;
+    const memory =
+      typeof memoryId === 'string'
+        ? this.data.friendItems.find((item) => item.id === memoryId)
+        : undefined;
+    if (!memory || !memory.isMapAvailable) {
+      this.setData({ actionMessage: memory?.mapActionLabel || '这段好友回忆暂时无法定位。' });
+      return;
+    }
+    setMapFocusIntent({
+      mapXRatio: memory.mapXRatio,
+      mapYRatio: memory.mapYRatio,
+      memoryId: memory.id,
+      source: 'friend-timeline',
+    });
     void wx.switchTab({
       url: '/pages/map/index',
       fail: () => {

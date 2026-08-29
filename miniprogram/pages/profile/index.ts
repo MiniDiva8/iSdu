@@ -26,7 +26,7 @@ function confirmCloudBackup(): Promise<boolean> {
       title: '开启云端与好友功能？',
       content:
         '开启后，iSdu 会在你确认时把本机回忆、照片、正文和插画地图比例位置备份到 CloudBase。所有迁移回忆默认仅自己可见；不会读取微信好友、通讯录、手机号或 GPS。',
-      confirmText: '同意并继续',
+      confirmText: '同意',
       cancelText: '暂不开启',
       success: (result) => resolve(result.confirm),
       fail: (result) => reject(new Error(result.errMsg)),

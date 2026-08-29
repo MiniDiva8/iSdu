@@ -1,124 +1,112 @@
 # iSdu
 
-> 基于校园地图的个人空间日记
+> 把校园变成一张会生长的记忆星图。
 
-“iSdu”是一款面向山东大学校园生活的微信小程序。它把一张二维校园插画地图变成个人日记：用户在校园位置上留下照片、文字、地点、心情和时间，之后既可以回答“我在哪里留下过记忆”，也可以按时间轴回答“那是什么时候”。
+`iSdu` 是一款面向山东大学校园生活的微信原生小程序。它以中心校区二维插画地图为载体，让照片、文字、地点、心情和时间重新回到故事发生的位置；用户既能建立自己的校园空间日记，也能在明确授权后与 iSdu 好友分享、回看和回应校园故事。
 
-## 比赛版定位
+## 产品价值
 
-比赛版严格限定为：单用户、单校区、无社交功能的校园地图个人日记。
+- **空间化记忆**：日记不再只是按时间堆叠，而是与校园中的具体地点长期绑定。
+- **持续回顾**：地图回答“在哪里”，时光回答“什么时候”，两种视图可以互相跳转。
+- **克制社交**：好友必须通过邀请双方确认；没有公开广场、陌生人推荐或通讯录匹配。
+- **隐私优先**：回忆默认仅自己可见，也可选择指定好友或全部 iSdu 好友；每次跨用户访问均由云函数重新鉴权。
+- **校园文化表达**：把熟悉的教学楼、体育场、道路和校园生活转化为可积累的个人与共同记忆。
 
-核心体验：
+## 核心体验
 
 ```text
 校园地图选点
-→ 添加照片与文字
-→ 保存个人日记
-→ 地图原位置出现记忆标记
-→ 点击标记回看
-→ 时间轴按月回顾
-→ 地图与时间轴互相跳转
+→ 添加 1–3 张照片与文字
+→ 记录地点、心情、主题和时间
+→ 地图原位置出现记忆点
+→ 在详情或时光中回顾、编辑和删除
+→ 选择可见范围
+→ 好友在 24 小时地图或好友时光中查看并点赞
 ```
 
-评论、点赞、好友、公开动态、GPS、多校区、AI 生成日记和管理后台等长期功能不进入比赛 MVP。
+## 已实现功能
 
-## 当前阶段
+### 个人校园记忆
 
-当前处于 `0.9.0` 本地数据公测候选的发布验收阶段：
+- `1448 × 1086` 二维校园插画地图；
+- 地图拖动、缩放、复位和中心准星选点；
+- 使用 `[0, 1]` 比例坐标保存位置，适配不同屏幕与缩放状态；
+- 1–3 张照片、正文、地点、心情、内容主题和记录时间；
+- 本地照片持久化、新建、编辑、删除、回滚和缺失文件处理；
+- 地图记忆点、详情卡片、关键词搜索、按月时光和地图定位；
+- 本机个人资料、数据管理、空状态和损坏数据恢复。
 
-- 已建立项目执行规则。
-- 已完成候选仓库、许可证、维护状态和兼容风险评估。
-- 已确定技术栈和集成边界。
-- 已完成 `1448 × 1086` 二维插画地图、拖动、缩放、复位和中心准星比例选点。
-- 已建立 Memory 模型、版本化本地 Repository、真实空状态和损坏数据处理；发布模式不再自动灌入 Demo 日记。
-- 已实现 1—3 张照片选择与用户目录持久化，新建、编辑和删除都有文件回滚或清理规则。
-- 已打通地图选点 → 保存 → 星点 → 详情 → 编辑 / 删除 → 重启读取的本地闭环。
-- 底部仅保留地图、时光两个 Tab；记录入口统一放在地图页，时光页支持按月回顾、关键词搜索、本机个人资料和数据管理。
-- 已提供“清除全部本机数据”入口，并在照片选择前说明本机保存用途。
-- 已精确安装 `tdesign-miniprogram@1.15.3`，只使用 Button 和 Empty。
-- 坐标、Memory、Repository、本地图片和筛选测试以及 TypeScript、ESLint、Prettier 检查纳入统一 `npm run check`。
-- 尚待在微信开发者工具中重新构建 npm、记录主包大小，并完成 iOS 与 Android 发布候选验收。
-- 尚未接入 CloudBase、GPS、登录、社交、正式时间轴或个人统计。
+### Social V2
 
-## 已确定的技术路线
+- 用户主动开启 CloudBase 云端身份和本机回忆私密备份；
+- 微信分享邀请、手动接受、iSdu 双向好友和删除好友；
+- `仅自己 / 指定好友 / 全部好友` 三档可见范围；
+- 服务端权限校验后的点赞与取消点赞；
+- 好友近 24 小时地图图层；
+- 可分页翻阅历史共享内容的“好友时光”；
+- 删除好友、撤销权限或重新建立关系后重新鉴权；
+- 云端账号与数据删除入口。
 
-- 微信原生小程序。
-- TypeScript + WXML + WXSS。
-- WebView 渲染器作为比赛版基线。
-- `tdesign-miniprogram` 作为唯一正式 UI 组件库，按需注册组件。
-- 自研二维插画地图画布：`movable-area` / `movable-view` + 比例坐标。
-- 当前 `0.9.0` 仅使用本地 Repository，不含云同步；未来 CloudBase 实现继续复用统一接口。
-- 长期云端版使用 CloudBase 文档数据库与云存储，并设置仅创建者可读写。
-- TypeScript 类型检查、ESLint、Prettier、纯逻辑测试和真机关键流程检查。
+> iSdu 好友是用户主动建立的应用内关系。项目不读取微信好友列表、通讯录、手机号或 GPS，也不提供公开动态广场。
 
-完整理由与风险见 [技术栈决策](docs/TECH_STACK_DECISION.md)。
+## 技术架构
 
-## 当前目录
+- 微信原生小程序：TypeScript、WXML、WXSS；
+- WebView 渲染器；
+- `tdesign-miniprogram@1.15.3` 按需使用；
+- `movable-area` / `movable-view` + 自研比例坐标系统；
+- Local Repository + 小程序用户文件目录；
+- CloudBase 文档数据库、云存储和云函数；
+- `auth-api`、`memory-api`、`friend-api`；
+- 云函数精确锁定 `wx-server-sdk@4.0.2`；
+- Node.js 原生测试、TypeScript、ESLint、Prettier 和敏感信息扫描。
 
-```text
-.
-├── AGENTS.md
-├── README.md
-├── package.json
-├── package-lock.json
-├── project.config.json
-├── tsconfig.json
-├── docs/
-│   ├── OPEN_SOURCE_EVALUATION.md
-│   ├── TECH_STACK_DECISION.md
-│   ├── INTEGRATION_PLAN.md
-│   ├── THIRD_PARTY_NOTICES.md
-│   ├── RISK_REGISTER.md
-│   ├── STATUS.md
-│   ├── MANUAL_SETUP.md
-│   ├── MANUAL_TEST_CHECKLIST.md
-│   ├── MAP_COORDINATE_SYSTEM.md
-│   ├── LOCAL_DATA_DESIGN.md
-│   └── NEXT_TASK_PROMPT.md
-└── miniprogram/
-    ├── config/
-    ├── data/
-    ├── models/
-    ├── services/
-    ├── utils/
-    ├── components/
-    ├── assets/
-    └── pages/
+页面只通过服务与 Repository 访问数据。云端身份来自 `cloud.getWXContext()`，客户端传入的用户 ID、作者 ID 或好友状态不作为授权依据；云图片只有在权限检查通过后才签发短期访问地址。
+
+## 本地运行
+
+环境建议：
+
+- Node.js `^22.15.0` 或 `>=24`；
+- npm `>=10`；
+- 微信开发者工具稳定版；
+- 一个自行创建并关联到当前小程序的 CloudBase 环境（仅体验本地模式时不需要）。
+
+```powershell
+npm.cmd ci --registry=https://registry.npmjs.org/
+npm.cmd run check
 ```
 
-## 关键设计约束
+然后在微信开发者工具中导入仓库根目录，并执行“工具 → 构建 npm”。真实 AppID、CloudBase 环境 ID 和开发者工具私有配置不得提交到仓库。详细步骤见：
 
-- 地图标记保存 `xRatio` / `yRatio`，不得保存固定屏幕像素。
-- 地图、标记必须在同一缩放和平移容器内，避免不同机型下漂移。
-- 比赛版不申请定位权限，不使用 GPS。
-- 日记和照片默认私有，不得公开读取。
-- 正式第三方依赖和迁移代码必须保留许可证、版权与来源。
-- 每轮只完成一个里程碑，完成后停止等待验收。
+- [开发者工具配置](docs/MANUAL_SETUP.md)
+- [CloudBase 安全部署](docs/CLOUDBASE_SECURITY_DEPLOYMENT.md)
+- [Social V2 双账号验收](docs/SOCIAL_V2_MANUAL_TEST.md)
+- [人工测试清单](docs/MANUAL_TEST_CHECKLIST.md)
 
-## 研究与决策文档
+## 隐私与安全边界
 
-- [开源项目评估](docs/OPEN_SOURCE_EVALUATION.md)
-- [技术栈决策](docs/TECH_STACK_DECISION.md)
-- [集成计划](docs/INTEGRATION_PLAN.md)
-- [第三方声明](docs/THIRD_PARTY_NOTICES.md)
-- [风险登记册](docs/RISK_REGISTER.md)
-- [项目状态](docs/STATUS.md)
-- [地图比例坐标系统](docs/MAP_COORDINATE_SYSTEM.md)
-- [本地数据与图片设计](docs/LOCAL_DATA_DESIGN.md)
-- [开发者工具与真机手册](docs/MANUAL_SETUP.md)
-- [本地闭环人工测试清单](docs/MANUAL_TEST_CHECKLIST.md)
-- [上线准备与发布清单](docs/RELEASE_READINESS.md)
-- [用户隐私保护指引填报草案](docs/PRIVACY_GUIDE_DRAFT.md)
-- [骨架任务基线（已执行）](docs/NEXT_TASK_PROMPT.md)
+- 回忆默认私密；
+- 客户端不直连跨用户业务集合；
+- 好友详情、图片、点赞、好友地图和好友时光分别执行服务端鉴权；
+- 邀请令牌单次使用、24 小时有效，数据库只保存哈希；
+- 图片数据库记录保存 `fileID`，客户端只接收短期地址；
+- 日志不记录 OpenID、完整正文、好友允许列表或图片临时地址；
+- 云端失败时不静默回退成本地双写。
 
-## 当前验收
+## 项目状态
 
-请先按 [上线准备与发布清单](docs/RELEASE_READINESS.md) 完成账号侧准备，再按 [人工配置与测试手册](docs/MANUAL_SETUP.md) 导入并构建，最后逐项执行 [本地闭环人工测试清单](docs/MANUAL_TEST_CHECKLIST.md)。当前版本通过开发者工具、一台 iOS 和一台 Android 的发布候选验收前，不提交正式审核。
+- 比赛第一版保留在 `main` 的历史节点 `4f517e9`；
+- Social V2 位于 `codex/social-v2`，已完成真实 CloudBase 部署、双账号好友关系、权限共享、点赞、好友 24 小时地图和好友时光体验；
+- 自动测试、类型检查、ESLint、Prettier 和安全扫描均纳入 `npm run check`；
+- 正式发布前仍应按文档复核 CloudBase 规则、素材权利和微信公众平台隐私声明。
 
-当前仓库不提交 `node_modules`、`miniprogram_npm`、真实 AppID 或开发者工具私有配置。
+比赛介绍 PPT 可在 [competition-v2 Release](https://github.com/MiniDiva8/iSdu/releases/tag/competition-v2) 下载。
 
-## 许可证与原创性
+## 素材与第三方说明
 
-项目仓库暂时保持私有，当前不添加 MIT 或其他项目自身的开源许可证；不对仓库自有内容作额外授权推断。
+TDesign MiniProgram 与微信云开发 SDK 的版本、许可证和使用范围记录在 [THIRD_PARTY_NOTICES.md](docs/THIRD_PARTY_NOTICES.md)。当前校园地图素材由项目所有者提供并经过处理；其生成过程、源文件和比赛使用权仍需单独归档，因此仓库不对该地图素材提供再利用授权。
 
-TDesign 已成为精确锁定的正式运行时依赖；其他候选仍不等于已经使用。依赖版本、许可证和使用范围见 [第三方声明](docs/THIRD_PARTY_NOTICES.md)。校园插画、空间坐标系统、空间日记交互和时光回放将作为本项目原创核心实现。
+## 许可证
+
+本仓库公开用于作品展示、学习交流和比赛体验，但项目自身当前仍为 `UNLICENSED`。除各第三方组件自身许可证明确授予的权利外，不因仓库公开而自动授予复制、修改、再发布或商业使用许可。

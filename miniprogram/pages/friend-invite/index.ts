@@ -9,7 +9,7 @@ function confirmFriendCloudUse(): Promise<boolean> {
       title: '开启 iSdu 好友身份？',
       content:
         '接受邀请会创建你的随机 iSdu 用户身份和双向好友关系。不会读取微信好友、通讯录、手机号或 GPS，也不会自动上传本机回忆。',
-      confirmText: '同意并继续',
+      confirmText: '同意',
       cancelText: '取消',
       success: (result) => resolve(result.confirm),
       fail: (result) => reject(new Error(result.errMsg)),
