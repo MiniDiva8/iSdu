@@ -17,18 +17,24 @@
 
 .editor-form {
   width: 100%;
+  padding: 20px;
   overflow-x: hidden;
+  background: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-divider);
+  border-radius: 24px;
 }
 
 .editor-header {
-  padding: 8px 0 24px;
+  padding: 12px 0 32px;
 }
 
 .editor-title {
   display: block;
+  font-family: var(--ui-font-display);
   font-size: 28px;
-  font-weight: 600;
-  line-height: 34px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  line-height: 40px;
 }
 
 .editor-subtitle {
@@ -36,8 +42,8 @@
   max-width: 560px;
   margin-top: 8px;
   color: var(--ui-color-text-secondary);
-  font-size: 15px;
-  line-height: 23px;
+  font-size: 14px;
+  line-height: 26px;
 }
 
 .editor-state-card {
@@ -46,6 +52,31 @@
   background: var(--ui-color-surface);
   border: 1px solid var(--ui-color-divider);
   border-radius: var(--ui-radius-large);
+}
+
+.editor-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.editor-progress__step {
+  flex: none;
+  color: var(--ui-color-text-tertiary);
+  font-size: 12px;
+  line-height: 24px;
+}
+
+.editor-progress__step--active {
+  color: var(--ui-color-primary-strong);
+  font-weight: 600;
+}
+
+.editor-progress__line {
+  flex: 1;
+  height: 1px;
+  background: var(--ui-color-divider);
 }
 
 .editor-state-card__title {
@@ -63,8 +94,10 @@
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px 0 24px;
-  border-bottom: 1px solid var(--ui-color-divider);
+  padding: 16px;
+  background: var(--ui-color-background-alt);
+  border: 1px solid var(--ui-color-divider);
+  border-radius: var(--ui-radius-medium);
 }
 
 .editor-context-row {
@@ -72,7 +105,7 @@
   min-width: 0;
   flex: 1;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
 }
 
 .editor-context-row:last-child {
@@ -99,7 +132,7 @@
 
 .editor-section {
   box-sizing: border-box;
-  padding: 28px 0;
+  padding: 32px 0;
   border-bottom: 1px solid var(--ui-color-divider);
 }
 
@@ -117,7 +150,7 @@
 
 .editor-section__title {
   display: block;
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   line-height: 28px;
 }
@@ -126,10 +159,10 @@
   display: block;
   width: 100%;
   max-width: 520px;
-  margin-top: 4px;
+  margin-top: 10px;
   color: var(--ui-color-text-secondary);
   font-size: 13px;
-  line-height: 18px;
+  line-height: 24px;
   overflow-wrap: break-word;
 }
 
@@ -137,10 +170,12 @@
   display: block;
   width: 100%;
   max-width: 520px;
-  margin-top: 6px;
-  color: var(--ui-color-primary-strong);
+  padding-top: 10px;
+  margin-top: 10px;
+  color: var(--ui-color-text-secondary);
   font-size: 12px;
-  line-height: 18px;
+  line-height: 22px;
+  border-top: 1px solid var(--ui-color-divider);
 }
 
 .editor-section__counter {
@@ -271,13 +306,13 @@
 .option-chip {
   box-sizing: border-box;
   max-width: 100%;
-  min-height: 38px;
+  min-height: 44px;
   width: auto;
   padding: 0 14px;
   margin: 0;
   color: var(--ui-color-text-secondary);
   font-size: 13px;
-  line-height: 36px;
+  line-height: 42px;
   background: var(--ui-color-surface-secondary);
   border: 1px solid transparent;
   border-radius: var(--ui-radius-pill);
@@ -286,9 +321,9 @@
 }
 
 .option-chip--selected {
-  color: var(--ui-color-primary-strong);
+  color: var(--ui-color-surface);
   font-weight: 500;
-  background: var(--ui-color-primary-soft);
+  background: var(--ui-color-primary);
   border-color: rgba(67, 122, 100, 0.16);
 }
 
@@ -387,11 +422,11 @@
 .editor-storage-note {
   display: block;
   max-width: 520px;
-  margin: 16px auto 0;
+  margin: 24px auto 0;
   color: var(--ui-color-text-tertiary);
   font-size: 12px;
-  line-height: 18px;
-  text-align: center;
+  line-height: 22px;
+  text-align: left;
 }
 
 @media (max-width: 480px) {
@@ -404,8 +439,21 @@
     align-items: flex-start;
   }
 
+  .editor-context-row {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .editor-context-label {
+    flex: none;
+  }
+
   .editor-context-value {
-    text-align: left;
+    font-size: 13px;
+    line-height: 22px;
+    text-align: right;
   }
 }
 
@@ -420,6 +468,15 @@
   }
 
   .editor-section__heading {
+    gap: 8px;
+  }
+
+  .editor-form {
+    padding: 16px;
+  }
+
+  .editor-actions {
+    grid-template-columns: minmax(0, 1fr);
     gap: 8px;
   }
 }

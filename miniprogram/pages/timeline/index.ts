@@ -1,15 +1,9 @@
 import { campusMapConfig } from '../../config/campus-map';
 import type { FriendTimelineCursor, FriendTimelineItem } from '../../models/friend-timeline-item';
 import { getMemoryCategoryLabel, getMemoryMoodLabel, type Memory } from '../../models/memory';
-import {
-  USER_PROFILE_NAME_MAX_LENGTH,
-  USER_PROFILE_SIGNATURE_MAX_LENGTH,
-  UserProfileValidationError,
-  type UserProfile,
-} from '../../models/user-profile';
+import type { UserProfile } from '../../models/user-profile';
 import { cloudModeService } from '../../services/cloud/cloud-mode-service';
 import { consumeMapFocusIntent, setMapFocusIntent } from '../../services/map-focus-intent';
-import { cloudAuthRepository } from '../../services/repository/cloud-auth-repository';
 import { cloudMemoryRepository } from '../../services/repository/cloud-memory-repository';
 import { memoryRepository, userProfileRepository } from '../../services/repository/index';
 import { formatMemoryDateTime } from '../../utils/date-format';
@@ -157,20 +151,10 @@ Page({
     isFriendLoading: false,
     isFriendLoadingMore: false,
     isLoading: true,
-    isProfileEditorOpen: false,
     isProfileLoading: true,
-    isProfileSaving: false,
     isSearchEmpty: false,
     keyword: '',
-    profileButtonLabel: '设置资料',
-    profileDisplayName: '',
-    profileDraftName: '',
-    profileDraftSignature: '',
     profileErrorMessage: '',
-    profileInitial: '忆',
-    profileNameMaxLength: USER_PROFILE_NAME_MAX_LENGTH,
-    profileSignature: '',
-    profileSignatureMaxLength: USER_PROFILE_SIGNATURE_MAX_LENGTH,
     resultCount: 0,
     timelineMode: 'mine',
     timelineTitle: createTimelineTitle(null),
@@ -200,114 +184,23 @@ Page({
 
   async loadProfile() {
     this.setData({ isProfileLoading: true, profileErrorMessage: '' });
-
     try {
       const profile = await userProfileRepository.getProfile();
-      const displayName = profile?.displayName ?? '';
-
-      this.setData({
-        isProfileLoading: false,
-        profileButtonLabel: profile ? '编辑资料' : '设置资料',
-        profileDisplayName: displayName,
-        profileDraftName: displayName,
-        profileDraftSignature: profile?.signature ?? '',
-        profileInitial: createProfileInitial(displayName),
-        profileSignature: profile?.signature ?? '',
-        timelineTitle: createTimelineTitle(profile),
-      });
+      this.setData({ isProfileLoading: false, timelineTitle: createTimelineTitle(profile) });
     } catch (error: unknown) {
       this.setData({
         isProfileLoading: false,
         profileErrorMessage:
-          error instanceof Error ? error.message : '本地个人资料读取失败，请重新设置。',
+          error instanceof Error ? error.message : '个人资料读取失败，请前往我的空间重新设置。',
       });
     }
   },
 
-  openProfileEditor() {
-    this.setData({
-      isProfileEditorOpen: true,
-      profileDraftName: this.data.profileDisplayName,
-      profileDraftSignature: this.data.profileSignature,
-      profileErrorMessage: '',
+  openMySpace() {
+    void wx.navigateTo({
+      url: '/pages/profile/index',
+      fail: () => this.setData({ actionMessage: '我的空间暂时无法打开，请稍后重试。' }),
     });
-  },
-
-  cancelProfileEditor() {
-    if (this.data.isProfileSaving) {
-      return;
-    }
-
-    this.setData({
-      isProfileEditorOpen: false,
-      profileDraftName: this.data.profileDisplayName,
-      profileDraftSignature: this.data.profileSignature,
-      profileErrorMessage: '',
-    });
-  },
-
-  handleProfileNameInput(event: WechatMiniprogram.Input) {
-    this.setData({
-      profileDraftName: event.detail.value.slice(0, USER_PROFILE_NAME_MAX_LENGTH),
-      profileErrorMessage: '',
-    });
-  },
-
-  handleProfileSignatureInput(event: WechatMiniprogram.TextareaInput) {
-    this.setData({
-      profileDraftSignature: event.detail.value.slice(0, USER_PROFILE_SIGNATURE_MAX_LENGTH),
-      profileErrorMessage: '',
-    });
-  },
-
-  async saveProfile() {
-    if (this.data.isProfileSaving) {
-      return;
-    }
-
-    this.setData({ isProfileSaving: true, profileErrorMessage: '' });
-
-    try {
-      const profile = await userProfileRepository.saveProfile({
-        displayName: this.data.profileDraftName,
-        signature: this.data.profileDraftSignature,
-      });
-
-      let actionMessage = '个人资料已保存在本机。';
-      if (cloudModeService.getState().privacyAcceptedAt) {
-        try {
-          await cloudAuthRepository.bootstrap();
-          await cloudAuthRepository.updateMyProfile({
-            displayName: profile.displayName,
-            signature: profile.signature,
-          });
-          actionMessage = '个人资料已同步到 iSdu 好友身份。';
-        } catch {
-          actionMessage = '资料已保存在本机，但云端好友资料同步失败，请稍后重试。';
-        }
-      }
-
-      this.setData({
-        actionMessage,
-        isProfileEditorOpen: false,
-        isProfileSaving: false,
-        profileButtonLabel: '编辑资料',
-        profileDisplayName: profile.displayName,
-        profileDraftName: profile.displayName,
-        profileDraftSignature: profile.signature,
-        profileInitial: createProfileInitial(profile.displayName),
-        profileSignature: profile.signature,
-        timelineTitle: createTimelineTitle(profile),
-      });
-    } catch (error: unknown) {
-      this.setData({
-        isProfileSaving: false,
-        profileErrorMessage:
-          error instanceof UserProfileValidationError || error instanceof Error
-            ? error.message
-            : '个人资料保存失败，请重试。',
-      });
-    }
   },
 
   async loadTimeline() {
@@ -444,7 +337,7 @@ Page({
 
   openDataManagement() {
     void wx.navigateTo({
-      url: '/pages/profile/index',
+      url: '/pages/data-management/index',
       fail: () => {
         this.setData({ actionMessage: '数据管理页暂时无法打开，请稍后重试。' });
       },

@@ -1,0 +1,25 @@
+<view class="page-shell about-page">
+  <view class="page-hero"
+    ><text class="eyebrow">校园记忆星图</text><text class="page-title">关于 iSdu</text
+    ><text class="page-subtitle">让普通的一天，也有迹可循。</text></view
+  >
+  <view class="about-cover">
+    <view class="about-orbit" aria-hidden="true"><text class="about-star">✦</text></view>
+    <text class="about-wordmark">iSdu</text>
+    <text class="about-motto">一处地点，一段时光。</text>
+  </view>
+  <view class="about-story"
+    ><text class="about-story__title">把记忆留在发生的地方</text
+    ><text class="about-story__copy"
+      >在校园插画地图上，留下照片、文字与心情。沿着时间慢慢回看，也可以把故事分享给你主动确认的好友。</text
+    ></view
+  >
+  <view class="about-story"
+    ><text class="about-story__title">分享的边界，由你决定</text
+    ><text class="about-story__copy"
+      >回忆默认私密。你可以选择仅自己、指定好友或全部好友可见。iSdu 不读取微信好友列表、通讯录或
+      GPS。</text
+    ></view
+  >
+  <text class="about-disclaimer">iSdu 是非官方的个人校园记忆工具，不代表山东大学官方应用。</text>
+</view>

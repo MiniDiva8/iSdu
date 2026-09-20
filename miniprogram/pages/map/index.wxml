@@ -1,8 +1,41 @@
 <view class="map-page">
   <view class="map-hero">
-    <text class="eyebrow">我的校园回忆</text>
-    <text class="map-page-title">记忆星图</text>
-    <text class="map-page-subtitle">在熟悉的地方，留下属于你的回忆。</text>
+    <view class="map-hero__copy">
+      <text class="map-edition">iSdu <text class="map-edition__divider">/</text> 校园记忆册</text>
+      <text class="map-page-title"
+        >把校园日常，<text class="map-title-accent">寄给未来的你。</text></text
+      >
+    </view>
+    <view class="map-postage" aria-hidden="true">
+      <text class="map-postage__star">✦</text>
+      <text class="map-postage__label">珍藏此刻</text>
+    </view>
+  </view>
+
+  <view wx:if="{{isMapReady && !isPickingLocation}}" class="map-toolbar">
+    <view class="map-layer-switch">
+      <button
+        class="map-layer-switch__button {{mapLayer === 'mine' ? 'map-layer-switch__button--active' : ''}}"
+        data-layer="mine"
+        bindtap="handleMapLayerTap"
+      >
+        我的
+      </button>
+      <button
+        class="map-layer-switch__button {{mapLayer === 'friends' ? 'map-layer-switch__button--active' : ''}}"
+        data-layer="friends"
+        bindtap="handleMapLayerTap"
+      >
+        好友 24h
+      </button>
+    </view>
+    <button
+      wx:if="{{mapLayer === 'mine'}}"
+      class="map-floating-control {{activeFilterCount ? 'map-floating-control--active' : ''}}"
+      bindtap="toggleFilterPanel"
+    >
+      筛选<text wx:if="{{activeFilterCount}}"> · {{activeFilterCount}}</text>
+    </button>
   </view>
 
   <view class="map-stage">
@@ -107,35 +140,14 @@
         </view>
       </view>
 
-      <view wx:if="{{isMapReady && !isPickingLocation}}" class="map-floating-tools">
-        <button
-          wx:if="{{mapLayer === 'mine'}}"
-          class="map-floating-control {{activeFilterCount ? 'map-floating-control--active' : ''}}"
-          bindtap="toggleFilterPanel"
-        >
-          筛选<text wx:if="{{activeFilterCount}}"> · {{activeFilterCount}}</text>
-        </button>
-        <text class="map-memory-count">
-          {{mapLayer === 'mine' ? visibleMarkerCount : friendMarkers.length}} 段回忆
-        </text>
-      </view>
-
-      <view wx:if="{{isMapReady && !isPickingLocation}}" class="map-layer-switch">
-        <button
-          class="map-layer-switch__button {{mapLayer === 'mine' ? 'map-layer-switch__button--active' : ''}}"
-          data-layer="mine"
-          bindtap="handleMapLayerTap"
-        >
-          我的
-        </button>
-        <button
-          class="map-layer-switch__button {{mapLayer === 'friends' ? 'map-layer-switch__button--active' : ''}}"
-          data-layer="friends"
-          bindtap="handleMapLayerTap"
-        >
-          好友 24h
-        </button>
-      </view>
+      <button
+        wx:if="{{isMapReady && !isPickingLocation}}"
+        class="map-reset-action"
+        bindtap="resetMapView"
+        aria-label="回到地图初始位置"
+      >
+        复位
+      </button>
 
       <scroll-view
         wx:if="{{filterPanelOpen && isMapReady && !isPickingLocation}}"
@@ -253,6 +265,23 @@
         移动地图，把想记录的位置放到准星下
       </view>
     </view>
+    <view wx:if="{{!isPickingLocation}}" class="map-postcard-caption">
+      <view class="map-postcard-caption__place">
+        <text class="map-postcard-caption__name">山东大学 · 中心校区</text>
+        <text class="map-postcard-caption__hint">拖动探索 · 双指缩放</text>
+      </view>
+      <view class="map-postcard-count">
+        <text class="map-postcard-count__value"
+          >{{mapLayer === 'mine' ? (isMemoryLoading || hasRepositoryError ? '—' :
+          visibleMarkerCount) : (isFriendLayerLoading || friendLoadError ? '—' :
+          friendMarkers.length)}}</text
+        >
+        <text class="map-postcard-count__label"
+          >{{mapLayer === 'mine' ? (activeFilterCount ? '筛选星点' : '我的星点') :
+          '好友星点'}}</text
+        >
+      </view>
+    </view>
   </view>
 
   <view wx:if="{{hasRepositoryError}}" class="status-banner status-banner--error">
@@ -277,29 +306,17 @@
   </view>
 
   <view
-    wx:if="{{mapLayer === 'mine' && hasNoMarkers && !isMemoryLoading && !hasRepositoryError}}"
+    wx:if="{{!isPickingLocation && mapLayer === 'mine' && activeFilterCount && hasNoMarkers && !isMemoryLoading && !hasRepositoryError}}"
     class="map-empty-state"
   >
-    <text class="map-empty-state__title">
-      {{activeFilterCount ? '当前筛选下没有回忆' : '这里还没有留下记忆'}}
-    </text>
-    <text class="map-empty-state__copy">
-      {{activeFilterCount ? '调整筛选，就能重新看见其他记忆。' :
-      '在地图上标记属于你的第一段校园时光。'}}
-    </text>
-    <text wx:if="{{!activeFilterCount}}" class="map-empty-state__privacy-copy">
-      当前版本的回忆和照片只保存在这台设备，没有云端备份。
-    </text>
+    <text class="map-empty-state__copy"> 暂无匹配回忆，试试调整筛选。 </text>
   </view>
 
   <view
-    wx:if="{{mapLayer === 'friends' && !isFriendLayerLoading && !friendLoadError && friendMarkers.length === 0}}"
+    wx:if="{{!isPickingLocation && mapLayer === 'friends' && !isFriendLayerLoading && !friendLoadError && friendMarkers.length === 0}}"
     class="map-empty-state"
   >
-    <text class="map-empty-state__title">好友近 24 小时还没有公开星点</text>
-    <text class="map-empty-state__copy"
-      >只有仍是好友、当前有权查看且地图版本一致的回忆会显示。</text
-    >
+    <text class="map-empty-state__copy">近 24 小时，暂无好友分享给你的星点。</text>
   </view>
 
   <view wx:if="{{isPickingLocation}}" class="map-pick-bar">
@@ -319,8 +336,10 @@
   </view>
 
   <view wx:else class="map-primary-actions">
-    <t-button theme="primary" block bind:tap="startPickingLocation">记录此处</t-button>
-    <button class="map-reset-action" bindtap="resetMapView">回到初始位置</button>
+    <t-button theme="primary" block disabled="{{!isMapReady}}" bind:tap="startPickingLocation"
+      >{{mapLayer === 'mine' && !isMemoryLoading && !hasRepositoryError && availableMarkerCount ===
+      0 ? '＋ 点亮我的第一颗星' : '＋ 留下一段回忆'}}</t-button
+    >
   </view>
 
   <view wx:if="{{selectedMemory}}" class="memory-sheet-backdrop" catchtap="closeMemoryCard"></view>
