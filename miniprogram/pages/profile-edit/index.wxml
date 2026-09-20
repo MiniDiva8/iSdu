@@ -1,0 +1,53 @@
+<view class="page-shell personal-page">
+  <view class="page-hero"
+    ><text class="eyebrow">以你的名字，收藏时光</text><text class="page-title">个人资料</text
+    ><text class="page-subtitle">一个名字，一句此刻想说的话。</text></view
+  >
+  <view class="personal-form">
+    <view class="personal-field">
+      <label for="profile-name" class="personal-label">名字</label>
+      <input
+        id="profile-name"
+        class="personal-input"
+        value="{{profileDraftName}}"
+        maxlength="{{profileNameMaxLength}}"
+        disabled="{{isLoading || isSaving}}"
+        placeholder="例如：小忆"
+        bindinput="handleProfileNameInput"
+      />
+      <text class="personal-counter">{{profileDraftName.length}} / {{profileNameMaxLength}}</text>
+    </view>
+    <view class="personal-field">
+      <label for="profile-signature" class="personal-label">个性签名</label>
+      <textarea
+        id="profile-signature"
+        class="personal-textarea"
+        value="{{profileDraftSignature}}"
+        maxlength="{{profileSignatureMaxLength}}"
+        disabled="{{isLoading || isSaving}}"
+        placeholder="把校园里的每一天，好好收起来。"
+        bindinput="handleProfileSignatureInput"
+      />
+      <text class="personal-counter"
+        >{{profileDraftSignature.length}} / {{profileSignatureMaxLength}}</text
+      >
+    </view>
+    <text class="personal-note">资料先保存在本机；开启云端后，会同步到你的 iSdu 好友身份。</text>
+    <text wx:if="{{errorMessage}}" class="personal-message personal-message--error"
+      >{{errorMessage}}</text
+    >
+    <text wx:if="{{actionMessage}}" class="personal-message">{{actionMessage}}</text>
+    <view class="personal-actions"
+      ><t-button
+        theme="primary"
+        block
+        loading="{{isSaving}}"
+        disabled="{{isLoading || isSaving}}"
+        bind:tap="saveProfile"
+        >{{isLoading ? '正在读取…' : '保存资料'}}</t-button
+      ><button class="ui-text-button" disabled="{{isSaving}}" bindtap="cancelEditing">
+        返回我的空间
+      </button></view
+    >
+  </view>
+</view>

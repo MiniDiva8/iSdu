@@ -1,0 +1,52 @@
+<view class="page-shell profile-page">
+  <view class="page-hero">
+    <text class="eyebrow">安心保存每段回忆</text>
+    <text class="page-title">备份与数据</text>
+    <text class="page-subtitle">在这里管理本机记录与云端备份。</text>
+  </view>
+  <view class="profile-note profile-cloud-zone">
+    <text class="profile-note__title">云端与好友功能</text>
+    <text class="profile-note__status">{{cloudStatusLabel}}</text>
+    <text class="profile-note__copy">
+      只有点击下方按钮并确认隐私说明后，iSdu
+      才会创建云端身份并备份本机回忆。备份默认全部私密，成功核验前不会切换数据源或删除本机副本。
+    </text>
+    <text class="profile-note__copy">
+      不读取微信好友列表、通讯录、手机号或 GPS；地图位置仍是插画地图上的比例位置。
+    </text>
+    <button
+      wx:if="{{!cloudModeActive}}"
+      class="profile-cloud-action"
+      loading="{{isMigrating}}"
+      disabled="{{isMigrating}}"
+      bindtap="enableCloudAndMigrate"
+    >
+      {{isMigrating ? (migrationProgressLabel || '正在连接云端…') : '开启云端并备份本机回忆'}}
+    </button>
+    <button
+      wx:if="{{cloudModeActive}}"
+      class="profile-clear-action profile-cloud-delete-action"
+      loading="{{isDeletingCloud}}"
+      disabled="{{isDeletingCloud}}"
+      bindtap="deleteAllCloudData"
+    >
+      {{isDeletingCloud ? '正在删除云端数据…' : '删除全部云端数据'}}
+    </button>
+  </view>
+  <view class="profile-danger-zone">
+    <text class="profile-danger-zone__title">本机数据管理</text>
+    <text class="profile-danger-zone__copy">
+      清除后将永久删除全部回忆、受管照片和个人资料，无法恢复。逐条删除请在回忆详情页操作。
+    </text>
+    <button
+      class="profile-clear-action"
+      loading="{{isClearing}}"
+      disabled="{{isClearing}}"
+      bindtap="clearAllLocalData"
+    >
+      {{isClearing ? '正在清除…' : '清除全部本机数据'}}
+    </button>
+  </view>
+  <text wx:if="{{actionMessage}}" class="profile-message">{{actionMessage}}</text>
+  <button class="profile-map-action" bindtap="returnToMap">返回校园地图</button>
+</view>

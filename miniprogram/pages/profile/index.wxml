@@ -1,59 +1,60 @@
-<view class="page-shell profile-page">
+<view class="page-shell space-page">
   <view class="page-hero">
-    <text class="eyebrow">私人记忆册</text>
-    <text class="page-title">我的校园记忆</text>
-    <text class="page-subtitle">个人资料可以在“时光”页设置；云端与好友功能由你主动开启。</text>
+    <text class="eyebrow">给生活留一点空白</text>
+    <text class="page-title">我的空间</text>
+    <text class="page-subtitle">关于你，以及你留下的校园故事。</text>
   </view>
-  <view class="profile-note profile-cloud-zone">
-    <text class="profile-note__title">云端与好友功能</text>
-    <text class="profile-note__status">{{cloudStatusLabel}}</text>
-    <text class="profile-note__copy">
-      只有点击下方按钮并确认隐私说明后，iSdu
-      才会创建云端身份并备份本机回忆。备份默认全部私密，成功核验前不会切换数据源或删除本机副本。
-    </text>
-    <text class="profile-note__copy">
-      不读取微信好友列表、通讯录、手机号或 GPS；地图位置仍是插画地图上的比例位置。
-    </text>
-    <button
-      wx:if="{{!cloudModeActive}}"
-      class="profile-cloud-action"
-      loading="{{isMigrating}}"
-      disabled="{{isMigrating}}"
-      bindtap="enableCloudAndMigrate"
-    >
-      {{isMigrating ? (migrationProgressLabel || '正在连接云端…') : '开启云端并备份本机回忆'}}
+  <button
+    class="space-identity"
+    data-page="profile-edit"
+    bindtap="openSection"
+    aria-label="编辑个人资料"
+  >
+    <view class="space-avatar">{{initial}}</view>
+    <view class="space-identity__body">
+      <text class="space-name">{{isLoading ? '正在读取资料…' : displayName}}</text>
+      <text class="space-signature">{{signature}}</text>
+    </view>
+    <text class="space-chevron" aria-hidden="true">›</text>
+  </button>
+  <text class="space-section-label">空间管理</text>
+  <view class="space-menu">
+    <button class="space-menu__item" data-page="profile-edit" bindtap="openSection">
+      <text class="space-menu__number" aria-hidden="true">01</text>
+      <view class="space-menu__body"
+        ><text class="space-menu__title">个人资料</text
+        ><text class="space-menu__hint">名字与个性签名</text></view
+      >
+      <text class="space-chevron" aria-hidden="true">›</text>
     </button>
-    <button
-      wx:if="{{cloudModeActive}}"
-      class="profile-clear-action profile-cloud-delete-action"
-      loading="{{isDeletingCloud}}"
-      disabled="{{isDeletingCloud}}"
-      bindtap="deleteAllCloudData"
-    >
-      {{isDeletingCloud ? '正在删除云端数据…' : '删除全部云端数据'}}
+    <button class="space-menu__item" data-page="friends" bindtap="openSection">
+      <text class="space-menu__number" aria-hidden="true">02</text>
+      <view class="space-menu__body"
+        ><text class="space-menu__title">我的好友</text
+        ><text class="space-menu__hint">邀请、确认与管理好友</text></view
+      >
+      <text class="space-chevron" aria-hidden="true">›</text>
+    </button>
+    <button class="space-menu__item" data-page="data-management" bindtap="openSection">
+      <text class="space-menu__number" aria-hidden="true">03</text>
+      <view class="space-menu__body"
+        ><text class="space-menu__title">备份与数据</text
+        ><text class="space-menu__hint">{{storageLabel}}</text></view
+      >
+      <text class="space-chevron" aria-hidden="true">›</text>
+    </button>
+    <button class="space-menu__item" data-page="about" bindtap="openSection">
+      <text class="space-menu__number" aria-hidden="true">04</text>
+      <view class="space-menu__body"
+        ><text class="space-menu__title">关于 iSdu</text
+        ><text class="space-menu__hint">了解这本校园记忆册</text></view
+      >
+      <text class="space-chevron" aria-hidden="true">›</text>
     </button>
   </view>
-  <view class="profile-danger-zone">
-    <text class="profile-danger-zone__title">本机数据管理</text>
-    <text class="profile-danger-zone__copy">
-      清除后将永久删除全部回忆、受管照片和个人资料，无法恢复。逐条删除请在回忆详情页操作。
-    </text>
-    <button
-      class="profile-clear-action"
-      loading="{{isClearing}}"
-      disabled="{{isClearing}}"
-      bindtap="clearAllLocalData"
-    >
-      {{isClearing ? '正在清除…' : '清除全部本机数据'}}
-    </button>
-  </view>
-  <view class="profile-about">
-    <text class="profile-about__title">关于 iSdu</text>
-    <text class="profile-about__copy">
-      iSdu 是非官方的个人校园记忆工具，不代表山东大学官方应用。第二阶段只提供用户主动建立的 iSdu
-      好友、严格权限分享和云端备份，不提供公开广场、通讯录匹配或 GPS。
-    </text>
-  </view>
-  <text wx:if="{{actionMessage}}" class="profile-message">{{actionMessage}}</text>
-  <button class="profile-map-action" bindtap="returnToMap">返回校园地图</button>
+  <view wx:if="{{errorMessage}}" class="space-error"
+    ><text>{{errorMessage}}</text
+    ><button class="ui-text-button" bindtap="loadProfile">重试</button></view
+  >
+  <text class="space-footer">一处地点，一段只属于你的时光。</text>
 </view>

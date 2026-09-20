@@ -10,101 +10,16 @@
     >
   </view>
 
-  <view class="timeline-profile">
-    <view class="timeline-profile__avatar">{{profileInitial}}</view>
-    <view class="timeline-profile__body">
-      <text class="timeline-profile__name">{{profileDisplayName || '给自己取个名字'}}</text>
-      <text class="timeline-profile__signature">
-        {{profileSignature || '写下一句属于你的校园签名'}}
-      </text>
-    </view>
-    <view class="timeline-profile__actions">
+  <view class="timeline-toolbar">
+    <text class="timeline-storage-status">{{isCloudActive ? '云端回忆' : '本机 · 未备份'}}</text>
+    <view class="timeline-toolbar__links">
       <button class="ui-text-button" bindtap="openFriends">好友</button>
-      <button class="ui-text-button" disabled="{{isProfileLoading}}" bindtap="openProfileEditor">
-        {{isProfileLoading ? '读取中' : profileButtonLabel}}
-      </button>
+      <button class="ui-text-button" bindtap="openMySpace">我的空间 ›</button>
     </view>
   </view>
-
-  <view wx:if="{{isProfileEditorOpen}}" class="timeline-profile-editor">
-    <view class="timeline-profile-editor__heading">
-      <view>
-        <text class="timeline-profile-editor__title">编辑个人资料</text>
-        <text class="timeline-profile-editor__hint"
-          >资料先保存在本机；开启云端后会同步到 iSdu 好友身份。</text
-        >
-      </view>
-      <button
-        class="timeline-profile-editor__close"
-        disabled="{{isProfileSaving}}"
-        bindtap="cancelProfileEditor"
-      >
-        ×
-      </button>
-    </view>
-
-    <text class="timeline-profile-editor__label">名字</text>
-    <input
-      class="timeline-profile-editor__input"
-      value="{{profileDraftName}}"
-      maxlength="{{profileNameMaxLength}}"
-      placeholder="例如：小忆"
-      disabled="{{isProfileSaving}}"
-      bindinput="handleProfileNameInput"
-    />
-    <text class="timeline-profile-editor__counter"
-      >{{profileDraftName.length}} / {{profileNameMaxLength}}</text
-    >
-
-    <text class="timeline-profile-editor__label timeline-profile-editor__label--signature"
-      >个性签名</text
-    >
-    <textarea
-      class="timeline-profile-editor__textarea"
-      value="{{profileDraftSignature}}"
-      maxlength="{{profileSignatureMaxLength}}"
-      placeholder="例如：把校园里的每一天，好好收起来。"
-      auto-height="{{false}}"
-      disabled="{{isProfileSaving}}"
-      bindinput="handleProfileSignatureInput"
-    />
-    <text class="timeline-profile-editor__counter"
-      >{{profileDraftSignature.length}} / {{profileSignatureMaxLength}}</text
-    >
-
-    <text wx:if="{{profileErrorMessage}}" class="timeline-profile-editor__error"
-      >{{profileErrorMessage}}</text
-    >
-    <view class="timeline-profile-editor__actions">
-      <button
-        class="timeline-profile-editor__cancel"
-        disabled="{{isProfileSaving}}"
-        bindtap="cancelProfileEditor"
-      >
-        取消
-      </button>
-      <t-button theme="primary" block loading="{{isProfileSaving}}" bind:tap="saveProfile"
-        >保存资料</t-button
-      >
-    </view>
-  </view>
-
-  <view wx:if="{{profileErrorMessage && !isProfileEditorOpen}}" class="timeline-profile-warning">
+  <view wx:if="{{profileErrorMessage}}" class="timeline-profile-warning">
     <text>{{profileErrorMessage}}</text>
-    <button bindtap="openProfileEditor">重新设置</button>
-  </view>
-
-  <view class="timeline-data-note">
-    <view>
-      <text class="timeline-data-note__title"
-        >{{isCloudActive ? '云端与好友功能已开启' : '仅保存在这台设备'}}</text
-      >
-      <text class="timeline-data-note__copy"
-        >{{isCloudActive ? '云端回忆按你设置的范围分享；好友访问仍会再次鉴权。' :
-        '没有云端备份；换设备或清除数据后可能无法恢复。'}}</text
-      >
-    </view>
-    <button class="ui-text-button" bindtap="openDataManagement">数据管理</button>
+    <button bindtap="openMySpace">去设置</button>
   </view>
 
   <view class="timeline-mode" aria-label="时光查看范围">

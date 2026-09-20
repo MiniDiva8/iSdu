@@ -145,6 +145,7 @@ async function cleanupUnreferencedImages(candidatePaths: readonly string[]): Pro
 
 Page({
   data: {
+    editorStep: 'content',
     category: 'campus-life',
     categoryOptions,
     coordinateLabel: '尚未选择位置',
@@ -299,6 +300,26 @@ Page({
         selected: selectedIds.has(item.friend.userId),
       })),
     });
+  },
+
+  goToOptions() {
+    if (!this.data.isFormReady || this.data.isSaving || this.data.hasSaved) return;
+    if (!this.data.text.trim() && this.data.images.length === 0) {
+      this.setData({ formError: '先写下一段文字，或添加一张照片。' });
+      return;
+    }
+    if (this.data.images.some((image) => image.loadFailed)) {
+      this.setData({ formError: '请先移除无法读取的照片，再继续。' });
+      return;
+    }
+    this.setData({ editorStep: 'options', formError: '' });
+    void wx.pageScrollTo({ scrollTop: 0, duration: 180 });
+  },
+
+  backToContent() {
+    if (this.data.isSaving || this.data.hasSaved) return;
+    this.setData({ editorStep: 'content', formError: '' });
+    void wx.pageScrollTo({ scrollTop: 0, duration: 180 });
   },
 
   selectVisibility(event: WechatMiniprogram.BaseEvent) {
@@ -558,7 +579,7 @@ Page({
     }
 
     if (this.data.images.some((image) => image.loadFailed)) {
-      this.setData({ formError: '请先移除无法读取的照片，再保存回忆。' });
+      this.setData({ editorStep: 'content', formError: '请先移除无法读取的照片，再保存回忆。' });
       return;
     }
 
@@ -676,6 +697,7 @@ Page({
         formError: `${getErrorMessage(error)}${rollbackWarning}${
           selectedImagesInvalidated ? '；本轮新选照片已失效，请重新选择' : ''
         }`,
+        editorStep: selectedImagesInvalidated ? 'content' : this.data.editorStep,
         images: selectedImagesInvalidated
           ? this.data.images.filter((image) => !image.isTemporary)
           : this.data.images,

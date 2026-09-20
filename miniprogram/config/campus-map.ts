@@ -21,9 +21,11 @@ interface CampusMapConfig {
  * source image. It intentionally excludes the irregular warm-white margin.
  * Ratios remain relative to the complete source image so existing marker math
  * and persisted coordinates do not depend on a device viewport.
+ * The refined illustration retains the same canvas and landmark layout;
+ * its visual revision does not introduce a new coordinate system version.
  */
 export const campusMapConfig = {
-  assetPath: '/assets/demo/campus-map-placeholder.jpg',
+  assetPath: '/assets/demo/campus-map-refined.jpg',
   assetVersion: CURRENT_MAP_ASSET_VERSION,
   clusterDistancePx: 54,
   displayName: '山东大学中心校区',

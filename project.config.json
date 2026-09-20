@@ -45,6 +45,10 @@
   "packOptions": {
     "ignore": [
       {
+        "value": "assets/demo/campus-map-placeholder.jpg",
+        "type": "file"
+      },
+      {
         "value": "assets/README.md",
         "type": "file"
       },

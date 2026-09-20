@@ -183,10 +183,11 @@ function isNodeRect(value: unknown): value is NodeRect {
   );
 }
 function createMapLayout(windowSize: MapSize): MapLayout {
-  const horizontalPadding = windowSize.width <= 340 ? 32 : 40;
+  const horizontalPadding = windowSize.width <= 340 ? 48 : 56;
   const viewportSize = {
-    width: Math.max(280, Math.min(920, Math.round(windowSize.width - horizontalPadding))),
-    height: Math.max(320, Math.min(620, Math.round(windowSize.height * 0.62))),
+    width: Math.max(260, Math.min(904, Math.round(windowSize.width - horizontalPadding))),
+    // Reserve room for the title, toolbar and primary action on compact screens.
+    height: Math.max(280, Math.min(620, Math.round(windowSize.height - 360))),
   };
   const mapSize = calculateCoverSize(ORIGINAL_MAP_SIZE, viewportSize);
   const mapOffset = { x: viewportSize.width / 2, y: viewportSize.height / 2 };
@@ -503,7 +504,7 @@ Page({
   async refreshFriendLayer() {
     if (cloudModeService.getState().mode !== 'cloud') {
       this.setData({
-        friendLoadError: '请先在“时光 → 数据管理”中开启云端与好友功能。',
+        friendLoadError: '请先在“时光 → 我的空间 → 备份与数据”中开启云端与好友功能。',
         friendMarkers: [],
         friendPoints: [],
         isFriendLayerLoading: false,
