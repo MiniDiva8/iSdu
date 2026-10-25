@@ -1,0 +1,101 @@
+{
+  "description": "iSdu 微信原生 TypeScript 小程序公共工程配置",
+  "cloudfunctionRoot": "cloudfunctions/",
+  "miniprogramRoot": "miniprogram/",
+  "srcMiniprogramRoot": "miniprogram/",
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "ignoreUploadUnusedFiles": true,
+    "ignoreDevUnusedFiles": true,
+    "nodeModules": true,
+    "packNpmManually": true,
+    "packNpmRelationList": [
+      {
+        "packageJsonPath": "./package.json",
+        "miniprogramNpmDistDir": "./miniprogram/"
+      }
+    ],
+    "useCompilerPlugins": ["typescript"],
+    "skylineRenderEnable": false,
+    "uploadWithSourceMap": true,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "compileType": "miniprogram",
+  "simulatorType": "wechat",
+  "appid": "touristappid",
+  "projectname": "iSdu",
+  "libVersion": "3.7.6",
+  "packOptions": {
+    "ignore": [
+      {
+        "value": "assets/demo/campus-map-placeholder.jpg",
+        "type": "file"
+      },
+      {
+        "value": "assets/README.md",
+        "type": "file"
+      },
+      {
+        "value": "components/README.md",
+        "type": "file"
+      },
+      {
+        "value": "data/demo-memories.ts",
+        "type": "file"
+      },
+      {
+        "value": "models/memory.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "services/local-image-service.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "services/repository/local-memory-repository.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "services/repository/local-user-profile-repository.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "utils/map-coordinates.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "utils/memory-filters.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "utils/memory-insights.test.mjs",
+        "type": "file"
+      }
+    ],
+    "include": []
+  },
+  "condition": {
+    "miniprogram": {
+      "list": []
+    }
+  },
+  "simulatorPluginLibVersion": {},
+  "editorSetting": {}
+}

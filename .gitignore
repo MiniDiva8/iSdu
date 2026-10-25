@@ -1,0 +1,40 @@
+# Dependencies and generated mini-program packages
+node_modules/
+miniprogram_npm/
+dist/
+coverage/
+
+# WeChat DevTools machine-private configuration
+project.private.config.json
+*.private.config.json
+
+# CloudBase and environment-specific local configuration
+.env
+.env.*
+!.env.example
+.cloudbaserc
+.cloudbaserc.*
+.secrets/
+
+# Third-party evaluation checkouts must never enter the product repository
+third-party-evaluation/
+
+# Local source artwork and export files; only optimized runtime assets belong in miniprogram/assets
+/ChatGPT Image*
+/*.psd
+/*.psb
+/*.ai
+
+# Logs and editor/OS noise
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Isolated development scratch and local verification
+.worktrees/
+.superpowers/
+.verification/
+.preview/
+playwright-report/

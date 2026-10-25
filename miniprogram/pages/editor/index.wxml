@@ -1,0 +1,256 @@
+<view class="page-shell editor-page">
+  <view class="page-hero editor-header">
+    <text class="eyebrow">留住这一刻</text>
+    <text class="editor-title">{{pageTitle}}</text>
+    <text class="editor-subtitle">{{pageSubtitle}}</text>
+  </view>
+
+  <view wx:if="{{isFormReady && !isLoading}}" class="editor-progress" aria-label="记录步骤">
+    <text
+      class="editor-progress__step {{editorStep === 'content' ? 'editor-progress__step--active' : ''}}"
+      >01 · 照片与文字</text
+    >
+    <view class="editor-progress__line"></view>
+    <text
+      class="editor-progress__step {{editorStep === 'options' ? 'editor-progress__step--active' : ''}}"
+      >02 · 心情与分享</text
+    >
+  </view>
+
+  <view wx:if="{{isLoading}}" class="editor-state-card">
+    <text class="editor-state-card__title">正在读取回忆…</text>
+  </view>
+
+  <view wx:elif="{{!isFormReady}}" class="editor-state-card editor-state-card--error">
+    <t-empty description="{{formError || '记录页暂时无法使用'}}" />
+    <view class="editor-state-card__action">
+      <t-button theme="primary" variant="outline" block bind:tap="cancelEditing">返回地图</t-button>
+    </view>
+  </view>
+
+  <view wx:else class="editor-form">
+    <block wx:if="{{editorStep === 'content'}}">
+      <view class="editor-context">
+        <view class="editor-context-row">
+          <text class="editor-context-label">地点</text>
+          <text class="editor-context-value">已在校园地图中选择</text>
+        </view>
+        <view class="editor-context-row">
+          <text class="editor-context-label">记录时间</text>
+          <text class="editor-context-value">{{recordedAtLabel}}</text>
+        </view>
+      </view>
+
+      <view class="editor-section">
+        <view class="editor-section__heading">
+          <view class="editor-section__copy">
+            <text class="editor-section__title">照片</text>
+            <text class="editor-section__hint">
+              选择 1—3 张；优先压缩，单张不超过 {{imageMaxSizeLabel}}；也可以只写文字。
+            </text>
+            <text class="editor-section__privacy-hint">
+              {{isCloudMode ? '照片随回忆存入云端，按你设置的范围分享。' :
+              '照片只保存在当前设备，不会上传 iSdu 云端。'}}
+            </text>
+          </view>
+          <text class="editor-section__counter">{{images.length}} / {{imageLimit}}</text>
+        </view>
+
+        <view class="photo-grid">
+          <view wx:for="{{images}}" wx:key="id" class="photo-item">
+            <image
+              wx:if="{{!item.loadFailed}}"
+              class="photo-item__image"
+              src="{{item.path}}"
+              mode="aspectFill"
+              data-index="{{index}}"
+              data-path="{{item.path}}"
+              bindtap="previewImage"
+              binderror="handleImageError"
+            />
+            <view wx:else class="photo-item__missing">
+              <text>照片无法读取</text>
+            </view>
+            <button
+              class="photo-item__remove"
+              aria-label="移除这张照片"
+              data-index="{{index}}"
+              disabled="{{isSaving || hasSaved}}"
+              bindtap="removeImage"
+            >
+              ×
+            </button>
+          </view>
+
+          <button
+            wx:if="{{images.length < imageLimit}}"
+            class="photo-add"
+            disabled="{{isSaving || hasSaved}}"
+            bindtap="chooseImages"
+          >
+            <text class="photo-add__symbol">＋</text>
+            <text>添加照片</text>
+          </button>
+        </view>
+      </view>
+
+      <view class="editor-section">
+        <view class="editor-section__heading">
+          <view class="editor-section__copy">
+            <text class="editor-section__title">这一刻</text>
+            <text class="editor-section__hint">照片和文字至少填写一项。</text>
+          </view>
+          <text class="editor-section__counter">剩余 {{textRemaining}} 字</text>
+        </view>
+        <textarea
+          class="memory-textarea"
+          value="{{text}}"
+          maxlength="{{textMaxLength}}"
+          placeholder="这一刻，你想记住什么？"
+          auto-height="{{false}}"
+          disabled="{{isSaving || hasSaved}}"
+          bindinput="handleTextInput"
+        />
+      </view>
+
+      <view class="editor-section">
+        <text class="editor-section__title">地点</text>
+        <text class="editor-section__hint">可以写“图书馆前”“操场看台”等，也可以暂时留空。</text>
+        <input
+          class="memory-input"
+          value="{{placeName}}"
+          maxlength="{{placeMaxLength}}"
+          placeholder="给这个校园地点起个名字"
+          disabled="{{isSaving || hasSaved}}"
+          bindinput="handlePlaceInput"
+        />
+      </view>
+    </block>
+    <block wx:else>
+      <view class="editor-section">
+        <text class="editor-section__title">心情</text>
+        <view class="option-grid">
+          <button
+            wx:for="{{moodOptions}}"
+            wx:key="value"
+            class="option-chip {{mood === item.value ? 'option-chip--selected' : ''}}"
+            data-value="{{item.value}}"
+            disabled="{{isSaving || hasSaved}}"
+            bindtap="selectMood"
+          >
+            {{item.label}}
+          </button>
+        </view>
+        <view wx:if="{{mood === 'custom'}}" class="custom-option-field">
+          <input
+            class="memory-input custom-option-input"
+            value="{{customMood}}"
+            maxlength="{{customLabelMaxLength}}"
+            placeholder="写下你的心情，例如：松了一口气"
+            disabled="{{isSaving || hasSaved}}"
+            focus="{{true}}"
+            bindinput="handleCustomMoodInput"
+          />
+          <text class="custom-option-counter">
+            {{customMood.length}} / {{customLabelMaxLength}}
+          </text>
+        </view>
+      </view>
+
+      <view class="editor-section">
+        <text class="editor-section__title">回忆分类</text>
+        <text class="editor-section__hint">选择一个主题，方便以后慢慢回看。</text>
+        <view class="option-grid">
+          <button
+            wx:for="{{categoryOptions}}"
+            wx:key="value"
+            class="option-chip option-chip--{{item.value}} {{category === item.value ? 'option-chip--selected' : ''}}"
+            data-value="{{item.value}}"
+            disabled="{{isSaving || hasSaved}}"
+            bindtap="selectCategory"
+          >
+            {{item.label}}
+          </button>
+        </view>
+        <view wx:if="{{category === 'custom'}}" class="custom-option-field">
+          <input
+            class="memory-input custom-option-input"
+            value="{{customCategory}}"
+            maxlength="{{customLabelMaxLength}}"
+            placeholder="填写分类名称，例如：志愿服务"
+            disabled="{{isSaving || hasSaved}}"
+            focus="{{true}}"
+            bindinput="handleCustomCategoryInput"
+          />
+          <text class="custom-option-counter">
+            {{customCategory.length}} / {{customLabelMaxLength}}
+          </text>
+        </view>
+      </view>
+
+      <view wx:if="{{isCloudMode}}" class="editor-section visibility-section">
+        <text class="editor-section__title">谁可以看</text>
+        <text class="editor-section__hint">
+          新回忆默认仅自己可见；以后改为私密时，好友刷新后会立即失去访问权。
+        </text>
+        <view class="option-grid">
+          <button
+            wx:for="{{visibilityOptions}}"
+            wx:key="value"
+            class="option-chip {{visibility === item.value ? 'option-chip--selected' : ''}}"
+            data-value="{{item.value}}"
+            disabled="{{isSaving || hasSaved}}"
+            bindtap="selectVisibility"
+          >
+            {{item.label}}
+          </button>
+        </view>
+        <view wx:if="{{visibility === 'selected_friends'}}" class="friend-selector">
+          <text wx:if="{{friendLoadError}}" class="friend-selector__message">
+            {{friendLoadError}}
+          </text>
+          <text wx:elif="{{friendChoices.length === 0}}" class="friend-selector__message">
+            还没有 iSdu 好友，请先从“时光”页发送好友邀请。
+          </text>
+          <button
+            wx:for="{{friendChoices}}"
+            wx:key="relationshipId"
+            class="friend-choice {{item.selected ? 'friend-choice--selected' : ''}}"
+            data-user-id="{{item.friend.userId}}"
+            disabled="{{isSaving || hasSaved}}"
+            bindtap="toggleFriendSelection"
+          >
+            <text>{{item.friend.displayName}}</text>
+            <text>{{item.selected ? '已选择' : '选择'}}</text>
+          </button>
+        </view>
+      </view>
+    </block>
+
+    <view wx:if="{{formError}}" class="editor-error">{{formError}}</view>
+
+    <view wx:if="{{editorStep === 'content'}}" class="editor-actions">
+      <t-button theme="primary" block disabled="{{isSaving || hasSaved}}" bind:tap="goToOptions"
+        >下一步</t-button
+      >
+      <button class="editor-cancel" disabled="{{isSaving}}" bindtap="cancelEditing">取消</button>
+    </view>
+    <view wx:else class="editor-actions">
+      <t-button
+        theme="primary"
+        block
+        loading="{{isSaving}}"
+        disabled="{{isSaving || hasSaved}}"
+        bind:tap="saveMemory"
+      >
+        {{isEditMode ? '保存修改' : '保存这段记忆'}}
+      </t-button>
+      <button class="editor-cancel" disabled="{{isSaving}}" bindtap="backToContent">上一步</button>
+    </view>
+
+    <text wx:if="{{editorStep === 'options'}}" class="editor-storage-note">
+      {{isCloudMode ? '回忆保存到 iSdu 云端；好友只能按你设置的范围访问。' :
+      '照片会复制到小程序本地用户目录，日记保存在本机 Storage；卸载或清理小程序数据后可能丢失。'}}
+    </text>
+  </view>
+</view>

@@ -1,0 +1,55 @@
+<view class="page-shell friends-page">
+  <view class="page-hero">
+    <text class="eyebrow">由双方主动确认</text>
+    <text class="page-title">iSdu 好友</text>
+    <text class="page-subtitle"
+      >这里只显示通过邀请建立的 iSdu 好友，不读取微信通讯录或好友列表。</text
+    >
+  </view>
+
+  <view class="friends-invite">
+    <text class="friends-section__title">邀请好友</text>
+    <text class="friends-section__copy"
+      >邀请 24 小时有效且只能使用一次，对方打开后仍需手动接受。</text
+    >
+    <button
+      wx:if="{{!invite}}"
+      class="friends-primary-action"
+      loading="{{isCreatingInvite}}"
+      disabled="{{isCreatingInvite}}"
+      bindtap="createInvite"
+    >
+      {{isCreatingInvite ? '正在生成…' : '生成微信邀请'}}
+    </button>
+    <button wx:else class="friends-primary-action" open-type="share">发送微信邀请</button>
+    <button wx:if="{{invite}}" class="friends-secondary-action" bindtap="createInvite">
+      重新生成
+    </button>
+  </view>
+
+  <text wx:if="{{actionMessage}}" class="friends-message">{{actionMessage}}</text>
+
+  <view class="friends-list">
+    <text class="friends-section__title">我的好友 · {{friends.length}}</text>
+    <text wx:if="{{isLoading}}" class="friends-empty">正在读取好友列表…</text>
+    <text wx:elif="{{friends.length === 0}}" class="friends-empty"
+      >还没有好友，先发送一张邀请卡片吧。</text
+    >
+    <view wx:for="{{friends}}" wx:key="relationshipId" class="friend-row">
+      <view class="friend-row__avatar">{{item.initial}}</view>
+      <view class="friend-row__body">
+        <text class="friend-row__name">{{item.friend.displayName}}</text>
+        <text class="friend-row__signature">{{item.friend.signature || '还没有填写个性签名'}}</text>
+      </view>
+      <button
+        class="friend-row__remove"
+        data-user-id="{{item.friend.userId}}"
+        data-name="{{item.friend.displayName}}"
+        disabled="{{removingUserId === item.friend.userId}}"
+        bindtap="removeFriend"
+      >
+        删除
+      </button>
+    </view>
+  </view>
+</view>

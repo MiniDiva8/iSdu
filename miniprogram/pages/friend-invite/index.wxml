@@ -1,0 +1,25 @@
+<view class="page-shell invite-page">
+  <view class="page-hero">
+    <text class="eyebrow">双方确认的校园好友</text>
+    <text class="page-title">iSdu 好友邀请</text>
+    <text class="page-subtitle">打开邀请不会自动添加好友，你可以先查看邀请者资料。</text>
+  </view>
+  <view wx:if="{{isLoading}}" class="invite-card">正在安全读取邀请…</view>
+  <view wx:elif="{{preview}}" class="invite-card">
+    <view class="invite-avatar">{{previewInitial}}</view>
+    <text class="invite-name">{{preview.inviter.displayName}}</text>
+    <text class="invite-signature">{{preview.inviter.signature || '邀请你一起收藏校园时光'}}</text>
+    <text class="invite-note">成为好友后，也只能看到对方明确设为好友可见的回忆。</text>
+    <button
+      wx:if="{{!accepted}}"
+      class="invite-action"
+      loading="{{isAccepting}}"
+      disabled="{{isAccepting}}"
+      bindtap="acceptInvite"
+    >
+      接受邀请
+    </button>
+    <button wx:else class="invite-action" bindtap="openFriends">查看好友列表</button>
+  </view>
+  <text wx:if="{{actionMessage}}" class="invite-message">{{actionMessage}}</text>
+</view>

@@ -1,0 +1,10 @@
+{
+  "name": "isdu-friend-api",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "wx-server-sdk": "4.0.2"
+  }
+}

@@ -1,0 +1,73 @@
+.personal-form {
+  padding: 24px 20px;
+  background: var(--ui-color-surface);
+  border: 1px solid var(--ui-color-divider);
+  border-radius: var(--ui-radius-large);
+}
+.personal-field + .personal-field {
+  margin-top: 24px;
+}
+.personal-label {
+  display: block;
+  color: var(--ui-color-text-primary);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 26px;
+}
+.personal-input,
+.personal-textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 14px;
+  color: var(--ui-color-text-primary);
+  font-size: 15px;
+  line-height: 26px;
+  background: var(--ui-color-background-alt);
+  border: 1px solid var(--ui-color-divider);
+  border-radius: var(--ui-radius-small);
+}
+.personal-input {
+  height: 50px;
+}
+.personal-textarea {
+  height: 144px;
+}
+.personal-counter {
+  display: block;
+  margin-top: 8px;
+  color: var(--ui-color-text-tertiary);
+  font-size: 12px;
+  line-height: 20px;
+  text-align: right;
+}
+.personal-note {
+  display: block;
+  padding-top: 20px;
+  margin-top: 24px;
+  border-top: 1px solid var(--ui-color-divider);
+  color: var(--ui-color-text-secondary);
+  font-size: 13px;
+  line-height: 24px;
+}
+.personal-message {
+  display: block;
+  padding: 12px 14px;
+  margin-top: 16px;
+  color: var(--ui-color-primary-strong);
+  background: var(--ui-color-primary-soft);
+  border-radius: var(--ui-radius-small);
+  font-size: 13px;
+  line-height: 24px;
+}
+.personal-message--error {
+  color: var(--ui-color-danger);
+  background: var(--ui-color-danger-soft);
+}
+.personal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 28px;
+}

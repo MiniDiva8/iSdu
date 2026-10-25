@@ -1,0 +1,39 @@
+{
+  "pages": [
+    "pages/map/index",
+    "pages/editor/index",
+    "pages/timeline/index",
+    "pages/detail/index",
+    "pages/profile/index",
+    "pages/friends/index",
+    "pages/friend-invite/index",
+    "pages/profile-edit/index",
+    "pages/data-management/index",
+    "pages/about/index"
+  ],
+  "window": {
+    "navigationBarBackgroundColor": "#edf3f1",
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "iSdu",
+    "backgroundColor": "#edf3f1",
+    "backgroundTextStyle": "light"
+  },
+  "tabBar": {
+    "color": "#526b66",
+    "selectedColor": "#245d59",
+    "backgroundColor": "#fcfdfb",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/map/index",
+        "text": "地图"
+      },
+      {
+        "pagePath": "pages/timeline/index",
+        "text": "时光"
+      }
+    ]
+  },
+  "renderer": "webview",
+  "sitemapLocation": "sitemap.json"
+}

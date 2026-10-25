@@ -1,0 +1,60 @@
+<view class="page-shell space-page">
+  <view class="page-hero">
+    <text class="eyebrow">给生活留一点空白</text>
+    <text class="page-title">我的空间</text>
+    <text class="page-subtitle">关于你，以及你留下的校园故事。</text>
+  </view>
+  <button
+    class="space-identity"
+    data-page="profile-edit"
+    bindtap="openSection"
+    aria-label="编辑个人资料"
+  >
+    <view class="space-avatar">{{initial}}</view>
+    <view class="space-identity__body">
+      <text class="space-name">{{isLoading ? '正在读取资料…' : displayName}}</text>
+      <text class="space-signature">{{signature}}</text>
+    </view>
+    <text class="space-chevron" aria-hidden="true">›</text>
+  </button>
+  <text class="space-section-label">空间管理</text>
+  <view class="space-menu">
+    <button class="space-menu__item" data-page="profile-edit" bindtap="openSection">
+      <text class="space-menu__number" aria-hidden="true">01</text>
+      <view class="space-menu__body"
+        ><text class="space-menu__title">个人资料</text
+        ><text class="space-menu__hint">名字与个性签名</text></view
+      >
+      <text class="space-chevron" aria-hidden="true">›</text>
+    </button>
+    <button class="space-menu__item" data-page="friends" bindtap="openSection">
+      <text class="space-menu__number" aria-hidden="true">02</text>
+      <view class="space-menu__body"
+        ><text class="space-menu__title">我的好友</text
+        ><text class="space-menu__hint">邀请、确认与管理好友</text></view
+      >
+      <text class="space-chevron" aria-hidden="true">›</text>
+    </button>
+    <button class="space-menu__item" data-page="data-management" bindtap="openSection">
+      <text class="space-menu__number" aria-hidden="true">03</text>
+      <view class="space-menu__body"
+        ><text class="space-menu__title">备份与数据</text
+        ><text class="space-menu__hint">{{storageLabel}}</text></view
+      >
+      <text class="space-chevron" aria-hidden="true">›</text>
+    </button>
+    <button class="space-menu__item" data-page="about" bindtap="openSection">
+      <text class="space-menu__number" aria-hidden="true">04</text>
+      <view class="space-menu__body"
+        ><text class="space-menu__title">关于 iSdu</text
+        ><text class="space-menu__hint">了解这本校园记忆册</text></view
+      >
+      <text class="space-chevron" aria-hidden="true">›</text>
+    </button>
+  </view>
+  <view wx:if="{{errorMessage}}" class="space-error"
+    ><text>{{errorMessage}}</text
+    ><button class="ui-text-button" bindtap="loadProfile">重试</button></view
+  >
+  <text class="space-footer">一处地点，一段只属于你的时光。</text>
+</view>

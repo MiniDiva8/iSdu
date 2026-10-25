@@ -1,0 +1,42 @@
+{
+  "name": "isdu-miniprogram",
+  "version": "0.9.0",
+  "private": true,
+  "description": "iSdu：基于校园地图的个人空间日记微信小程序",
+  "license": "UNLICENSED",
+  "type": "module",
+  "packageManager": "npm@11.13.0",
+  "engines": {
+    "node": "^22.15.0 || >=24",
+    "npm": ">=10"
+  },
+  "scripts": {
+    "test:coordinates": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/map-coordinates.test.mjs",
+    "test:memory": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/models/memory.test.mjs miniprogram/services/repository/local-memory-repository.test.mjs miniprogram/services/repository/local-user-profile-repository.test.mjs miniprogram/utils/memory-filters.test.mjs miniprogram/utils/memory-insights.test.mjs",
+    "test:image": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/services/local-image-service.test.mjs miniprogram/services/timeline-cover-service.test.mjs",
+    "test:cloud-auth": "node --test cloudfunctions/auth-api/lib/auth-handler.test.cjs cloudfunctions/auth-api/lib/cloud-user-store.test.cjs && node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/services/repository/cloud-auth-repository.test.mjs",
+    "test:cloud-memory": "node --test cloudfunctions/memory-api/lib/memory-handler.test.cjs && node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/services/memory-migration-service.test.mjs miniprogram/services/memory-service.test.mjs miniprogram/services/repository/cloud-like-repository.test.mjs miniprogram/services/repository/cloud-memory-repository.test.mjs",
+    "test:cloud-friends": "node --test cloudfunctions/friend-api/lib/friend-handler.test.cjs",
+    "test:pages": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test scripts/page-flows.test.mjs scripts/timeline-cover-flows.test.mjs",
+    "test": "npm run test:coordinates && npm run test:memory && npm run test:image && npm run test:cloud-auth && npm run test:cloud-memory && npm run test:cloud-friends && npm run test:pages",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"miniprogram/**/*.ts\" \"cloudfunctions/**/*.js\"",
+    "format:check": "npm run format:check:base && npm run format:check:wxml && npm run format:check:wxss",
+    "format:check:base": "prettier --check package.json package-lock.json tsconfig.json project.config.json .prettierrc.json eslint.config.mjs \"scripts/**/*.mjs\" \"miniprogram/**/*.ts\" \"miniprogram/**/*.mjs\" \"miniprogram/**/*.json\" \"cloudfunctions/**/*.js\" \"cloudfunctions/**/*.cjs\" \"cloudfunctions/**/*.json\" AGENTS.md README.md docs/*.md",
+    "format:check:wxml": "prettier --check \"miniprogram/**/*.wxml\" --parser html",
+    "format:check:wxss": "prettier --check \"miniprogram/**/*.wxss\" --parser css",
+    "scan:security": "node scripts/security-scan.mjs",
+    "check": "npm run test && npm run typecheck && npm run lint && npm run format:check && npm run scan:security"
+  },
+  "dependencies": {
+    "tdesign-miniprogram": "1.15.3"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.8.0",
+    "miniprogram-api-typings": "5.2.2",
+    "prettier": "3.9.6",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.65.0"
+  }
+}
