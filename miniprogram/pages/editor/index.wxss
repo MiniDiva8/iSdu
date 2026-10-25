@@ -350,3 +350,28 @@ button {
   font-size: 21rpx;
   color: #768066;
 }
+
+.editor-topic-choice {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  width: 100%;
+  border-radius: 25rpx;
+  background: #ecebdc;
+  padding: 20rpx 22rpx;
+  box-sizing: border-box;
+  text-align: left;
+}
+.editor-topic-choice > view {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+  flex: 1;
+}
+.editor-topic-choice > view > text:first-child {
+  font-size: 28rpx;
+}
+.editor-topic-choice > view > text + text {
+  font-size: 20rpx;
+  color: #929780;
+}

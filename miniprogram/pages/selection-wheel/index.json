@@ -1,0 +1,9 @@
+{
+  "navigationStyle": "custom",
+  "disableScroll": true,
+  "backgroundColor": "#f6f5ed",
+  "usingComponents": {
+    "mood-face": "/components/mood-face/index",
+    "t-icon": "tdesign-miniprogram/icon/icon"
+  }
+}

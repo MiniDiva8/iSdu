@@ -19,22 +19,28 @@ Baseline: 46abb56；现有 codex/emmo-journal 独立工程；inline execution。
 - 异步重载：个人页退出或模式切换时不显示旧响应。
 
 ### Task 1: 转盘、偏好与统计模型
+
 Files: utils/selection-wheel.ts, utils/profile-summary.ts, services/journal-preferences-service.ts and corresponding tests.
 Interfaces: wheelIndexAtRotation, wheelRotationForIndex, wheelReleaseRotation, wheelPointAngle, normalizeWheelAngle；buildProfileSummary(memories, nowIso)；journalPreferencesService read/save/clear。
-- [ ] 观察角度/吸附、Unicode/连续天数、偏好验证与存储的失败测试。
-- [ ] 实现纯模型与偏好服务。
-- [ ] 新测试与类型检查通过，提交。
+
+- [x] 观察角度/吸附、Unicode/连续天数、偏好验证与存储的失败测试。
+- [x] 实现纯模型与偏好服务。
+- [x] 新测试与类型检查通过，提交。
 
 ### Task 2: 原生转盘与个人设置
-Files: pages/selection-wheel/*, pages/profile/*, pages/editor/*, pages/journal/*, pages/data-management/index.ts, scripts/profile-wheel-flows.test.mjs, app.json.
+
+Files: pages/selection-wheel/_, pages/profile/_, pages/editor/_, pages/journal/_, pages/data-management/index.ts, scripts/profile-wheel-flows.test.mjs, app.json.
 Consumes: Task 1 的模型与偏好；现有日期校验和日记/好友 Repository。
 Produces: 全屏转盘、主页与编辑的确认返回、参考图式个人页、真实统计和默认值设置。
-- [ ] 新建导航、编辑确认/取消、默认值与旧记录、统计/偏好清理业务测试先失败。
-- [ ] 实现原生页面、旋转手势及设置布局；保留照片和权限业务。
-- [ ] 全套检查通过，提交。
+
+- [x] 新建导航、编辑确认/取消、默认值与旧记录、统计/偏好清理业务测试先失败。
+- [x] 实现原生页面、旋转手势及设置布局；保留照片和权限业务。
+- [x] 全套检查通过，提交。
 
 ### Task 3: 验证、审查与体验上传
+
 Files: docs/PROFILE_WHEEL_RELEASE.md; private verification, staging and QR output under .verification/profile-wheel-rc2.
+
 - [ ] 官方 WXML/WXSS 编译与实际模拟器转盘手势/确认/取消通过。
 - [ ] 检查小屏与安全区的个人页、心情和主题转盘截图。
 - [ ] 一个新上下文代理进行整轮只读审查，重要问题以回归修复。

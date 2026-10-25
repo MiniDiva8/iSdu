@@ -1,3 +1,4 @@
+import { journalPreferencesService } from '../../services/journal-preferences-service';
 import {
   MEMORY_CATEGORIES,
   MEMORY_CATEGORY_LABELS,
@@ -188,6 +189,7 @@ Page({
     mood: 'calm',
     moodOptions,
     moodLabels: MEMORY_MOOD_LABELS,
+    categoryLabels: MEMORY_CATEGORY_LABELS,
     visibilityLabels: {
       private: '仅自己',
       selected_friends: '部分好友',
@@ -213,9 +215,12 @@ Page({
 
   onLoad(query: Record<string, string | undefined>) {
     this.data.isPageActive = true;
+    const prefs = journalPreferencesService.read();
     const isCloudMode = cloudModeService.getState().mode === 'cloud';
     this.setData({
       isCloudMode,
+      mood: prefs.defaultMood,
+      category: prefs.defaultCategory,
       isJournalEntry: query.source === 'journal',
       maxDateKey: getJournalDayKey(new Date().toISOString()),
     });
@@ -245,7 +250,8 @@ Page({
           recordedAt,
           recordedAtLabel: formatMemoryDateTime(recordedAt),
           dateKey,
-          mood: isMemoryMood(query.mood) ? query.mood : 'calm',
+          mood: isMemoryMood(query.mood) ? query.mood : prefs.defaultMood,
+          category: isMemoryCategory(query.category) ? query.category : prefs.defaultCategory,
           hasLocation: false,
           mapAssetVersion: JOURNAL_UNLOCATED_MAP_VERSION,
           xRatio: 0,
@@ -381,12 +387,42 @@ Page({
   },
 
   openMoodPicker() {
-    if (!this.data.isSaving && !this.data.hasSaved) this.setData({ showMoodPicker: true });
+    this.openSelectionWheel('mood');
   },
-  closeMoodPicker() {
-    this.setData({ showMoodPicker: false });
+  openCategoryPicker() {
+    this.openSelectionWheel('category');
   },
-  noop() {},
+  openSelectionWheel(kind: 'mood' | 'category') {
+    if (this.data.isSaving || this.data.hasSaved || !this.data.isFormReady) return;
+    const value = kind === 'mood' ? this.data.mood : this.data.category;
+    void wx.navigateTo({
+      url:
+        '/pages/selection-wheel/index?source=editor&kind=' +
+        kind +
+        '&value=' +
+        encodeURIComponent(value),
+      events: { selection: (value: unknown) => this.applyWheelSelection(value) },
+      fail: () => this.setData({ formError: '转盘暂时无法打开，请稍后重试。' }),
+    });
+  },
+  applyWheelSelection(value: unknown) {
+    if (!value || typeof value !== 'object' || this.data.isSaving || this.data.hasSaved) return;
+    const selection = value as { kind?: unknown; value?: unknown };
+    if (selection.kind === 'mood' && isMemoryMood(selection.value)) {
+      this.setData({
+        mood: selection.value,
+        customMood: selection.value === 'custom' ? this.data.customMood : '',
+        formError: '',
+      });
+    } else if (selection.kind === 'category' && isMemoryCategory(selection.value)) {
+      this.setData({
+        category: selection.value,
+        customCategory: selection.value === 'custom' ? this.data.customCategory : '',
+        formError: '',
+      });
+    } else return;
+    this.markDirty();
+  },
   toggleOptions() {
     this.setData({ editorStep: this.data.editorStep === 'options' ? 'content' : 'options' });
   },

@@ -1,0 +1,75 @@
+<view class="wheel-page" style="padding-top:{{topInset + 46}}px">
+  <view class="wheel-header"
+    ><view class="wheel-collection"
+      ><view class="wheel-dot"></view
+      ><text>{{kind === 'mood' ? '默认心情' : '日记主题'}}</text></view
+    ><view class="wheel-underline"></view
+  ></view>
+  <view class="wheel-main">
+    <view
+      class="wheel-stage"
+      style="width:{{stageSize}}px;height:{{stageSize}}px"
+      bindtouchstart="handleWheelTouchStart"
+      catchtouchmove="handleWheelTouchMove"
+      bindtouchend="handleWheelTouchEnd"
+      bindtouchcancel="handleWheelTouchCancel"
+    >
+      <view
+        class="wheel-orbit {{settling ? 'wheel-orbit--settling' : ''}}"
+        style="transform:rotate({{rotation}}deg)"
+      >
+        <button
+          wx:for="{{options}}"
+          wx:key="value"
+          class="wheel-option {{index === selectedIndex ? 'wheel-option--selected' : ''}} {{settling ? 'wheel-option--settling' : ''}}"
+          style="left:{{item.left}};top:{{item.top}};transform:translate(-50%,-50%) rotate({{counterRotation}}deg)"
+          data-index="{{index}}"
+          bindtap="selectOption"
+          aria-label="{{item.label + (index === selectedIndex ? '，已选中' : '')}}"
+          disabled="{{isSubmitting}}"
+        >
+          <view class="wheel-token"
+            ><mood-face wx:if="{{kind === 'mood'}}" mood="{{item.value}}" size="normal" /><view
+              wx:else
+              class="topic-token"
+              style="background:{{item.color}}"
+              ><t-icon name="{{item.icon}}" size="28px" /></view
+          ></view>
+        </button>
+      </view>
+      <view class="wheel-center"
+        ><text class="wheel-greeting"
+          >{{kind === 'mood' ? 'Hi，今天过得怎么样？' : '给这一页，选个主题'}}</text
+        ><text class="wheel-selected">{{selectedLabel}}</text
+        ><text class="wheel-center-hint">滑动旋转 · 点击选中</text></view
+      >
+    </view>
+    <view class="wheel-action-row"
+      ><text class="wheel-context"
+        >{{source === 'preferences' ? '设为新日记的默认选择' : (source === 'journal' ? dateKey :
+        '选好后，回到这页日记')}}</text
+      ><button
+        class="wheel-next"
+        aria-label="确认选择"
+        disabled="{{isSubmitting || errorMessage}}"
+        bindtap="confirmSelection"
+      >
+        <t-icon name="arrow-right" size="27px" /></button
+    ></view>
+    <text wx:if="{{errorMessage}}" class="wheel-error">{{errorMessage}}</text>
+  </view>
+  <view class="wheel-footer"
+    ><button class="wheel-small-action" bindtap="resetSelection" disabled="{{isSubmitting}}">
+      <t-icon name="refresh" size="25px" /><text>重置</text></button
+    ><button
+      class="wheel-close"
+      bindtap="cancelSelection"
+      aria-label="取消选择"
+      disabled="{{isSubmitting}}"
+    >
+      <view></view><view></view></button
+    ><button class="wheel-small-action" bindtap="stepOption" disabled="{{isSubmitting}}">
+      <t-icon name="gesture-click" size="25px" /><text>转一下</text>
+    </button></view
+  >
+</view>

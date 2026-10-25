@@ -1,57 +1,136 @@
-<view class="space-page">
-  <view class="space-heading"
-    ><text class="space-eyebrow">你的故事，慢慢收藏</text><text class="space-title">我的小世界</text
-    ><text class="space-subtitle">与自己的心情，也与校园里的朋友相连。</text></view
+<view class="profile-page" style="padding-top:{{topInset + 54}}px">
+  <view class="profile-nav" style="top:{{topInset}}px"
+    ><button bindtap="openJournal" aria-label="返回日记">
+      <t-icon name="chevron-left" size="27px" /></button
+    ><text>设置</text></view
   >
-  <button class="space-identity" data-page="profile-edit" bindtap="openSection">
-    <view class="space-avatar">{{initial}}</view
-    ><view class="space-identity__body"
-      ><text class="space-name">{{isLoading ? '正在读取…' : displayName}}</text
-      ><text class="space-signature">{{signature}}</text></view
-    ><t-icon name="chevron-right" size="20px" />
-  </button>
-  <view class="space-stats"
-    ><view><text>{{insightsReady ? entryCount : '—'}}</text><text>我的日记</text></view
-    ><view><text>{{insightsReady ? recordedDayCount : '—'}}</text><text>记录天数</text></view
-    ><view><text>{{insightsReady ? campusPlaceCount : '—'}}</text><text>校园足迹</text></view></view
-  >
-  <text wx:if="{{insightError}}" class="space-insight-error">{{insightError}}</text>
-  <view class="space-menu">
-    <button data-page="album" bindtap="openSection">
-      <view class="space-menu-icon space-menu-icon--yellow"
-        ><t-icon name="image" size="23px" /></view
-      ><view><text>照片里的日子</text><text>把小小瞬间，排成一面照片墙</text></view
-      ><t-icon name="chevron-right" size="18px" />
+  <view class="profile-hero">
+    <button
+      class="profile-avatar"
+      data-page="profile-edit"
+      bindtap="openSection"
+      aria-label="编辑个人资料"
+    >
+      <view class="profile-avatar-face"><mood-face mood="{{defaultMood}}" size="normal" /></view
+      ><text>{{initial}}</text>
     </button>
-    <button data-page="friends" bindtap="openSection">
-      <view class="space-menu-icon space-menu-icon--green"
-        ><t-icon name="usergroup" size="23px" /></view
-      ><view><text>我的好友</text><text>邀请彼此，分享愿意留给好友的日记</text></view
-      ><t-icon name="chevron-right" size="18px" />
+    <view class="profile-hero-body"
+      ><button class="profile-name" data-page="profile-edit" bindtap="openSection">
+        {{isLoading ? '正在读取…' : displayName}}
+      </button>
+      <view class="profile-stats"
+        ><view><text>{{insightsReady ? entryCount : '—'}}</text><text>日记数</text></view
+        ><view><text>{{insightsReady ? characterCount : '—'}}</text><text>字数</text></view
+        ><view
+          ><text>{{insightsReady ? currentStreak : '—'}}</text><text>连续天数</text></view
+        ></view
+      >
+    </view>
+  </view>
+  <text wx:if="{{insightError}}" class="profile-error">{{insightError}}</text>
+  <view class="profile-shortcuts">
+    <button class="profile-shortcut" bindtap="openMoodDefaults">
+      <view><text>我的心情</text><text>{{moodCount}} 种 · {{defaultMoodLabel}}</text></view
+      ><mood-face mood="{{defaultMood}}" size="small" />
     </button>
-    <button data-page="data-management" bindtap="openSection">
-      <view class="space-menu-icon space-menu-icon--blue"><t-icon name="cloud" size="23px" /></view
-      ><view><text>备份与数据</text><text>{{storageLabel}}</text></view
-      ><t-icon name="chevron-right" size="18px" />
-    </button>
-    <button data-page="profile-edit" bindtap="openSection">
-      <view class="space-menu-icon"><t-icon name="edit" size="22px" /></view
-      ><view><text>个人资料</text><text>名字、签名，和一点自己的风格</text></view
-      ><t-icon name="chevron-right" size="18px" />
-    </button>
-    <button data-page="about" bindtap="openSection">
-      <view class="space-menu-icon"><t-icon name="book" size="22px" /></view
-      ><view><text>关于 iSdu</text><text>一本生长在校园里的日记</text></view
-      ><t-icon name="chevron-right" size="18px" />
+    <button class="profile-shortcut" bindtap="openCategoryDefaults">
+      <view><text>日记主题</text><text>{{categoryCount}} 种 · {{defaultCategoryLabel}}</text></view
+      ><view class="profile-topic-mark"><t-icon name="book" size="27px" /><view></view></view>
     </button>
   </view>
-  <view wx:if="{{errorMessage}}" class="space-error"
+  <button class="profile-campus-banner" bindtap="openCampus">
+    <view class="profile-banner-icon"><t-icon name="location" size="30px" /></view
+    ><text>把心情，留在校园里</text><text class="profile-banner-action">去看看</text>
+  </button>
+  <view class="profile-group">
+    <button class="profile-menu-row" data-page="friends" bindtap="openSection">
+      <t-icon name="usergroup" size="25px" /><text>我的好友</text
+      ><t-icon name="chevron-right" size="23px" />
+    </button>
+    <button class="profile-menu-row" data-page="album" bindtap="openSection">
+      <t-icon name="image" size="25px" /><text>照片墙</text
+      ><t-icon name="chevron-right" size="23px" />
+    </button>
+    <button class="profile-menu-row" data-page="profile-edit" bindtap="openSection">
+      <t-icon name="user" size="25px" /><text>个人资料</text
+      ><t-icon name="chevron-right" size="23px" />
+    </button>
+  </view>
+  <view class="profile-group">
+    <button class="profile-menu-row" data-panel="preferences" bindtap="openPanel">
+      <t-icon name="edit" size="25px" /><text>偏好设置</text
+      ><t-icon name="chevron-right" size="23px" />
+    </button>
+    <button class="profile-menu-row" data-page="data-management" bindtap="openSection">
+      <t-icon name="lock-on" size="25px" /><text>隐私与数据</text
+      ><t-icon name="chevron-right" size="23px" />
+    </button>
+    <button class="profile-menu-row" bindtap="openCategoryDefaults">
+      <t-icon name="book" size="25px" /><text>主题分类</text
+      ><t-icon name="chevron-right" size="23px" />
+    </button>
+    <button class="profile-menu-row" data-panel="stats" bindtap="openPanel">
+      <t-icon name="chart-bar" size="25px" /><text>日记图表</text
+      ><t-icon name="chevron-right" size="23px" />
+    </button>
+    <button class="profile-menu-row" data-page="about" bindtap="openSection">
+      <t-icon name="info-circle" size="25px" /><text>关于 iSdu</text
+      ><t-icon name="chevron-right" size="23px" />
+    </button>
+  </view>
+  <view class="profile-group"
+    ><button class="profile-menu-row" data-page="data-management" bindtap="openSection">
+      <t-icon name="cloud" size="25px" /><view class="profile-sync-copy"
+        ><text>同步与备份</text><text>{{storageLabel}}</text></view
+      ><t-icon name="chevron-right" size="23px" /></button
+  ></view>
+  <view wx:if="{{errorMessage}}" class="profile-error"
     ><text>{{errorMessage}}</text><button bindtap="loadProfile">重新读取</button></view
   >
-  <button class="space-write" bindtap="openJournal">
-    <mood-face mood="happy" size="small" /><view
-      ><text>今天的心情，也记下来吧</text><text>回到我的日记册</text></view
-    ><t-icon name="chevron-right" size="19px" />
-  </button>
-  <text class="space-footer">一处地点，一段属于你的时光。</text>
+  <text class="profile-signature">{{signature}}</text>
+  <view wx:if="{{panel}}" class="profile-mask" bindtap="closePanel"
+    ><view class="profile-sheet" catchtap="noop">
+      <view class="profile-sheet-head"
+        ><text>{{panel === 'preferences' ? '偏好设置' : '我的日记图表'}}</text
+        ><button bindtap="closePanel" aria-label="关闭"><t-icon name="close" size="23px" /></button
+      ></view>
+      <block wx:if="{{panel === 'preferences'}}">
+        <button class="preference-row" bindtap="openMoodDefaults">
+          <text>默认心情</text><mood-face mood="{{defaultMood}}" size="tiny" /><text
+            >{{defaultMoodLabel}}</text
+          ><t-icon name="chevron-right" size="18px" />
+        </button>
+        <button class="preference-row" bindtap="openCategoryDefaults">
+          <text>默认主题</text><text>{{defaultCategoryLabel}}</text
+          ><t-icon name="chevron-right" size="18px" />
+        </button>
+        <view class="preference-row"
+          ><view
+            ><text>转盘轻振反馈</text
+            ><text class="profile-sheet-muted">选中心情时，给一点轻轻的回应</text></view
+          ><switch checked="{{haptics}}" color="#788357" bindchange="toggleHaptics"
+        /></view>
+        <text class="profile-sheet-muted"
+          >默认选择仅用于新建日记，已有记录保持原来的心情和主题。</text
+        >
+      </block>
+      <block wx:else>
+        <text class="profile-sheet-muted"
+          >{{insightsReady ? entryCount + ' 篇日记 · ' + recordedDayCount + ' 天记录 · ' +
+          campusPlaceCount + ' 处校园足迹' : (insightError || '正在读取日记统计…')}}</text
+        >
+        <scroll-view scroll-y class="profile-chart-list"
+          ><view wx:for="{{moodCounts}}" wx:key="mood" class="profile-chart-row"
+            ><mood-face mood="{{item.mood}}" size="tiny" /><view
+              ><view class="profile-chart-label"
+                ><text>{{item.label}}</text><text>{{item.count}} 篇</text></view
+              ><view class="profile-chart-track"
+                ><view style="width:{{item.percentage}}%"></view></view></view></view
+          ><text wx:if="{{insightsReady && entryCount === 0}}" class="profile-chart-empty"
+            >从第一篇日记开始，慢慢看见自己的心情。</text
+          ></scroll-view
+        >
+      </block>
+    </view></view
+  >
 </view>

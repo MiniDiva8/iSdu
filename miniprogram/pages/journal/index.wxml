@@ -118,28 +118,7 @@
       ><button bindtap="openFriends">我的好友</button></view
     >
   </view>
-  <view wx:if="{{showMoodPicker || showDaySheet}}" class="journal-mask" bindtap="closePanels">
-    <view wx:if="{{showMoodPicker}}" class="journal-sheet" catchtap="noop">
-      <view class="sheet-heading"
-        ><view
-          ><text class="sheet-date">{{selectedDate}}</text
-          ><text class="sheet-title">这一刻，是什么心情？</text></view
-        ><button aria-label="关闭心情选择" bindtap="closePanels">
-          <t-icon name="close" size="22px" /></button
-      ></view>
-      <view class="mood-picker-grid"
-        ><button
-          wx:for="{{moodOptions}}"
-          wx:key="value"
-          class="mood-choice"
-          data-value="{{item.value}}"
-          bindtap="chooseMood"
-        >
-          <mood-face mood="{{item.value}}" /><text>{{item.label}}</text>
-        </button></view
-      >
-      <text class="sheet-footnote">选一个表情，把今天留在这里。</text>
-    </view>
+  <view wx:if="{{showDaySheet}}" class="journal-mask" bindtap="closePanels">
     <view wx:if="{{showDaySheet}}" class="journal-sheet" catchtap="noop">
       <view class="sheet-heading"
         ><view

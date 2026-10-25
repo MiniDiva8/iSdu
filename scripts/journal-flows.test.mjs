@@ -83,11 +83,9 @@ test('empty day and selected mood start an explicitly unlocated journal', async 
   t.mock.method(memoryRepository, 'listMemories', async () => []);
   await home.loadJournal();
   home.openDay({ currentTarget: { dataset: { key: '2024-02-20' } } });
-  assert.equal(home.data.showMoodPicker, true);
-  home.chooseMood({ currentTarget: { dataset: { value: 'happy' } } });
+  assert.match(navigation.at(-1), /pages\/selection-wheel\/index/);
   assert.match(navigation.at(-1), /source=journal/);
   assert.match(navigation.at(-1), /date=2024-02-20/);
-  assert.match(navigation.at(-1), /mood=happy/);
 });
 test('failed reload clears stale entries when changing to cloud mode', async (t) => {
   const home = page('journal');

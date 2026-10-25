@@ -1,3 +1,4 @@
+import { journalPreferencesService } from '../../services/journal-preferences-service';
 import { journalDraftService } from '../../services/journal-draft-service';
 import { timelineCoverService } from '../../services/timeline-cover-service';
 import { localImageService } from '../../services/local-image-service';
@@ -12,7 +13,7 @@ function confirmClearAllData(): Promise<boolean> {
     wx.showModal({
       title: '清除全部本机数据？',
       content:
-        '这会永久删除本机保存的所有回忆、文字草稿、照片、时光封面、名字和个性签名，且无法恢复。请确认当前没有需要保留的内容。',
+        '这会永久删除本机保存的所有回忆、文字草稿、偏好设置、照片、时光封面、名字和个性签名，且无法恢复。请确认当前没有需要保留的内容。',
       confirmText: '全部清除',
       confirmColor: '#c65a55',
       cancelText: '取消',
@@ -176,6 +177,14 @@ Page({
 
     const cleanupWarnings: string[] = [];
     try {
+      journalPreferencesService.clear();
+    } catch (error: unknown) {
+      cleanupWarnings.push(
+        error instanceof Error ? '偏好设置未能清除：' + error.message : '偏好设置未能清除',
+      );
+    }
+
+    try {
       journalDraftService.clear();
     } catch (error: unknown) {
       cleanupWarnings.push(
@@ -204,7 +213,7 @@ Page({
     const actionMessage =
       cleanupWarnings.length > 0
         ? `回忆已经清除，但仍有部分数据未完成：${cleanupWarnings.join('；')}`
-        : '本机保存的回忆、文字草稿、照片、时光封面和个人资料已清除。';
+        : '本机保存的回忆、文字草稿、偏好设置、照片、时光封面和个人资料已清除。';
 
     this.setData({ actionMessage, isClearing: false });
 

@@ -1,9 +1,19 @@
-import { getJournalDayKey, hasJournalLocation } from '../../utils/journal';
+import {
+  MEMORY_MOODS,
+  MEMORY_CATEGORIES,
+  MEMORY_MOOD_LABELS,
+  MEMORY_CATEGORY_LABELS,
+} from '../../models/memory';
+import { buildProfileSummary, type ProfileMoodCount } from '../../utils/profile-summary';
+import { journalPreferencesService } from '../../services/journal-preferences-service';
 import { cloudModeService } from '../../services/cloud/cloud-mode-service';
 import { memoryRepository, userProfileRepository } from '../../services/repository/index';
-
 Page({
+  _active: true,
+  _summaryVersion: 0,
+  _profileVersion: 0,
   data: {
+    topInset: 24,
     displayName: '给自己取个名字',
     signature: '为校园生活，留一份自己的注脚。',
     initial: '忆',
@@ -11,19 +21,53 @@ Page({
     isLoading: true,
     errorMessage: '',
     entryCount: 0,
+    characterCount: 0,
+    currentStreak: 0,
     recordedDayCount: 0,
     campusPlaceCount: 0,
     insightsReady: false,
     insightError: '',
+    moodCounts: [] as ProfileMoodCount[],
+    moodCount: MEMORY_MOODS.length,
+    categoryCount: MEMORY_CATEGORIES.length,
+    defaultMood: 'calm',
+    defaultMoodLabel: '平静',
+    defaultCategory: 'campus-life',
+    defaultCategoryLabel: '校园生活',
+    haptics: false,
+    panel: '',
+  },
+  onLoad() {
+    const info = typeof wx.getWindowInfo === 'function' ? wx.getWindowInfo() : null;
+    this.setData({ topInset: info?.statusBarHeight ?? 24 });
   },
   onShow() {
+    this._active = true;
     void this.loadProfile();
     void this.loadInsights();
   },
+  onHide() {
+    this._active = false;
+    this._summaryVersion += 1;
+    this._profileVersion += 1;
+    this.setData({ panel: '' });
+  },
+  onUnload() {
+    this._active = false;
+    this._summaryVersion += 1;
+    this._profileVersion += 1;
+  },
   async loadProfile() {
+    const version = ++this._profileVersion;
+    const prefs = journalPreferencesService.read();
     this.setData({
       isLoading: true,
       errorMessage: '',
+      defaultMood: prefs.defaultMood,
+      defaultMoodLabel: MEMORY_MOOD_LABELS[prefs.defaultMood],
+      defaultCategory: prefs.defaultCategory,
+      defaultCategoryLabel: MEMORY_CATEGORY_LABELS[prefs.defaultCategory],
+      haptics: prefs.haptics,
       storageLabel:
         cloudModeService.getState().mode === 'cloud'
           ? '云端已开启 · 按权限分享'
@@ -31,6 +75,7 @@ Page({
     });
     try {
       const profile = await userProfileRepository.getProfile();
+      if (!this._active || version !== this._profileVersion) return;
       this.setData({
         displayName: profile?.displayName || '给自己取个名字',
         signature: profile?.signature || '为校园生活，留一份自己的注脚。',
@@ -38,6 +83,7 @@ Page({
         isLoading: false,
       });
     } catch (error: unknown) {
+      if (!this._active || version !== this._profileVersion) return;
       this.setData({
         isLoading: false,
         errorMessage: error instanceof Error ? error.message : '个人资料读取失败，请稍后重试。',
@@ -45,41 +91,73 @@ Page({
     }
   },
   async loadInsights() {
+    const version = ++this._summaryVersion;
+    const mode = cloudModeService.getState().mode;
     this.setData({ insightsReady: false, insightError: '' });
     try {
-      const records = (await memoryRepository.listMemories()).filter(
-        (memory) => memory.origin === 'user',
-      );
-      const days = new Set(records.map((memory) => getJournalDayKey(memory.recordedAt)));
-      const places = new Set(
-        records
-          .filter(hasJournalLocation)
-          .map(
-            (memory) =>
-              memory.mapAssetVersion +
-              ':' +
-              memory.mapXRatio.toFixed(5) +
-              ':' +
-              memory.mapYRatio.toFixed(5),
-          ),
-      );
-      this.setData({
-        entryCount: records.length,
-        recordedDayCount: days.size,
-        campusPlaceCount: places.size,
-        insightsReady: true,
-      });
+      const memories = await memoryRepository.listMemories();
+      if (
+        !this._active ||
+        version !== this._summaryVersion ||
+        mode !== cloudModeService.getState().mode
+      )
+        return;
+      this.setData({ ...buildProfileSummary(memories), insightsReady: true });
     } catch {
+      if (
+        !this._active ||
+        version !== this._summaryVersion ||
+        mode !== cloudModeService.getState().mode
+      )
+        return;
       this.setData({
         entryCount: 0,
+        characterCount: 0,
+        currentStreak: 0,
         recordedDayCount: 0,
         campusPlaceCount: 0,
+        moodCounts: [],
+        insightsReady: false,
         insightError: '日记统计暂时没有读到，稍后回来看看。',
       });
     }
   },
   openJournal() {
     void wx.switchTab({ url: '/pages/journal/index' });
+  },
+  openCampus() {
+    void wx.switchTab({ url: '/pages/map/index' });
+  },
+  openPanel(event: WechatMiniprogram.BaseEvent) {
+    const panel = event.currentTarget.dataset.panel as unknown;
+    if (panel === 'preferences' || panel === 'stats') this.setData({ panel });
+  },
+  closePanel() {
+    this.setData({ panel: '' });
+  },
+  noop() {},
+  openMoodDefaults() {
+    this.openDefaultWheel('mood');
+  },
+  openCategoryDefaults() {
+    this.openDefaultWheel('category');
+  },
+  openDefaultWheel(kind: 'mood' | 'category') {
+    const prefs = journalPreferencesService.read();
+    const value = kind === 'mood' ? prefs.defaultMood : prefs.defaultCategory;
+    this.setData({ panel: '' });
+    void wx.navigateTo({
+      url: '/pages/selection-wheel/index?source=preferences&kind=' + kind + '&value=' + value,
+      fail: () => this.setData({ errorMessage: '选择页暂时无法打开，请稍后重试。' }),
+    });
+  },
+  toggleHaptics(event: WechatMiniprogram.SwitchChange) {
+    try {
+      const prefs = journalPreferencesService.save({ haptics: event.detail.value });
+      this.setData({ haptics: prefs.haptics, errorMessage: '' });
+    } catch {
+      this.setData({ errorMessage: '偏好未能保存，请稍后重试。' });
+    }
   },
   openSection(event: WechatMiniprogram.BaseEvent) {
     const key = (event.currentTarget.dataset as { page?: unknown }).page;

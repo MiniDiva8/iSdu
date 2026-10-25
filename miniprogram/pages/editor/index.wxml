@@ -88,7 +88,7 @@
           >{{hasLocation ? '已选地点' : '校园地点'}}</text
         ></button
       ><button disabled="{{isSaving || hasSaved}}" bindtap="toggleOptions">
-        <t-icon name="more" size="23px" /><text>分类与分享</text>
+        <t-icon name="more" size="23px" /><text>主题与分享</text>
       </button></view
     >
     <view class="editor-place"
@@ -112,19 +112,19 @@
       ></view
     >
     <view wx:if="{{editorStep === 'options'}}" class="editor-options">
-      <text class="editor-section-title">给这页日记一个主题</text
-      ><view class="editor-options-grid"
-        ><button
-          wx:for="{{categoryOptions}}"
-          wx:key="value"
-          class="{{category === item.value ? 'is-selected' : ''}}"
-          data-value="{{item.value}}"
-          disabled="{{isSaving || hasSaved}}"
-          bindtap="selectCategory"
-        >
-          {{item.label}}
-        </button></view
+      <text class="editor-section-title">给这页日记一个主题</text>
+      <button
+        class="editor-topic-choice"
+        bindtap="openCategoryPicker"
+        disabled="{{isSaving || hasSaved}}"
       >
+        <t-icon name="book" size="23px" /><view
+          ><text
+            >{{category === 'custom' ? (customCategory || '自定义主题') :
+            categoryLabels[category]}}</text
+          ><text>转动转盘，选一个适合今天的主题</text></view
+        ><t-icon name="chevron-right" size="21px" />
+      </button>
       <input
         wx:if="{{category === 'custom'}}"
         class="custom-option-input"
@@ -193,22 +193,4 @@
       </button></view
     >
   </block>
-  <view wx:if="{{showMoodPicker}}" class="editor-mask" bindtap="closeMoodPicker"
-    ><view class="editor-mood-sheet" catchtap="noop"
-      ><view class="editor-sheet-head"
-        ><text>这一刻的心情</text
-        ><button aria-label="关闭" bindtap="closeMoodPicker">
-          <t-icon name="close" size="22px" /></button></view
-      ><view class="editor-mood-grid"
-        ><button
-          wx:for="{{moodOptions}}"
-          wx:key="value"
-          data-value="{{item.value}}"
-          bindtap="selectMood"
-        >
-          <mood-face mood="{{item.value}}" /><text>{{item.label}}</text>
-        </button></view
-      ></view
-    ></view
-  >
 </view>

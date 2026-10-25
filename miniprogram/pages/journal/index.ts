@@ -1,10 +1,4 @@
-import {
-  MEMORY_MOODS,
-  MEMORY_MOOD_LABELS,
-  getMemoryMoodLabel,
-  isMemoryMood,
-  type Memory,
-} from '../../models/memory';
+import { getMemoryMoodLabel, type Memory } from '../../models/memory';
 import { memoryRepository } from '../../services/repository/index';
 import { cloudModeService } from '../../services/cloud/cloud-mode-service';
 import { journalDraftService } from '../../services/journal-draft-service';
@@ -50,14 +44,12 @@ Page({
     isLoading: true,
     errorMessage: '',
     storageLabel: '仅存本机',
-    showMoodPicker: false,
     showDaySheet: false,
     showSearch: false,
     hasDraft: false,
     dayEntries: [] as EntryRow[],
     searchResults: [] as EntryRow[],
     keyword: '',
-    moodOptions: MEMORY_MOODS.map((value) => ({ value, label: MEMORY_MOOD_LABELS[value] })),
   },
   onLoad() {
     const info = typeof wx.getWindowInfo === 'function' ? wx.getWindowInfo() : null;
@@ -167,31 +159,24 @@ Page({
       selectedDate: day.key,
       dayEntries: entries.map(entryRow),
       showDaySheet: entries.length > 0,
-      showMoodPicker: entries.length === 0,
     });
+    if (entries.length === 0) this.openMoodWheel();
   },
   startWriting() {
-    this.setData({
-      selectedDate: getJournalDayKey(new Date().toISOString()),
-      showDaySheet: false,
-      showMoodPicker: true,
-    });
+    this.setData({ selectedDate: getJournalDayKey(new Date().toISOString()), showDaySheet: false });
+    this.openMoodWheel();
   },
   writeAnother() {
-    this.setData({ showDaySheet: false, showMoodPicker: true });
+    this.setData({ showDaySheet: false });
+    this.openMoodWheel();
   },
-  chooseMood(event: WechatMiniprogram.BaseEvent) {
-    const mood = event.currentTarget.dataset.value as unknown;
-    if (!isMemoryMood(mood)) return;
-    this.setData({ showMoodPicker: false });
+  openMoodWheel() {
     void wx.navigateTo({
       url:
-        '/pages/editor/index?source=journal&date=' +
-        encodeURIComponent(this.data.selectedDate) +
-        '&mood=' +
-        mood,
+        '/pages/selection-wheel/index?source=journal&kind=mood&date=' +
+        encodeURIComponent(this.data.selectedDate),
       fail: () => {
-        void wx.showToast({ title: '日记页未能打开，请重试', icon: 'none' });
+        void wx.showToast({ title: '心情转盘暂时没有打开，请重试', icon: 'none' });
       },
     });
   },
@@ -239,7 +224,7 @@ Page({
     });
   },
   closePanels() {
-    this.setData({ showMoodPicker: false, showDaySheet: false });
+    this.setData({ showDaySheet: false });
   },
   noop() {},
 });

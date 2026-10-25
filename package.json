@@ -1,6 +1,6 @@
 {
   "name": "isdu-miniprogram",
-  "version": "3.1.0-rc.1",
+  "version": "3.1.0-rc.2",
   "private": true,
   "description": "iSdu：基于校园地图的个人空间日记微信小程序",
   "license": "UNLICENSED",
@@ -28,7 +28,7 @@
     "scan:security": "node scripts/security-scan.mjs",
     "check": "npm run test && npm run typecheck && npm run lint && npm run format:check && npm run scan:security",
     "test:journal": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/journal.test.mjs miniprogram/services/journal-draft-service.test.mjs scripts/journal-flows.test.mjs scripts/journal-editor-flows.test.mjs",
-    "test:profile-wheel": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/selection-wheel.test.mjs miniprogram/utils/profile-summary.test.mjs miniprogram/services/journal-preferences-service.test.mjs"
+    "test:profile-wheel": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/selection-wheel.test.mjs miniprogram/utils/profile-summary.test.mjs miniprogram/services/journal-preferences-service.test.mjs scripts/profile-wheel-flows.test.mjs"
   },
   "dependencies": {
     "tdesign-miniprogram": "1.15.3"
