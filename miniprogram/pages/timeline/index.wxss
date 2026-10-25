@@ -627,3 +627,19 @@
     --timeline-page-gutter: var(--ui-space-4);
   }
 }
+
+page {
+  background: #f7f5ec;
+  background-image: none;
+}
+.timeline-card {
+  background: #fffdf5;
+  border-color: #e0e1cd;
+  box-shadow: 0 4rpx 16rpx rgba(77, 83, 50, 0.04);
+}
+.timeline-card__placeholder {
+  background: #e8ecd9;
+}
+.timeline-month__title {
+  color: #66794c;
+}

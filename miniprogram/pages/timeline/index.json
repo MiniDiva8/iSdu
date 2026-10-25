@@ -3,6 +3,8 @@
   "navigationBarTitleText": "时光",
   "usingComponents": {
     "t-button": "tdesign-miniprogram/button/button",
-    "t-icon": "tdesign-miniprogram/icon/icon"
-  }
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "mood-face": "/components/mood-face/index"
+  },
+  "navigationBarBackgroundColor": "#f7f5ec"
 }

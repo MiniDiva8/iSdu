@@ -1,3 +1,4 @@
+import { hasJournalLocation } from '../../utils/journal';
 import { getMemoryCategoryLabel, getMemoryMoodLabel, type Memory } from '../../models/memory';
 import { localImageService } from '../../services/local-image-service';
 import { cloudModeService } from '../../services/cloud/cloud-mode-service';
@@ -82,6 +83,7 @@ Page({
     displayPlaceName: '',
     formattedRecordedAt: '',
     hasText: false,
+    hasLocation: false,
     isDeleting: false,
     isFriendMemory: false,
     isLikeSaving: false,
@@ -147,9 +149,12 @@ Page({
 
       const cloudMemory = this.data.isFriendMemory ? (memory as CloudMemory) : null;
       this.setData({
+        hasLocation: hasJournalLocation(memory),
         categoryLabel: getMemoryCategoryLabel(memory),
-        coordinateLabel: '已保存在校园地图上的原位置',
-        displayPlaceName: memory.placeName || '未填写地点名称',
+        coordinateLabel: hasJournalLocation(memory)
+          ? '已关联校园地图上的位置'
+          : '这篇日记没有关联校园地点',
+        displayPlaceName: memory.placeName || getMemoryMoodLabel(memory),
         formattedRecordedAt: formatMemoryDateTime(memory.recordedAt),
         hasText: Boolean(memory.text),
         isLoading: false,
@@ -207,6 +212,13 @@ Page({
     });
   },
 
+  previewPhoto(event: WechatMiniprogram.BaseEvent) {
+    const index = Number(event.currentTarget.dataset.index);
+    const current = this.data.photoItems[index];
+    const urls = this.data.photoItems.filter((item) => !item.isMissing).map((item) => item.path);
+    if (current && !current.isMissing) void wx.previewImage({ current: current.path, urls });
+  },
+
   editMemory() {
     if (!this.data.memory || this.data.isDeleting || this.data.isFriendMemory) {
       return;
@@ -225,6 +237,11 @@ Page({
   showOnMap() {
     const memory = this.data.memory;
     if (!memory || this.data.isDeleting) {
+      return;
+    }
+
+    if (!hasJournalLocation(memory)) {
+      this.setData({ actionMessage: '这篇日记还没有关联校园地点，可以编辑后添加。' });
       return;
     }
 
@@ -325,7 +342,13 @@ Page({
     }
 
     try {
-      await switchToMap();
+      await new Promise<void>((resolve, reject) =>
+        wx.switchTab({
+          url: '/pages/journal/index',
+          success: () => resolve(),
+          fail: (error) => reject(new Error(error.errMsg)),
+        }),
+      );
     } catch (error: unknown) {
       this.setData({
         loadError: `日记已删除，但返回地图失败：${describeError(error, '请手动返回地图。')}`,

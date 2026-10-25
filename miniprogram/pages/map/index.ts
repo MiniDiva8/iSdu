@@ -1101,7 +1101,7 @@ Page({
     });
   },
   goToProfile() {
-    void wx.navigateTo({
+    void wx.switchTab({
       url: '/pages/profile/index',
       fail: () =>
         this.setData({

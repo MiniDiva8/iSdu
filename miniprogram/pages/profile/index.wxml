@@ -1,60 +1,57 @@
-<view class="page-shell space-page">
-  <view class="page-hero">
-    <text class="eyebrow">给生活留一点空白</text>
-    <text class="page-title">我的空间</text>
-    <text class="page-subtitle">关于你，以及你留下的校园故事。</text>
-  </view>
-  <button
-    class="space-identity"
-    data-page="profile-edit"
-    bindtap="openSection"
-    aria-label="编辑个人资料"
+<view class="space-page">
+  <view class="space-heading"
+    ><text class="space-eyebrow">你的故事，慢慢收藏</text><text class="space-title">我的小世界</text
+    ><text class="space-subtitle">与自己的心情，也与校园里的朋友相连。</text></view
   >
-    <view class="space-avatar">{{initial}}</view>
-    <view class="space-identity__body">
-      <text class="space-name">{{isLoading ? '正在读取资料…' : displayName}}</text>
-      <text class="space-signature">{{signature}}</text>
-    </view>
-    <text class="space-chevron" aria-hidden="true">›</text>
+  <button class="space-identity" data-page="profile-edit" bindtap="openSection">
+    <view class="space-avatar">{{initial}}</view
+    ><view class="space-identity__body"
+      ><text class="space-name">{{isLoading ? '正在读取…' : displayName}}</text
+      ><text class="space-signature">{{signature}}</text></view
+    ><t-icon name="chevron-right" size="20px" />
   </button>
-  <text class="space-section-label">空间管理</text>
+  <view class="space-stats"
+    ><view><text>{{insightsReady ? entryCount : '—'}}</text><text>我的日记</text></view
+    ><view><text>{{insightsReady ? recordedDayCount : '—'}}</text><text>记录天数</text></view
+    ><view><text>{{insightsReady ? campusPlaceCount : '—'}}</text><text>校园足迹</text></view></view
+  >
+  <text wx:if="{{insightError}}" class="space-insight-error">{{insightError}}</text>
   <view class="space-menu">
-    <button class="space-menu__item" data-page="profile-edit" bindtap="openSection">
-      <text class="space-menu__number" aria-hidden="true">01</text>
-      <view class="space-menu__body"
-        ><text class="space-menu__title">个人资料</text
-        ><text class="space-menu__hint">名字与个性签名</text></view
-      >
-      <text class="space-chevron" aria-hidden="true">›</text>
+    <button data-page="album" bindtap="openSection">
+      <view class="space-menu-icon space-menu-icon--yellow"
+        ><t-icon name="image" size="23px" /></view
+      ><view><text>照片里的日子</text><text>把小小瞬间，排成一面照片墙</text></view
+      ><t-icon name="chevron-right" size="18px" />
     </button>
-    <button class="space-menu__item" data-page="friends" bindtap="openSection">
-      <text class="space-menu__number" aria-hidden="true">02</text>
-      <view class="space-menu__body"
-        ><text class="space-menu__title">我的好友</text
-        ><text class="space-menu__hint">邀请、确认与管理好友</text></view
-      >
-      <text class="space-chevron" aria-hidden="true">›</text>
+    <button data-page="friends" bindtap="openSection">
+      <view class="space-menu-icon space-menu-icon--green"
+        ><t-icon name="usergroup" size="23px" /></view
+      ><view><text>我的好友</text><text>邀请彼此，分享愿意公开给好友的日记</text></view
+      ><t-icon name="chevron-right" size="18px" />
     </button>
-    <button class="space-menu__item" data-page="data-management" bindtap="openSection">
-      <text class="space-menu__number" aria-hidden="true">03</text>
-      <view class="space-menu__body"
-        ><text class="space-menu__title">备份与数据</text
-        ><text class="space-menu__hint">{{storageLabel}}</text></view
-      >
-      <text class="space-chevron" aria-hidden="true">›</text>
+    <button data-page="data-management" bindtap="openSection">
+      <view class="space-menu-icon space-menu-icon--blue"><t-icon name="cloud" size="23px" /></view
+      ><view><text>备份与数据</text><text>{{storageLabel}}</text></view
+      ><t-icon name="chevron-right" size="18px" />
     </button>
-    <button class="space-menu__item" data-page="about" bindtap="openSection">
-      <text class="space-menu__number" aria-hidden="true">04</text>
-      <view class="space-menu__body"
-        ><text class="space-menu__title">关于 iSdu</text
-        ><text class="space-menu__hint">了解这本校园记忆册</text></view
-      >
-      <text class="space-chevron" aria-hidden="true">›</text>
+    <button data-page="profile-edit" bindtap="openSection">
+      <view class="space-menu-icon"><t-icon name="edit" size="22px" /></view
+      ><view><text>个人资料</text><text>名字、签名，和一点自己的风格</text></view
+      ><t-icon name="chevron-right" size="18px" />
+    </button>
+    <button data-page="about" bindtap="openSection">
+      <view class="space-menu-icon"><t-icon name="book" size="22px" /></view
+      ><view><text>关于 iSdu</text><text>一本生长在校园里的日记</text></view
+      ><t-icon name="chevron-right" size="18px" />
     </button>
   </view>
   <view wx:if="{{errorMessage}}" class="space-error"
-    ><text>{{errorMessage}}</text
-    ><button class="ui-text-button" bindtap="loadProfile">重试</button></view
+    ><text>{{errorMessage}}</text><button bindtap="loadProfile">重新读取</button></view
   >
-  <text class="space-footer">一处地点，一段只属于你的时光。</text>
+  <button class="space-write" bindtap="openJournal">
+    <mood-face mood="happy" size="small" /><view
+      ><text>今天的心情，也记下来吧</text><text>回到我的日记册</text></view
+    ><t-icon name="chevron-right" size="19px" />
+  </button>
+  <text class="space-footer">一处地点，一段属于你的时光。</text>
 </view>

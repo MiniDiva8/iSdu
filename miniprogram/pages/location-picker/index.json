@@ -1,0 +1,5 @@
+{
+  "navigationBarTitleText": "选择校园地点",
+  "navigationBarBackgroundColor": "#f7f5ec",
+  "usingComponents": { "t-icon": "tdesign-miniprogram/icon/icon" }
+}

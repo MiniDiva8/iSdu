@@ -1,5 +1,6 @@
+import { getJournalDayKey, hasJournalLocation } from '../../utils/journal';
 import { cloudModeService } from '../../services/cloud/cloud-mode-service';
-import { userProfileRepository } from '../../services/repository/index';
+import { memoryRepository, userProfileRepository } from '../../services/repository/index';
 
 Page({
   data: {
@@ -9,9 +10,15 @@ Page({
     storageLabel: '本机保存 · 尚未备份',
     isLoading: true,
     errorMessage: '',
+    entryCount: 0,
+    recordedDayCount: 0,
+    campusPlaceCount: 0,
+    insightsReady: false,
+    insightError: '',
   },
   onShow() {
     void this.loadProfile();
+    void this.loadInsights();
   },
   async loadProfile() {
     this.setData({
@@ -37,6 +44,43 @@ Page({
       });
     }
   },
+  async loadInsights() {
+    this.setData({ insightsReady: false, insightError: '' });
+    try {
+      const records = (await memoryRepository.listMemories()).filter(
+        (memory) => memory.origin === 'user',
+      );
+      const days = new Set(records.map((memory) => getJournalDayKey(memory.recordedAt)));
+      const places = new Set(
+        records
+          .filter(hasJournalLocation)
+          .map(
+            (memory) =>
+              memory.mapAssetVersion +
+              ':' +
+              memory.mapXRatio.toFixed(5) +
+              ':' +
+              memory.mapYRatio.toFixed(5),
+          ),
+      );
+      this.setData({
+        entryCount: records.length,
+        recordedDayCount: days.size,
+        campusPlaceCount: places.size,
+        insightsReady: true,
+      });
+    } catch {
+      this.setData({
+        entryCount: 0,
+        recordedDayCount: 0,
+        campusPlaceCount: 0,
+        insightError: '日记统计暂时没有读到，稍后回来看看。',
+      });
+    }
+  },
+  openJournal() {
+    void wx.switchTab({ url: '/pages/journal/index' });
+  },
   openSection(event: WechatMiniprogram.BaseEvent) {
     const key = (event.currentTarget.dataset as { page?: unknown }).page;
     const destinations: Record<string, string> = {
@@ -44,6 +88,7 @@ Page({
       'data-management': '/pages/data-management/index',
       friends: '/pages/friends/index',
       about: '/pages/about/index',
+      album: '/pages/album/index',
     };
     const url = typeof key === 'string' ? destinations[key] : undefined;
     if (!url) return;

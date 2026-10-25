@@ -1,3 +1,4 @@
+import { hasJournalLocation } from '../../utils/journal';
 import { campusMapConfig } from '../../config/campus-map';
 import type { FriendTimelineCursor, FriendTimelineItem } from '../../models/friend-timeline-item';
 import { getMemoryCategoryLabel, getMemoryMoodLabel, type Memory } from '../../models/memory';
@@ -19,6 +20,9 @@ interface TimelineMemoryView {
   imageFailed: boolean;
   imagePath: string;
   isDemo: boolean;
+  mapAssetVersion: string;
+  hasLocation: boolean;
+  mood: Memory['mood'];
   mapXRatio: number;
   mapYRatio: number;
   moodLabel: string;
@@ -100,10 +104,13 @@ function createTimelineItem(memory: Memory): TimelineMemoryView {
     imageFailed: false,
     imagePath,
     isDemo: memory.origin === 'demo',
+    mapAssetVersion: memory.mapAssetVersion,
+    hasLocation: hasJournalLocation(memory),
+    mood: memory.mood,
     mapXRatio: memory.mapXRatio,
     mapYRatio: memory.mapYRatio,
     moodLabel: getMemoryMoodLabel(memory),
-    placeLabel: memory.placeName || '校园中的某处',
+    placeLabel: memory.placeName || '一页心情日记',
     summary: createSummary(memory),
   };
 }
@@ -323,7 +330,7 @@ Page({
   },
 
   openMySpace() {
-    void wx.navigateTo({
+    void wx.switchTab({
       url: '/pages/profile/index',
       fail: () => this.setData({ actionMessage: '我的空间暂时无法打开，请稍后重试。' }),
     });
@@ -563,6 +570,11 @@ Page({
       return;
     }
 
+    if (!hasJournalLocation(memory)) {
+      this.setData({ actionMessage: '这篇日记没有关联校园地点。' });
+      return;
+    }
+
     setMapFocusIntent({
       mapXRatio: memory.mapXRatio,
       mapYRatio: memory.mapYRatio,
@@ -604,9 +616,13 @@ Page({
     });
   },
 
+  openAlbum() {
+    void wx.navigateTo({ url: '/pages/album/index' });
+  },
+
   goToRecord() {
     void wx.switchTab({
-      url: '/pages/map/index',
+      url: '/pages/journal/index',
       fail: () => {
         this.setData({ actionMessage: '地图暂时无法打开，请稍后重试。' });
       },

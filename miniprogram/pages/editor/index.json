@@ -1,7 +1,10 @@
 {
-  "navigationBarTitleText": "记录",
+  "navigationBarTitleText": "写日记",
   "usingComponents": {
     "t-button": "tdesign-miniprogram/button/button",
-    "t-empty": "tdesign-miniprogram/empty/empty"
-  }
+    "t-empty": "tdesign-miniprogram/empty/empty",
+    "mood-face": "/components/mood-face/index",
+    "t-icon": "tdesign-miniprogram/icon/icon"
+  },
+  "navigationBarBackgroundColor": "#f5f3e9"
 }

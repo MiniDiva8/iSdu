@@ -1,17 +1,17 @@
 page {
   /* Mist & Ink: cool jade, porcelain surfaces and restrained brass accents. */
-  --ui-color-background: #edf3f1;
-  --ui-color-background-alt: #f3f7f5;
-  --ui-color-surface: #fcfdfb;
+  --ui-color-background: #f7f5ec;
+  --ui-color-background-alt: #f1f2e7;
+  --ui-color-surface: #fffdf5;
   --ui-color-surface-secondary: #e7eeeb;
-  --ui-color-primary: #245d59;
-  --ui-color-primary-pressed: #194844;
-  --ui-color-primary-strong: #1b4542;
-  --ui-color-primary-soft: #deebe6;
+  --ui-color-primary: #6b7e53;
+  --ui-color-primary-pressed: #52673c;
+  --ui-color-primary-strong: #50633c;
+  --ui-color-primary-soft: #e5ead5;
   --ui-color-accent: #947449;
   --ui-color-accent-soft: #f1ebe0;
-  --ui-color-text-primary: #203b38;
-  --ui-color-text-secondary: #526b66;
+  --ui-color-text-primary: #35412f;
+  --ui-color-text-secondary: #7e896d;
   --ui-color-text-tertiary: #697d77;
   --ui-color-disabled: #b7bbb5;
   --ui-color-divider: rgba(36, 93, 89, 0.12);

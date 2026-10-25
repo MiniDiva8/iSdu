@@ -22,7 +22,15 @@ import {
   type MemoryVisibility,
 } from '../../models/cloud-memory';
 import type { FriendListItem } from '../../models/cloud-friend';
-import { CURRENT_MAP_ASSET_VERSION } from '../../config/campus-map';
+import { CURRENT_MAP_ASSET_VERSION, campusMapConfig } from '../../config/campus-map';
+import {
+  JOURNAL_UNLOCATED_MAP_VERSION,
+  createJournalTimestamp,
+  getJournalDayKey,
+  hasJournalLocation,
+} from '../../utils/journal';
+import { journalDraftService } from '../../services/journal-draft-service';
+import { isRatioPointInPolygon } from '../../utils/map-coordinates';
 import { LocalImageServiceError, localImageService } from '../../services/local-image-service';
 import { memoryRepository } from '../../services/repository/index';
 import { cloudFriendRepository } from '../../services/repository/cloud-friend-repository';
@@ -146,6 +154,15 @@ async function cleanupUnreferencedImages(candidatePaths: readonly string[]): Pro
 Page({
   data: {
     editorStep: 'content',
+    isJournalEntry: false,
+    hasLocation: false,
+    showMoodPicker: false,
+    dateKey: '',
+    maxDateKey: '',
+    draftNotice: '',
+    draftWasLoaded: false,
+    draftWasWritten: false,
+    discardDraftOnLeave: false,
     category: 'campus-life',
     categoryOptions,
     coordinateLabel: '尚未选择位置',
@@ -170,6 +187,8 @@ Page({
     memoryId: '',
     mood: 'calm',
     moodOptions,
+    moodLabels: MEMORY_MOOD_LABELS,
+    visibilityLabels: { private: '仅自己', selected_friends: '部分好友', friends: '全部好友' },
     originalImagePaths: [] as string[],
     pageSubtitle: '补充照片和文字，让这个地点成为你的校园回忆。',
     pageTitle: '写下这段回忆',
@@ -190,7 +209,11 @@ Page({
   onLoad(query: Record<string, string | undefined>) {
     this.data.isPageActive = true;
     const isCloudMode = cloudModeService.getState().mode === 'cloud';
-    this.setData({ isCloudMode });
+    this.setData({
+      isCloudMode,
+      isJournalEntry: query.source === 'journal',
+      maxDateKey: getJournalDayKey(new Date().toISOString()),
+    });
     if (isCloudMode) void this.loadFriendChoices();
     const memoryId = query.memoryId?.trim();
 
@@ -203,6 +226,51 @@ Page({
         pageTitle: '编辑校园回忆',
       });
       void this.loadMemory(memoryId);
+      return;
+    }
+
+    if (query.source === 'journal') {
+      try {
+        const now = new Date().toISOString();
+        const dateKey = query.date || getJournalDayKey(now);
+        const recordedAt = createJournalTimestamp(dateKey, now);
+        this.setData({
+          isFormReady: true,
+          memoryId: createMemoryId(),
+          recordedAt,
+          recordedAtLabel: formatMemoryDateTime(recordedAt),
+          dateKey,
+          mood: isMemoryMood(query.mood) ? query.mood : 'calm',
+          hasLocation: false,
+          mapAssetVersion: JOURNAL_UNLOCATED_MAP_VERSION,
+          xRatio: 0,
+          yRatio: 0,
+          coordinateLabel: '未关联校园地点',
+          pageTitle: '写一页日记',
+          pageSubtitle: '从一句话、一个表情开始。',
+        });
+        if (query.restore === '1' && !isCloudMode) {
+          const draft = journalDraftService.read();
+          if (draft) {
+            createJournalTimestamp(getJournalDayKey(draft.recordedAt), now);
+            const located = hasJournalLocation(draft);
+            this.setData({
+              ...draft,
+              dateKey: getJournalDayKey(draft.recordedAt),
+              recordedAtLabel: formatMemoryDateTime(draft.recordedAt),
+              hasLocation: located,
+              isDirty: true,
+              draftWasLoaded: true,
+              textRemaining: MEMORY_TEXT_MAX_LENGTH - draft.text.length,
+              draftNotice: draft.hadPhotos
+                ? '文字草稿已恢复，照片需要重新选择。'
+                : '已恢复上次的文字草稿。',
+            });
+          }
+        }
+      } catch (error: unknown) {
+        this.setData({ isFormReady: false, formError: getErrorMessage(error) });
+      }
       return;
     }
 
@@ -224,6 +292,8 @@ Page({
       memoryId: createMemoryId(),
       recordedAt,
       recordedAtLabel: formatMemoryDateTime(recordedAt),
+      hasLocation: true,
+      dateKey: getJournalDayKey(recordedAt),
       xRatio,
       yRatio,
     });
@@ -274,6 +344,9 @@ Page({
     const cloudMemory = isCloudMemory(memory) ? memory : null;
     const selectedIds = new Set(cloudMemory?.selectedFriendIds ?? []);
     this.setData({
+      hasLocation: hasJournalLocation(memory),
+      isJournalEntry: this.data.isJournalEntry || !hasJournalLocation(memory),
+      dateKey: getJournalDayKey(memory.recordedAt),
       category: memory.category,
       coordinateLabel: `横向 ${(memory.mapXRatio * 100).toFixed(1)}% · 纵向 ${(
         memory.mapYRatio * 100
@@ -300,6 +373,151 @@ Page({
         selected: selectedIds.has(item.friend.userId),
       })),
     });
+  },
+
+  openMoodPicker() {
+    if (!this.data.isSaving && !this.data.hasSaved) this.setData({ showMoodPicker: true });
+  },
+  closeMoodPicker() {
+    this.setData({ showMoodPicker: false });
+  },
+  noop() {},
+  toggleOptions() {
+    this.setData({ editorStep: this.data.editorStep === 'options' ? 'content' : 'options' });
+  },
+  changeDate(event: WechatMiniprogram.PickerChange) {
+    if (this.data.isSaving || this.data.hasSaved) return;
+    try {
+      const dateKey = String(event.detail.value);
+      const recordedAt = createJournalTimestamp(dateKey, new Date().toISOString());
+      this.setData({
+        dateKey,
+        recordedAt,
+        recordedAtLabel: formatMemoryDateTime(recordedAt),
+        formError: '',
+      });
+      this.markDirty();
+    } catch (error: unknown) {
+      this.setData({ formError: getErrorMessage(error) });
+    }
+  },
+  openLocationPicker() {
+    if (this.data.isSaving || this.data.hasSaved) return;
+    const query =
+      this.data.hasLocation && this.data.mapAssetVersion === CURRENT_MAP_ASSET_VERSION
+        ? '?xRatio=' + this.data.xRatio + '&yRatio=' + this.data.yRatio
+        : '';
+    void wx.navigateTo({
+      url: '/pages/location-picker/index' + query,
+      events: { locationSelected: (value: unknown) => this.applyCampusLocation(value) },
+      fail: () => this.setData({ formError: '校园选点页暂时无法打开。' }),
+    });
+  },
+  applyCampusLocation(value: unknown) {
+    if (!value || typeof value !== 'object' || this.data.isSaving || this.data.hasSaved) return;
+    const point = value as { mapAssetVersion?: unknown; xRatio?: unknown; yRatio?: unknown };
+    if (
+      point.mapAssetVersion !== CURRENT_MAP_ASSET_VERSION ||
+      !validateRatio(point.xRatio) ||
+      !validateRatio(point.yRatio) ||
+      !isRatioPointInPolygon(
+        { xRatio: point.xRatio, yRatio: point.yRatio },
+        campusMapConfig.validAreaPolygon,
+      )
+    ) {
+      this.setData({ formError: '请在校园有效区域内选择地点。' });
+      return;
+    }
+    this.setData({
+      hasLocation: true,
+      mapAssetVersion: CURRENT_MAP_ASSET_VERSION,
+      xRatio: point.xRatio,
+      yRatio: point.yRatio,
+      coordinateLabel: '已关联校园地图上的位置',
+      formError: '',
+    });
+    this.markDirty();
+  },
+  removeCampusLocation() {
+    if (this.data.isSaving || this.data.hasSaved) return;
+    this.setData({
+      hasLocation: false,
+      mapAssetVersion: JOURNAL_UNLOCATED_MAP_VERSION,
+      xRatio: 0,
+      yRatio: 0,
+      coordinateLabel: '未关联校园地点',
+      formError: '',
+    });
+    this.markDirty();
+  },
+  saveTextDraft(showFeedback: unknown = true): boolean {
+    if (
+      !this.data.isJournalEntry ||
+      this.data.isCloudMode ||
+      this.data.isEditMode ||
+      this.data.isSaving ||
+      this.data.hasSaved ||
+      !this.data.text.trim() ||
+      this.data.discardDraftOnLeave
+    )
+      return false;
+    try {
+      journalDraftService.save({
+        text: this.data.text,
+        mood: this.data.mood as MemoryMood,
+        customMood: this.data.customMood,
+        category: this.data.category as MemoryCategory,
+        customCategory: this.data.customCategory,
+        placeName: this.data.placeName,
+        recordedAt: this.data.recordedAt,
+        mapAssetVersion: this.data.mapAssetVersion,
+        xRatio: this.data.xRatio,
+        yRatio: this.data.yRatio,
+        hadPhotos: this.data.images.length > 0,
+      });
+      this.setData({
+        draftWasWritten: true,
+        draftNotice: '文字、心情和地点草稿已存本机，照片需重新选择。',
+      });
+      if (showFeedback !== false) void wx.showToast({ title: '文字草稿已保存', icon: 'none' });
+      return true;
+    } catch {
+      this.setData({ draftNotice: '文字草稿未能写入，请先保存日记。' });
+      return false;
+    }
+  },
+  clearTextDraft() {
+    if (
+      !this.data.isJournalEntry ||
+      this.data.isCloudMode ||
+      (!this.data.draftWasLoaded && !this.data.draftWasWritten)
+    )
+      return;
+    try {
+      journalDraftService.clear();
+    } catch {
+      this.setData({ draftNotice: '日记已保存，旧文字草稿暂未移除。' });
+    }
+  },
+  async recordMoodOnly() {
+    if (this.data.text.trim() || this.data.images.length) return;
+    if (this.data.mood === 'custom' && !this.data.customMood.trim()) {
+      this.setData({ formError: '先给这份心情起个名字。' });
+      return;
+    }
+    const label =
+      this.data.mood === 'custom'
+        ? this.data.customMood
+        : MEMORY_MOOD_LABELS[this.data.mood as MemoryMood];
+    this.setData({
+      text: '此刻的心情：' + label,
+      textRemaining: MEMORY_TEXT_MAX_LENGTH - label.length - 6,
+    });
+    this.markDirty();
+    await this.saveMemory();
+  },
+  onHide() {
+    this.saveTextDraft(false);
   },
 
   goToOptions() {
@@ -392,6 +610,7 @@ Page({
 
     if (isMemoryMood(dataset.value)) {
       this.setData({
+        showMoodPicker: false,
         customMood: dataset.value === 'custom' ? this.data.customMood : '',
         formError: '',
         mood: dataset.value,
@@ -640,6 +859,7 @@ Page({
       const cleanupFailures = await cleanupUnreferencedImages(removedOriginalPaths);
 
       wx.disableAlertBeforeUnload({ fail: () => undefined });
+      this.clearTextDraft();
       this.setData({
         formError:
           visibilityWarning ||
@@ -724,6 +944,8 @@ Page({
       confirmColor: '#a85f62',
       success: (result) => {
         if (result.confirm) {
+          this.setData({ discardDraftOnLeave: true });
+          this.clearTextDraft();
           leave();
         }
       },
@@ -738,7 +960,7 @@ Page({
       delta: 1,
       fail: () => {
         void wx.switchTab({
-          url: '/pages/map/index',
+          url: this.data.isJournalEntry ? '/pages/journal/index' : '/pages/map/index',
           fail: () => {
             this.setData({ formError: '返回地图失败，请使用左上角返回或底部地图 Tab。' });
           },
@@ -748,6 +970,7 @@ Page({
   },
 
   onUnload() {
+    this.saveTextDraft(false);
     if (navigationTimer) {
       clearTimeout(navigationTimer);
       navigationTimer = undefined;

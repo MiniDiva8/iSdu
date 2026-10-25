@@ -35,6 +35,7 @@ function entryRow(memory: Memory): EntryRow {
 }
 const todayKey = getJournalDayKey(new Date().toISOString());
 Page({
+  loadVersion: 0,
   data: {
     topInset: 24,
     monthKey: todayKey.slice(0, 7),
@@ -70,12 +71,32 @@ Page({
     await this.loadJournal();
     void wx.stopPullDownRefresh();
   },
+  onHide() {
+    this.loadVersion += 1;
+  },
+  onUnload() {
+    this.loadVersion += 1;
+  },
   async loadJournal() {
-    this.setData({ isLoading: true, errorMessage: '', showDaySheet: false, dayEntries: [] });
+    const loadVersion = ++this.loadVersion;
+    const sourceMode = cloudModeService.getState().mode;
+    const monthKey = this.data.monthKey;
+    this.setData({
+      isLoading: true,
+      errorMessage: '',
+      showDaySheet: false,
+      dayEntries: [],
+      memories: [],
+      searchResults: [],
+      days: [],
+      hasDraft: false,
+    });
     try {
       const memories = await memoryRepository.listMemories();
+      if (loadVersion !== this.loadVersion || sourceMode !== cloudModeService.getState().mode)
+        return;
       const now = new Date().toISOString();
-      const model = buildJournalMonth(memories, this.data.monthKey, now);
+      const model = buildJournalMonth(memories, monthKey, now);
       const isLocal = cloudModeService.getState().mode === 'local';
       let hasDraft = false;
       if (isLocal) {
@@ -99,6 +120,8 @@ Page({
       });
       this.updateSearchResults();
     } catch (error: unknown) {
+      if (loadVersion !== this.loadVersion || sourceMode !== cloudModeService.getState().mode)
+        return;
       this.setData({
         isLoading: false,
         errorMessage: error instanceof Error ? error.message : '日记暂时没有读到，请重试。',

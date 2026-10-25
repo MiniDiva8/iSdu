@@ -1,0 +1,27 @@
+<view class="picker-page">
+  <text class="picker-eyebrow">把这一刻，留在发生的地方</text
+  ><text class="picker-title">在校园里，选一个点</text>
+  <text class="picker-copy">轻点插画地图，标记这篇日记的位置。</text>
+  <view class="picker-map-frame"
+    ><image
+      id="picker-map"
+      class="picker-map"
+      src="{{mapSource}}"
+      mode="widthFix"
+      bindtap="selectPoint" /><view
+      wx:if="{{hasPicked}}"
+      class="picker-pin"
+      style="left:{{markerX}};top:{{markerY}}"
+      ><view></view></view
+  ></view>
+  <view class="picker-selected"
+    ><t-icon name="{{hasPicked ? 'location' : 'gesture-click'}}" size="24px" /><text
+      >{{hasPicked ? '这个校园地点已选好' : '还没有选点，在地图上轻点一下吧'}}</text
+    ></view
+  >
+  <text wx:if="{{errorMessage}}" class="picker-error">{{errorMessage}}</text>
+  <text class="picker-hint">日记会继续保留在编辑页，确认后带着这个地点返回。</text>
+  <button class="picker-confirm" disabled="{{!hasPicked}}" bindtap="confirmPoint">
+    把日记留在这里
+  </button>
+</view>

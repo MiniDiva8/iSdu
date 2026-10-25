@@ -103,7 +103,7 @@ Page({
       void wx.navigateBack({
         delta: 1,
         fail: () => {
-          void wx.redirectTo({
+          void wx.switchTab({
             url: '/pages/profile/index',
             fail: () => this.setData({ errorMessage: '返回失败，请使用左上角返回。' }),
           });

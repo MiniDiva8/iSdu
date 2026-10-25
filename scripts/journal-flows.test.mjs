@@ -123,3 +123,47 @@ test('journal search finds content outside the displayed month', async (t) => {
   home.handleSearchInput({ detail: { value: '图书馆' } });
   assert.equal(home.data.searchResults[0].id, 'old');
 });
+
+test('journal ignores an older failed request after a newer month has loaded', async (t) => {
+  const home = page('journal');
+  let rejectFirst;
+  let calls = 0;
+  t.mock.method(memoryRepository, 'listMemories', () => {
+    calls += 1;
+    if (calls === 1)
+      return new Promise((_, reject) => {
+        rejectFirst = reject;
+      });
+    return Promise.resolve([memory({ id: 'newest' })]);
+  });
+  home.data.monthKey = '2024-01';
+  const first = home.loadJournal();
+  home.data.monthKey = '2024-02';
+  await home.loadJournal();
+  rejectFirst(new Error('old request failed'));
+  await first;
+  assert.equal(home.data.errorMessage, '');
+  assert.equal(home.data.memories[0].id, 'newest');
+  assert.equal(home.data.days.length, 29);
+});
+
+test('album ignores an older successful request after a newer request failed', async (t) => {
+  const album = page('album');
+  album.data.monthKey = '2024-02';
+  let resolveFirst;
+  let calls = 0;
+  t.mock.method(memoryRepository, 'listMemories', () => {
+    calls += 1;
+    if (calls === 1)
+      return new Promise((resolve) => {
+        resolveFirst = resolve;
+      });
+    return Promise.reject(new Error('current request failed'));
+  });
+  const first = album.loadPhotos();
+  await album.loadPhotos();
+  resolveFirst([memory({ imagePaths: ['/old.jpg'] })]);
+  await first;
+  assert.deepEqual(album.data.photos, []);
+  assert.match(album.data.errorMessage, /current/);
+});

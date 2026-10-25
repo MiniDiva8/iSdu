@@ -11,13 +11,14 @@
     "pages/profile-edit/index",
     "pages/data-management/index",
     "pages/about/index",
-    "pages/album/index"
+    "pages/album/index",
+    "pages/location-picker/index"
   ],
   "window": {
-    "navigationBarBackgroundColor": "#edf3f1",
+    "navigationBarBackgroundColor": "#f7f5ec",
     "navigationBarTextStyle": "black",
     "navigationBarTitleText": "iSdu",
-    "backgroundColor": "#edf3f1",
+    "backgroundColor": "#f7f5ec",
     "backgroundTextStyle": "light"
   },
   "tabBar": {
@@ -28,19 +29,27 @@
     "list": [
       {
         "pagePath": "pages/journal/index",
-        "text": "日记"
+        "text": "日记",
+        "iconPath": "assets/journal/tabbar/journal.png",
+        "selectedIconPath": "assets/journal/tabbar/journal-selected.png"
       },
       {
         "pagePath": "pages/map/index",
-        "text": "校园"
+        "text": "校园",
+        "iconPath": "assets/journal/tabbar/campus.png",
+        "selectedIconPath": "assets/journal/tabbar/campus-selected.png"
       },
       {
         "pagePath": "pages/timeline/index",
-        "text": "时光"
+        "text": "时光",
+        "iconPath": "assets/journal/tabbar/timeline.png",
+        "selectedIconPath": "assets/journal/tabbar/timeline-selected.png"
       },
       {
         "pagePath": "pages/profile/index",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "assets/journal/tabbar/profile.png",
+        "selectedIconPath": "assets/journal/tabbar/profile-selected.png"
       }
     ]
   },

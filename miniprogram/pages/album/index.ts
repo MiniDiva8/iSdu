@@ -1,3 +1,4 @@
+import { cloudModeService } from '../../services/cloud/cloud-mode-service';
 import { memoryRepository } from '../../services/repository/index';
 import {
   buildJournalMonth,
@@ -9,6 +10,7 @@ interface AlbumPhoto extends JournalPhoto {
   failed: boolean;
 }
 Page({
+  loadVersion: 0,
   data: {
     monthKey: getJournalDayKey(new Date().toISOString()).slice(0, 7),
     monthLabel: '',
@@ -28,17 +30,30 @@ Page({
   onShow() {
     void this.loadPhotos();
   },
+  onHide() {
+    this.loadVersion += 1;
+  },
+  onUnload() {
+    this.loadVersion += 1;
+  },
   async loadPhotos() {
-    this.setData({ isLoading: true, errorMessage: '' });
+    const loadVersion = ++this.loadVersion;
+    const sourceMode = cloudModeService.getState().mode;
+    const monthKey = this.data.monthKey;
+    this.setData({ isLoading: true, errorMessage: '', photos: [] });
     try {
       const memories = await memoryRepository.listMemories();
-      const model = buildJournalMonth(memories, this.data.monthKey);
+      if (loadVersion !== this.loadVersion || sourceMode !== cloudModeService.getState().mode)
+        return;
+      const model = buildJournalMonth(memories, monthKey);
       this.setData({
         monthLabel: model.label,
         photos: model.photos.map((photo) => ({ ...photo, failed: false })),
         isLoading: false,
       });
     } catch (error: unknown) {
+      if (loadVersion !== this.loadVersion || sourceMode !== cloudModeService.getState().mode)
+        return;
       this.setData({
         photos: [],
         isLoading: false,

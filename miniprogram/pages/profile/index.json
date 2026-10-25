@@ -1,1 +1,8 @@
-{ "navigationBarTitleText": "我的空间", "usingComponents": {} }
+{
+  "navigationBarTitleText": "我的空间",
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon",
+    "mood-face": "/components/mood-face/index"
+  },
+  "navigationBarBackgroundColor": "#f7f5ec"
+}

@@ -54,7 +54,7 @@ function parseDraft(value: unknown): JournalDraft | null {
     category: item.category,
     customCategory: item.customCategory as string,
     placeName: item.placeName as string,
-    recordedAt: item.recordedAt as string,
+    recordedAt: item.recordedAt,
     mapAssetVersion: item.mapAssetVersion,
     xRatio: item.xRatio,
     yRatio: item.yRatio,

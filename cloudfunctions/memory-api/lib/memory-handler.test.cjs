@@ -722,3 +722,24 @@ test('sanitizes unexpected storage failures', async () => {
     requestId: 'req',
   });
 });
+
+test('journal-only entries remain private and compatible with the existing cloud contract', async () => {
+  const { handler, memories } = createHarness();
+  const result = await handler({
+    action: 'migrate',
+    payload: {
+      content: { ...content, mapAssetVersion: 'journal-unlocated-v1', mapXRatio: 0, mapYRatio: 0 },
+      sourceLocalMemoryId: 'journal-without-location',
+      localTimestamps: {
+        createdAt: '2026-08-14T08:00:00.000Z',
+        updatedAt: '2026-08-14T09:00:00.000Z',
+      },
+      uploaded: [],
+    },
+  });
+  assert.equal(result.ok, true);
+  const stored = [...memories.values()][0];
+  assert.equal(stored.visibility, 'private');
+  assert.equal(stored.mapAssetVersion, 'journal-unlocated-v1');
+  assert.deepEqual(stored.selectedGrants, []);
+});

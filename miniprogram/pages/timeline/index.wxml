@@ -27,7 +27,7 @@
       >
       <text class="page-subtitle"
         >{{timelineMode === 'friends' ? '翻阅好友愿意与你分享的校园故事。' :
-        '按时间整理，也能回到地图上的原位置。'}}</text
+        '日记、照片，以及好友愿意与你分享的小瞬间。'}}</text
       >
     </view>
   </view>
@@ -40,6 +40,7 @@
   <view class="timeline-toolbar">
     <text class="timeline-storage-status">{{isCloudActive ? '云端回忆' : '本机 · 未备份'}}</text>
     <view class="timeline-toolbar__links">
+      <button class="ui-text-button" bindtap="openAlbum">照片</button>
       <button class="ui-text-button" bindtap="openFriends">好友</button>
       <button class="ui-text-button" bindtap="openMySpace">我的空间 ›</button>
     </view>
@@ -116,9 +117,9 @@
     <view wx:elif="{{isEmpty}}" class="ui-state timeline-state">
       <text class="timeline-state__symbol">记</text>
       <text class="ui-state__title">这里还没有留下记忆</text>
-      <text class="ui-state__copy">去地图上标记属于你的第一段校园时光。</text>
+      <text class="ui-state__copy">从一句话或一张照片，收藏第一段校园时光。</text>
       <view class="timeline-state__action">
-        <t-button theme="primary" bind:tap="goToRecord">去地图记录</t-button>
+        <t-button theme="primary" bind:tap="goToRecord">写一篇日记</t-button>
       </view>
     </view>
 
@@ -157,7 +158,9 @@
               catchtap="openDetail"
               binderror="handleImageError"
             />
-            <view wx:else class="timeline-card__placeholder"><text>记</text></view>
+            <view wx:else class="timeline-card__placeholder"
+              ><mood-face mood="{{memory.mood}}" size="small"
+            /></view>
 
             <view class="timeline-card__body">
               <view class="timeline-card__topline">
