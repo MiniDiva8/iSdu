@@ -18,7 +18,7 @@
     "test:cloud-memory": "node --test cloudfunctions/memory-api/lib/memory-handler.test.cjs && node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/services/memory-migration-service.test.mjs miniprogram/services/memory-service.test.mjs miniprogram/services/repository/cloud-like-repository.test.mjs miniprogram/services/repository/cloud-memory-repository.test.mjs",
     "test:cloud-friends": "node --test cloudfunctions/friend-api/lib/friend-handler.test.cjs",
     "test:pages": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test scripts/page-flows.test.mjs scripts/timeline-cover-flows.test.mjs",
-    "test": "npm run test:coordinates && npm run test:memory && npm run test:image && npm run test:cloud-auth && npm run test:cloud-memory && npm run test:cloud-friends && npm run test:pages && npm run test:journal",
+    "test": "npm run test:coordinates && npm run test:memory && npm run test:image && npm run test:cloud-auth && npm run test:cloud-memory && npm run test:cloud-friends && npm run test:pages && npm run test:journal && npm run test:profile-wheel",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"miniprogram/**/*.ts\" \"cloudfunctions/**/*.js\"",
     "format:check": "npm run format:check:base && npm run format:check:wxml && npm run format:check:wxss",
@@ -27,7 +27,8 @@
     "format:check:wxss": "prettier --check \"miniprogram/**/*.wxss\" --parser css",
     "scan:security": "node scripts/security-scan.mjs",
     "check": "npm run test && npm run typecheck && npm run lint && npm run format:check && npm run scan:security",
-    "test:journal": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/journal.test.mjs miniprogram/services/journal-draft-service.test.mjs scripts/journal-flows.test.mjs scripts/journal-editor-flows.test.mjs"
+    "test:journal": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/journal.test.mjs miniprogram/services/journal-draft-service.test.mjs scripts/journal-flows.test.mjs scripts/journal-editor-flows.test.mjs",
+    "test:profile-wheel": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/selection-wheel.test.mjs miniprogram/utils/profile-summary.test.mjs miniprogram/services/journal-preferences-service.test.mjs"
   },
   "dependencies": {
     "tdesign-miniprogram": "1.15.3"
