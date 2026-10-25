@@ -75,3 +75,54 @@ test('keeps friend timeline authorization errors typed', async () => {
     return true;
   });
 });
+
+const ownedMemory = (visibility = 'private') => ({
+  id: 'existing-record',
+  text: '已有的校园记录',
+  imagePaths: [],
+  imageIds: [],
+  category: 'campus-life',
+  customCategory: '',
+  mood: 'happy',
+  customMood: '',
+  mapAssetVersion: 'campus-map-v3',
+  mapXRatio: 0.5,
+  mapYRatio: 0.5,
+  placeName: '',
+  recordedAt: '2026-08-15T08:00:00.000Z',
+  createdAt: '2026-08-15T08:00:00.000Z',
+  updatedAt: '2026-08-15T08:00:00.000Z',
+  origin: 'user',
+  canEdit: true,
+  likedByMe: false,
+  likeCount: 0,
+  ownerUserId: 'usr_self',
+  ownerDisplayName: '自己',
+  publishedAt: null,
+  selectedFriendIds: [],
+  visibility,
+});
+test('existing cloud lists containing public records remain readable in the diary client', async () => {
+  const client = createClient({
+    ok: true,
+    requestId: 'compat-list',
+    data: {
+      memories: [ownedMemory(), { ...ownedMemory('public'), id: 'existing-public' }],
+    },
+  });
+  const memories = await new CloudMemoryRepository(client).listMemories();
+  assert.deepEqual(
+    memories.map((x) => x.visibility),
+    ['private', 'public'],
+  );
+});
+test('unknown cloud visibility values are rejected instead of being downgraded', async () => {
+  const client = createClient({
+    ok: true,
+    requestId: 'compat-unknown',
+    data: {
+      memories: [ownedMemory('unexpected-scope')],
+    },
+  });
+  await assert.rejects(new CloudMemoryRepository(client).listMemories(), /可见范围无效/);
+});

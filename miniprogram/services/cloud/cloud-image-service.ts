@@ -1,4 +1,5 @@
 import type { CloudImageUploadPlan, UploadedCloudImage } from '../../models/cloud-memory';
+import { prepareImageForSafety } from '../image-safety-service';
 import { initializeCloudForRuntime } from './cloud-initializer';
 
 export interface CloudImageServiceApi {
@@ -33,7 +34,11 @@ export class CloudImageService implements CloudImageServiceApi {
       }
 
       try {
-        const result = await wx.cloud.uploadFile({ cloudPath: target.cloudPath, filePath });
+        const safeFilePath = await prepareImageForSafety(filePath);
+        const result = await wx.cloud.uploadFile({
+          cloudPath: target.cloudPath,
+          filePath: safeFilePath,
+        });
         uploaded.push({ fileId: result.fileID, imageId: target.imageId });
       } catch {
         throw new Error(`第 ${index + 1} 张照片上传失败，已上传文件将由云端过期清理`);

@@ -1,3 +1,4 @@
+import { cloudMemoryRepository } from '../miniprogram/services/repository/cloud-memory-repository.ts';
 import assert from 'node:assert/strict';
 import { beforeEach, test } from 'node:test';
 import { memoryRepository } from '../miniprogram/services/repository/index.ts';
@@ -239,4 +240,39 @@ test('unlocated journals are excluded before map incompatibility warnings are co
     map.data.markers.map((x) => x.id),
     ['campus'],
   );
+});
+
+test('editing an existing public cloud record preserves its visibility and keeps new-public publishing out of the picker', async (t) => {
+  const existing = {
+    ...memory({ id: 'legacy-public' }),
+    visibility: 'public',
+    canEdit: true,
+    imageIds: [],
+    selectedFriendIds: [],
+    likedByMe: false,
+    likeCount: 0,
+    ownerDisplayName: '自己',
+    ownerUserId: 'usr_self',
+    publishedAt: '2024-02-29T04:00:00.000Z',
+  };
+  const editor = page('editor');
+  editor.data.isCloudMode = true;
+  editor.data.isEditMode = true;
+  editor.data.memoryId = existing.id;
+  editor.populateMemory(existing);
+  assert.equal(editor.data.visibility, 'public');
+  assert.match(editor.data.visibilityLabels.public, /公开/);
+  assert.equal(
+    editor.data.visibilityOptions.some((x) => x.value === 'public'),
+    false,
+  );
+  const visibilityCalls = [];
+  t.mock.method(memoryRepository, 'updateMemory', async () => existing);
+  t.mock.method(cloudMemoryRepository, 'setVisibility', async (...args) => {
+    visibilityCalls.push(args);
+    return existing;
+  });
+  await editor.saveMemory();
+  editor.onUnload();
+  assert.deepEqual(visibilityCalls, [[existing.id, 'public', []]]);
 });

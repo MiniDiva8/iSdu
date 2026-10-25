@@ -188,7 +188,12 @@ Page({
     mood: 'calm',
     moodOptions,
     moodLabels: MEMORY_MOOD_LABELS,
-    visibilityLabels: { private: '仅自己', selected_friends: '部分好友', friends: '全部好友' },
+    visibilityLabels: {
+      private: '仅自己',
+      selected_friends: '部分好友',
+      friends: '全部好友',
+      public: '公开（沿用原设置）',
+    },
     originalImagePaths: [] as string[],
     pageSubtitle: '补充照片和文字，让这个地点成为你的校园回忆。',
     pageTitle: '写下这段回忆',

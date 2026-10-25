@@ -1,6 +1,6 @@
 import { parseMemoryRecord, type Memory } from './memory';
 
-export const MEMORY_VISIBILITIES = ['private', 'selected_friends', 'friends'] as const;
+export const MEMORY_VISIBILITIES = ['private', 'selected_friends', 'friends', 'public'] as const;
 export type MemoryVisibility = (typeof MEMORY_VISIBILITIES)[number];
 
 export interface CloudMemory extends Memory {

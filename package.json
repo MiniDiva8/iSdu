@@ -1,6 +1,6 @@
 {
   "name": "isdu-miniprogram",
-  "version": "0.9.0",
+  "version": "3.1.0-rc.1",
   "private": true,
   "description": "iSdu：基于校园地图的个人空间日记微信小程序",
   "license": "UNLICENSED",
@@ -13,7 +13,7 @@
   "scripts": {
     "test:coordinates": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/map-coordinates.test.mjs",
     "test:memory": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/models/memory.test.mjs miniprogram/services/repository/local-memory-repository.test.mjs miniprogram/services/repository/local-user-profile-repository.test.mjs miniprogram/utils/memory-filters.test.mjs miniprogram/utils/memory-insights.test.mjs",
-    "test:image": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/services/local-image-service.test.mjs miniprogram/services/timeline-cover-service.test.mjs",
+    "test:image": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/services/local-image-service.test.mjs miniprogram/services/timeline-cover-service.test.mjs miniprogram/services/image-safety-service.test.mjs miniprogram/services/cloud/cloud-image-service.test.mjs",
     "test:cloud-auth": "node --test cloudfunctions/auth-api/lib/auth-handler.test.cjs cloudfunctions/auth-api/lib/cloud-user-store.test.cjs && node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/services/repository/cloud-auth-repository.test.mjs",
     "test:cloud-memory": "node --test cloudfunctions/memory-api/lib/memory-handler.test.cjs && node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/services/memory-migration-service.test.mjs miniprogram/services/memory-service.test.mjs miniprogram/services/repository/cloud-like-repository.test.mjs miniprogram/services/repository/cloud-memory-repository.test.mjs",
     "test:cloud-friends": "node --test cloudfunctions/friend-api/lib/friend-handler.test.cjs",
