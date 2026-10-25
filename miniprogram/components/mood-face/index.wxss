@@ -1,0 +1,194 @@
+:host {
+  display: inline-flex;
+  vertical-align: middle;
+}
+.mood-face {
+  position: relative;
+  width: 94rpx;
+  height: 94rpx;
+  background: #f4d46b;
+  border-radius: 48% 53% 45% 50%;
+  transform: rotate(-4deg);
+  box-shadow: inset -5rpx -4rpx 0 rgba(92, 67, 25, 0.035);
+}
+.mood-face--small {
+  width: 64rpx;
+  height: 64rpx;
+}
+.mood-face--large {
+  width: 154rpx;
+  height: 154rpx;
+}
+.mood-face--tiny {
+  width: 44rpx;
+  height: 44rpx;
+}
+.face-eye {
+  position: absolute;
+  top: 37%;
+  width: 7%;
+  height: 8%;
+  background: #303831;
+  border-radius: 50%;
+}
+.face-eye--left {
+  left: 31%;
+}
+.face-eye--right {
+  right: 29%;
+}
+.face-mouth {
+  position: absolute;
+  left: 33%;
+  top: 51%;
+  width: 36%;
+  height: 22%;
+  border-bottom: 5rpx solid #303831;
+  border-radius: 0 0 50% 50%;
+}
+.face-cheek {
+  position: absolute;
+  top: 53%;
+  width: 14%;
+  height: 8%;
+  border-radius: 50%;
+  background: #e99b83;
+  opacity: 0;
+}
+.face-cheek--left {
+  left: 17%;
+}
+.face-cheek--right {
+  right: 14%;
+}
+.mood-face--calm {
+  background: #bfd7b9;
+  border-radius: 48% 46% 52% 47%;
+}
+.mood-face--calm .face-mouth {
+  height: 2%;
+  top: 61%;
+  width: 27%;
+  left: 37%;
+  border-bottom-width: 4rpx;
+  border-radius: 10rpx;
+}
+.mood-face--excited {
+  background: #f4b86a;
+  transform: rotate(6deg);
+}
+.mood-face--excited .face-mouth {
+  background: #303831;
+  border: 0;
+  height: 23%;
+  width: 27%;
+  left: 38%;
+  border-radius: 12% 12% 50% 50%;
+}
+.mood-face--grateful {
+  background: #efa9ac;
+}
+.mood-face--grateful .face-cheek {
+  opacity: 0.7;
+}
+.mood-face--relaxed {
+  background: #cbdcad;
+}
+.mood-face--relaxed .face-eye {
+  height: 3%;
+  top: 40%;
+  border-radius: 0 0 8rpx 8rpx;
+  transform: rotate(8deg);
+}
+.mood-face--relaxed .face-eye--right {
+  transform: rotate(-8deg);
+}
+.mood-face--nostalgic {
+  background: #b5c9ce;
+}
+.mood-face--nostalgic .face-mouth {
+  height: 8%;
+  top: 57%;
+  border-bottom-width: 3rpx;
+  width: 23%;
+  left: 40%;
+}
+.mood-face--inspired {
+  background: #edcf87;
+}
+.mood-face--inspired .face-eye--right {
+  height: 3%;
+  transform: rotate(-20deg);
+  top: 40%;
+  width: 13%;
+}
+.mood-face--proud {
+  background: #d6b9d0;
+}
+.mood-face--proud .face-mouth {
+  left: 34%;
+  width: 35%;
+  transform: rotate(-15deg);
+}
+.mood-face--lonely {
+  background: #bac2d2;
+}
+.mood-face--lonely .face-mouth,
+.mood-face--sad .face-mouth {
+  border-bottom: 0;
+  border-top: 4rpx solid #303831;
+  border-radius: 50% 50% 0 0;
+  top: 63%;
+  height: 14%;
+  width: 27%;
+  left: 37%;
+}
+.mood-face--sad {
+  background: #9abcc8;
+}
+.face-tear {
+  position: absolute;
+  left: 24%;
+  top: 49%;
+  height: 15%;
+  width: 7%;
+  background: #6c9fbd;
+  border-radius: 50% 50% 60% 60%;
+  transform: rotate(10deg);
+}
+.mood-face--tired {
+  background: #bfa98b;
+}
+.mood-face--tired .face-eye {
+  height: 3%;
+  top: 40%;
+  width: 13%;
+  border-radius: 4rpx;
+}
+.mood-face--tired .face-eye--left {
+  left: 26%;
+  transform: rotate(10deg);
+}
+.mood-face--tired .face-eye--right {
+  right: 24%;
+  transform: rotate(-9deg);
+}
+.mood-face--tired .face-mouth {
+  height: 0;
+  width: 24%;
+  left: 40%;
+  top: 65%;
+  border-radius: 8rpx;
+  border-bottom-width: 4rpx;
+}
+.mood-face--custom {
+  background: #e7dfcb;
+}
+.face-spark {
+  position: absolute;
+  right: -6%;
+  top: -13%;
+  font-size: 39rpx;
+  line-height: 1;
+  color: #a68444;
+}

@@ -1,0 +1,47 @@
+<view class="album-page">
+  <text class="album-eyebrow">生活的碎片，也会发光</text
+  ><text class="album-title">照片里的日子</text>
+  <view class="album-month"
+    ><button data-offset="-1" aria-label="上个月" bindtap="changeMonth">
+      <t-icon name="chevron-left" size="20px" /></button
+    ><text>{{monthLabel || monthKey}}</text
+    ><button data-offset="1" aria-label="下个月" bindtap="changeMonth">
+      <t-icon name="chevron-right" size="20px" /></button
+  ></view>
+  <view wx:if="{{isLoading}}" class="album-state">正在翻开这一页…</view>
+  <view wx:elif="{{errorMessage}}" class="album-state"
+    ><text>{{errorMessage}}</text><button bindtap="loadPhotos">重新读取</button></view
+  >
+  <view wx:elif="{{photos.length === 0}}" class="album-state"
+    ><text class="album-empty">▧</text><text>这个月还没有照片</text
+    ><text class="album-hint">写日记时留下一张，下次就能在这里重逢。</text></view
+  >
+  <block wx:else>
+    <text class="album-hint album-count"
+      >{{photos.length}} 张照片 · 点击打开日记，长按查看原图</text
+    >
+    <view class="album-grid"
+      ><button
+        wx:for="{{photos}}"
+        wx:key="key"
+        class="polaroid"
+        data-memory-id="{{item.memoryId}}"
+        data-path="{{item.path}}"
+        bindtap="openDiary"
+        bindlongpress="previewPhoto"
+      >
+        <view class="polaroid-tape"></view
+        ><image
+          wx:if="{{!item.failed}}"
+          src="{{item.path}}"
+          mode="aspectFill"
+          lazy-load
+          data-key="{{item.key}}"
+          binderror="imageFailed"
+        /><view wx:else class="polaroid-missing">照片暂时无法读取</view
+        ><text class="polaroid-date">{{item.dateLabel}}</text
+        ><text class="polaroid-place">{{item.placeName}}</text>
+      </button></view
+    >
+  </block>
+</view>

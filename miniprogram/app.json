@@ -1,5 +1,6 @@
 {
   "pages": [
+    "pages/journal/index",
     "pages/map/index",
     "pages/editor/index",
     "pages/timeline/index",
@@ -9,7 +10,8 @@
     "pages/friend-invite/index",
     "pages/profile-edit/index",
     "pages/data-management/index",
-    "pages/about/index"
+    "pages/about/index",
+    "pages/album/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#edf3f1",
@@ -19,18 +21,26 @@
     "backgroundTextStyle": "light"
   },
   "tabBar": {
-    "color": "#526b66",
-    "selectedColor": "#245d59",
-    "backgroundColor": "#fcfdfb",
+    "color": "#8a907c",
+    "selectedColor": "#3e5035",
+    "backgroundColor": "#fbfaf2",
     "borderStyle": "black",
     "list": [
       {
+        "pagePath": "pages/journal/index",
+        "text": "日记"
+      },
+      {
         "pagePath": "pages/map/index",
-        "text": "地图"
+        "text": "校园"
       },
       {
         "pagePath": "pages/timeline/index",
         "text": "时光"
+      },
+      {
+        "pagePath": "pages/profile/index",
+        "text": "我的"
       }
     ]
   },

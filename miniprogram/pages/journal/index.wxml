@@ -1,0 +1,167 @@
+<view class="journal-page" style="padding-top: {{topInset + 48}}px">
+  <view class="journal-brand" style="top: {{topInset}}px"
+    ><text class="journal-brand__mark">i</text><text>iSdu · 心情日记</text></view
+  >
+  <view class="journal-toolbar">
+    <button class="journal-icon" aria-label="打开校园地图" bindtap="openCampus">
+      <t-icon name="earth" size="25px" />
+    </button>
+    <view class="journal-toolbar__right">
+      <button class="journal-icon" aria-label="搜索日记" bindtap="toggleSearch">
+        <t-icon name="search" size="24px" />
+      </button>
+      <button class="journal-icon" aria-label="打开照片墙" bindtap="openAlbum">
+        <t-icon name="image" size="24px" />
+      </button>
+      <button class="journal-icon" aria-label="打开我的空间" bindtap="openProfile">
+        <t-icon name="setting" size="24px" />
+      </button>
+    </view>
+  </view>
+  <view class="journal-month">
+    <text class="journal-year">{{yearLabel || '我的校园时光'}}</text>
+    <view class="journal-month__row">
+      <button class="month-arrow" data-offset="-1" aria-label="上个月" bindtap="changeMonth">
+        <t-icon name="chevron-left" size="22px" />
+      </button>
+      <picker
+        mode="date"
+        fields="month"
+        value="{{monthKey}}"
+        start="2000-01"
+        end="2100-12"
+        bindchange="pickMonth"
+      >
+        <text class="journal-month__name">{{monthLabel || '心情日记'}}</text>
+      </picker>
+      <button class="month-arrow" data-offset="1" aria-label="下个月" bindtap="changeMonth">
+        <t-icon name="chevron-right" size="22px" />
+      </button>
+    </view>
+    <text class="journal-subtitle"
+      >{{entryCount ? '在校园里，收集了 ' + entryCount + ' 个小瞬间' :
+      '每一种心情，都值得被记住'}}</text
+    >
+  </view>
+  <view wx:if="{{showSearch}}" class="journal-search">
+    <input
+      value="{{keyword}}"
+      placeholder="搜索文字、地点或心情"
+      maxlength="50"
+      bindinput="handleSearchInput"
+      focus="{{showSearch}}"
+    />
+    <view wx:if="{{keyword}}" class="search-results">
+      <button
+        wx:for="{{searchResults}}"
+        wx:key="id"
+        class="search-entry"
+        data-id="{{item.id}}"
+        bindtap="openEntry"
+      >
+        <mood-face mood="{{item.mood}}" size="tiny" /><text>{{item.preview}}</text
+        ><t-icon name="chevron-right" size="17px" />
+      </button>
+      <text wx:if="{{searchResults.length === 0}}" class="journal-muted"
+        >还没有找到这个瞬间，换个词试试。</text
+      >
+    </view>
+  </view>
+  <view wx:if="{{isLoading}}" class="journal-loading">
+    <view wx:for="{{[1,2,3,4,5,6,7,8,9,10]}}" wx:key="*this" class="journal-skeleton"></view>
+  </view>
+  <view wx:elif="{{errorMessage}}" class="journal-state">
+    <text class="journal-state__symbol">☁</text
+    ><text class="journal-state__title">日记暂时没有打开</text><text>{{errorMessage}}</text>
+    <button class="journal-soft-button" bindtap="loadJournal">重新读取</button>
+  </view>
+  <view wx:else class="mood-wall">
+    <button
+      wx:for="{{days}}"
+      wx:key="key"
+      class="mood-day {{item.isFuture && !item.count ? 'mood-day--future' : ''}} {{item.isToday ? 'mood-day--today' : ''}}"
+      data-key="{{item.key}}"
+      disabled="{{item.isFuture && !item.count}}"
+      aria-label="{{item.day + '日，' + (item.count ? item.moodLabel + '，' + item.count + '篇日记' : '记录心情')}}"
+      bindtap="openDay"
+    >
+      <view class="mood-day__face">
+        <mood-face wx:if="{{item.count}}" mood="{{item.mood}}" />
+        <view wx:else class="mood-day__empty"
+          ><text wx:if="{{item.isToday}}">＋</text><view wx:else class="mood-day__seed"></view
+        ></view>
+        <text wx:if="{{item.count > 1}}" class="mood-day__count">{{item.count}}</text>
+      </view>
+      <text class="mood-day__date"
+        >{{item.isToday ? '今天' : item.day}}<text wx:if="{{item.isDemo}}" class="mood-day__demo">
+          · 例</text
+        ></text
+      >
+    </button>
+  </view>
+  <view class="journal-bottom">
+    <view class="journal-bottom__note"
+      ><view class="journal-line"></view><text>小小的日子，慢慢地收藏</text
+      ><view class="journal-line"></view
+    ></view>
+    <button wx:if="{{hasDraft}}" class="journal-draft" bindtap="openDraft">
+      继续上次的文字草稿 <t-icon name="chevron-right" size="14px" />
+    </button>
+    <view class="journal-footer-row"
+      ><button bindtap="returnToday">回到本月</button
+      ><text>{{storageLabel}} · {{recordedDays}} 天有记录</text
+      ><button bindtap="openFriends">我的好友</button></view
+    >
+  </view>
+  <button class="journal-compose" aria-label="写今天的日记" bindtap="startWriting">
+    <t-icon name="add" size="30px" />
+  </button>
+  <view wx:if="{{showMoodPicker || showDaySheet}}" class="journal-mask" bindtap="closePanels">
+    <view wx:if="{{showMoodPicker}}" class="journal-sheet" catchtap="noop">
+      <view class="sheet-heading"
+        ><view
+          ><text class="sheet-date">{{selectedDate}}</text
+          ><text class="sheet-title">这一刻，是什么心情？</text></view
+        ><button aria-label="关闭心情选择" bindtap="closePanels">
+          <t-icon name="close" size="22px" /></button
+      ></view>
+      <view class="mood-picker-grid"
+        ><button
+          wx:for="{{moodOptions}}"
+          wx:key="value"
+          class="mood-choice"
+          data-value="{{item.value}}"
+          bindtap="chooseMood"
+        >
+          <mood-face mood="{{item.value}}" /><text>{{item.label}}</text>
+        </button></view
+      >
+      <text class="sheet-footnote">选一个表情，把今天留在这里。</text>
+    </view>
+    <view wx:if="{{showDaySheet}}" class="journal-sheet" catchtap="noop">
+      <view class="sheet-heading"
+        ><view
+          ><text class="sheet-date">{{selectedDate}}</text
+          ><text class="sheet-title">这一天的小瞬间</text></view
+        ><button aria-label="关闭当天日记" bindtap="closePanels">
+          <t-icon name="close" size="22px" /></button
+      ></view>
+      <scroll-view scroll-y class="day-sheet-list"
+        ><button
+          wx:for="{{dayEntries}}"
+          wx:key="id"
+          class="day-entry"
+          data-id="{{item.id}}"
+          bindtap="openEntry"
+        >
+          <mood-face mood="{{item.mood}}" size="small" /><view class="day-entry__copy"
+            ><text>{{item.preview}}</text
+            ><text class="day-entry__place"
+              >{{item.place || item.moodLabel}}{{item.isDemo ? ' · 示例' : ''}}</text
+            ></view
+          ><t-icon name="chevron-right" size="18px" /></button
+      ></scroll-view>
+      <button class="journal-soft-button" bindtap="writeAnother">这一天，再记一篇 ＋</button>
+    </view>
+  </view>
+</view>

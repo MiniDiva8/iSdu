@@ -1,0 +1,9 @@
+<view class="mood-face mood-face--{{mood}} mood-face--{{size}}" aria-hidden="true">
+  <view class="face-cheek face-cheek--left"></view>
+  <view class="face-cheek face-cheek--right"></view>
+  <view class="face-eye face-eye--left"></view>
+  <view class="face-eye face-eye--right"></view>
+  <view class="face-mouth"></view>
+  <view wx:if="{{mood === 'sad' || mood === 'lonely'}}" class="face-tear"></view>
+  <view wx:if="{{mood === 'custom'}}" class="face-spark">✦</view>
+</view>

@@ -1,0 +1,5 @@
+{
+  "navigationBarTitleText": "照片里的日子",
+  "navigationBarBackgroundColor": "#f7f5ec",
+  "usingComponents": { "t-icon": "tdesign-miniprogram/icon/icon" }
+}
