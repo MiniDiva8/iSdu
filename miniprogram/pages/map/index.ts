@@ -1,3 +1,4 @@
+import { hasJournalLocation } from '../../utils/journal';
 import {
   MEMORY_CATEGORIES,
   MEMORY_CATEGORY_LABELS,
@@ -245,6 +246,7 @@ function createMemoryMarkers(
   let incompatibleMapCount = 0;
   let invalidCount = 0;
   for (const memory of memories) {
+    if (!hasJournalLocation(memory)) continue;
     if (memory.mapAssetVersion !== campusMapConfig.assetVersion) {
       incompatibleMapCount += 1;
       continue;

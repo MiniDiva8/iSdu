@@ -38,7 +38,7 @@ globalThis.wx = {
     return Promise.resolve({});
   },
 };
-for (const name of ['editor', 'detail', 'location-picker']) {
+for (const name of ['editor', 'detail', 'location-picker', 'map']) {
   current = name;
   try {
     await import('../miniprogram/pages/' + name + '/index.ts');
@@ -204,4 +204,39 @@ test('picker screen coordinates are converted against the rendered map rectangle
   assert.equal(picker.data.hasPicked, true);
   assert.equal(picker.data.xRatio, 0.54);
   assert.equal(picker.data.yRatio, 0.53);
+});
+
+test('a separate new diary cannot replace or clear an unrelated text draft', async () => {
+  const first = page('editor');
+  first.onLoad({ source: 'journal', date: '2024-02-29' });
+  first.handleTextInput({ detail: { value: '先前未完成的私密草稿 A' } });
+  first.saveTextDraft(false);
+  const second = page('editor');
+  second.onLoad({ source: 'journal', date: '2024-03-01' });
+  second.handleTextInput({ detail: { value: '新日记 B' } });
+  second.onHide();
+  assert.equal(journalDraftService.read().text, '先前未完成的私密草稿 A');
+  await second.saveMemory();
+  second.onUnload();
+  assert.equal(journalDraftService.read().text, '先前未完成的私密草稿 A');
+});
+test('unlocated journals are excluded before map incompatibility warnings are counted', async (t) => {
+  const map = page('map');
+  t.mock.method(memoryRepository, 'listMemories', async () => [
+    memory({ id: 'unlocated' }),
+    memory({
+      id: 'campus',
+      mapAssetVersion: CURRENT_MAP_ASSET_VERSION,
+      mapXRatio: 0.54,
+      mapYRatio: 0.53,
+    }),
+  ]);
+  await map.refreshMemories();
+  assert.equal(map.data.hasIncompatibleMapMemories, false);
+  assert.equal(map.data.incompatibleMapMemoryCount, 0);
+  assert.equal(map.data.availableMarkerCount, 1);
+  assert.deepEqual(
+    map.data.markers.map((x) => x.id),
+    ['campus'],
+  );
 });

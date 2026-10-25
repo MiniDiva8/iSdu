@@ -87,6 +87,14 @@
       {
         "value": "utils/memory-insights.test.mjs",
         "type": "file"
+      },
+      {
+        "value": "utils/journal.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "services/journal-draft-service.test.mjs",
+        "type": "file"
       }
     ],
     "include": []

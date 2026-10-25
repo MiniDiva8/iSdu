@@ -1,3 +1,4 @@
+import { journalDraftService } from '../miniprogram/services/journal-draft-service.ts';
 import assert from 'node:assert/strict';
 import { beforeEach, test } from 'node:test';
 import {
@@ -293,11 +294,35 @@ test('the cover action sheet routes selection and restore to real page flows', a
   assert.equal(timeline.data.coverImagePath, '');
 });
 
-test('confirmed clear of all local data also clears the cover', async () => {
+test('confirmed clear of all local data also clears the cover and text draft', async () => {
+  journalDraftService.save({
+    text: 'private draft',
+    mood: 'happy',
+    customMood: '',
+    category: 'campus-life',
+    customCategory: '',
+    placeName: '',
+    recordedAt: '2024-02-29T04:00:00.000Z',
+    mapAssetVersion: 'journal-unlocated-v1',
+    xRatio: 0,
+    yRatio: 0,
+    hadPhotos: false,
+  });
   await timelineCoverService.saveCover('wxfile://tmp/previous.jpg');
   const management = page('data-management');
   await management.clearAllLocalData();
   assert.equal(await timelineCoverService.getCover(), '');
+  assert.equal(journalDraftService.read(), null);
   assert.equal(images.size, 0);
   assert.equal(management.data.isClearing, false);
+});
+
+test('draft cleanup failure is reported without claiming all local data was cleared', async (t) => {
+  t.mock.method(journalDraftService, 'clear', () => {
+    throw new Error('文字草稿存储被占用');
+  });
+  const management = page('data-management');
+  await management.clearAllLocalData();
+  assert.match(management.data.actionMessage, /文字草稿/);
+  assert.match(management.data.actionMessage, /未完成/);
 });

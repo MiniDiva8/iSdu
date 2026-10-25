@@ -1,3 +1,4 @@
+import { getJournalDayKey } from './journal';
 import { cloneMemory, sortMemoriesByDate, type Memory } from '../models/memory';
 
 export interface MemoryMonthGroup {
@@ -22,7 +23,7 @@ function normalizePlaceName(placeName: string): string {
 }
 
 function getMonthKey(recordedAt: string): string {
-  return recordedAt.slice(0, 7);
+  return getJournalDayKey(recordedAt).slice(0, 7);
 }
 
 function formatMonthTitle(monthKey: string): string {
@@ -53,7 +54,7 @@ export function groupMemoriesByMonth(memories: readonly Memory[]): MemoryMonthGr
 
 export function calculateMemoryInsights(memories: readonly Memory[]): MemoryInsights {
   const sortedMemories = sortMemoriesByDate(memories);
-  const recordedDays = new Set(sortedMemories.map((memory) => memory.recordedAt.slice(0, 10)));
+  const recordedDays = new Set(sortedMemories.map((memory) => getJournalDayKey(memory.recordedAt)));
   const placeCounts = new Map<string, number>();
   let mostFrequentPlace: string | null = null;
   let mostFrequentPlaceCount = 0;

@@ -57,7 +57,7 @@ test('calculates totals, days, named places and the latest memory', () => {
   assert.equal(insights.totalCount, 4);
   assert.equal(insights.userCount, 4);
   assert.equal(insights.demoCount, 0);
-  assert.equal(insights.recordedDayCount, 3);
+  assert.equal(insights.recordedDayCount, 4);
   assert.equal(insights.placeCount, 2);
   assert.equal(insights.mostFrequentPlace, '图书馆');
   assert.equal(insights.mostFrequentPlaceCount, 2);
@@ -76,4 +76,22 @@ test('returns a safe empty overview', () => {
     userCount: 0,
   });
   assert.deepEqual(groupMemoriesByMonth([]), []);
+});
+
+test('timeline month grouping follows Beijing midnight across months and years', () => {
+  const groups = groupMemoriesByMonth([
+    createMemory({ id: 'november', recordedAt: '2026-10-31T17:00:00.000Z' }),
+    createMemory({ id: 'new-year', recordedAt: '2026-12-31T17:00:00.000Z' }),
+  ]);
+  assert.deepEqual(
+    groups.map((x) => x.key),
+    ['2027-01', '2026-11'],
+  );
+  assert.equal(
+    calculateMemoryInsights([
+      createMemory({ id: 'early', recordedAt: '2026-12-31T17:00:00.000Z' }),
+      createMemory({ id: 'late', recordedAt: '2027-01-01T12:00:00.000Z' }),
+    ]).recordedDayCount,
+    1,
+  );
 });

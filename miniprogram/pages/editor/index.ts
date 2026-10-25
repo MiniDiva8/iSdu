@@ -462,6 +462,13 @@ Page({
     )
       return false;
     try {
+      const existingDraft = journalDraftService.read();
+      if (existingDraft && !this.data.draftWasLoaded && !this.data.draftWasWritten) {
+        this.setData({ draftNotice: '已有另一份文字草稿，这页请保存为日记；原草稿仍保留在首页。' });
+        if (showFeedback !== false)
+          void wx.showToast({ title: '原草稿已保留，请保存这篇日记', icon: 'none' });
+        return false;
+      }
       journalDraftService.save({
         text: this.data.text,
         mood: this.data.mood as MemoryMood,

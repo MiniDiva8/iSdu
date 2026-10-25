@@ -3,9 +3,14 @@
     ><text class="journal-brand__mark">i</text><text>iSdu · 心情日记</text></view
   >
   <view class="journal-toolbar">
-    <button class="journal-icon" aria-label="打开校园地图" bindtap="openCampus">
-      <t-icon name="earth" size="25px" />
-    </button>
+    <view class="journal-toolbar__left">
+      <button class="journal-icon" aria-label="打开校园地图" bindtap="openCampus">
+        <t-icon name="earth" size="25px" />
+      </button>
+      <button class="journal-compose" aria-label="写今天的日记" bindtap="startWriting">
+        <t-icon name="add" size="30px" />
+      </button>
+    </view>
     <view class="journal-toolbar__right">
       <button class="journal-icon" aria-label="搜索日记" bindtap="toggleSearch">
         <t-icon name="search" size="24px" />
@@ -113,9 +118,6 @@
       ><button bindtap="openFriends">我的好友</button></view
     >
   </view>
-  <button class="journal-compose" aria-label="写今天的日记" bindtap="startWriting">
-    <t-icon name="add" size="30px" />
-  </button>
   <view wx:if="{{showMoodPicker || showDaySheet}}" class="journal-mask" bindtap="closePanels">
     <view wx:if="{{showMoodPicker}}" class="journal-sheet" catchtap="noop">
       <view class="sheet-heading"

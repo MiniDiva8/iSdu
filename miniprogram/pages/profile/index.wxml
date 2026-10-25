@@ -26,7 +26,7 @@
     <button data-page="friends" bindtap="openSection">
       <view class="space-menu-icon space-menu-icon--green"
         ><t-icon name="usergroup" size="23px" /></view
-      ><view><text>我的好友</text><text>邀请彼此，分享愿意公开给好友的日记</text></view
+      ><view><text>我的好友</text><text>邀请彼此，分享愿意留给好友的日记</text></view
       ><t-icon name="chevron-right" size="18px" />
     </button>
     <button data-page="data-management" bindtap="openSection">

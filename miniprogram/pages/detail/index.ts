@@ -321,7 +321,7 @@ Page({
     }
 
     this.setData({
-      actionMessage: cleanupWarning || '日记已删除，正在返回地图。',
+      actionMessage: cleanupWarning || '日记已删除，正在返回日记首页。',
       isDeleting: false,
       loadError: cleanupWarning || '这段记忆已经从本地日记中删除。',
       loadErrorTitle: '日记已删除',
@@ -351,7 +351,7 @@ Page({
       );
     } catch (error: unknown) {
       this.setData({
-        loadError: `日记已删除，但返回地图失败：${describeError(error, '请手动返回地图。')}`,
+        loadError: `日记已删除，但返回日记首页失败：${describeError(error, '请手动返回日记首页。')}`,
         loadErrorTitle: '日记已删除',
       });
     }
