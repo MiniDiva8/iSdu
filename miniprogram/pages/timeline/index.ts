@@ -110,7 +110,7 @@ function createTimelineItem(memory: Memory): TimelineMemoryView {
     mapXRatio: memory.mapXRatio,
     mapYRatio: memory.mapYRatio,
     moodLabel: getMemoryMoodLabel(memory),
-    placeLabel: memory.placeName || '一页心情日记',
+    placeLabel: memory.placeName.trim() || getMemoryMoodLabel(memory),
     summary: createSummary(memory),
   };
 }
@@ -146,7 +146,7 @@ function createFriendTimelineView(item: FriendTimelineItem): FriendTimelineView 
     moodLabel: getMemoryMoodLabel(item),
     ownerDisplayName: item.ownerDisplayName,
     ownerInitial: createProfileInitial(item.ownerDisplayName),
-    placeLabel: item.placeName || '校园中的某处',
+    placeLabel: item.placeName.trim() || getMemoryMoodLabel(item),
     sharedDateLabel: `分享于 ${formatMemoryDateTime(item.publishedAt)}`,
     summary: item.summary,
   };
@@ -154,6 +154,9 @@ function createFriendTimelineView(item: FriendTimelineItem): FriendTimelineView 
 
 Page({
   _coverLoadVersion: 0,
+  _timelineLoadVersion: 0,
+  _friendLoadVersion: 0,
+  _loadedScope: '',
   _isCoverMenuOpen: false,
 
   data: {
@@ -178,6 +181,8 @@ Page({
     isFriendLoading: false,
     isFriendLoadingMore: false,
     isLoading: true,
+    isRefreshing: false,
+    refreshMessage: '',
     isProfileLoading: true,
     isSearchEmpty: false,
     keyword: '',
@@ -200,7 +205,9 @@ Page({
 
   onPullDownRefresh() {
     const task =
-      this.data.timelineMode === 'friends' ? this.loadFriendTimeline(true) : this.loadTimeline();
+      this.data.timelineMode === 'friends'
+        ? this.loadFriendTimeline(true)
+        : this.loadTimeline(true);
     void task.finally(() => wx.stopPullDownRefresh());
   },
 
@@ -336,28 +343,85 @@ Page({
     });
   },
 
-  async loadTimeline() {
+  onHide() {
+    this._timelineLoadVersion++;
+    this._coverLoadVersion++;
+    this.clearFriendTimeline();
+  },
+
+  onUnload() {
+    this._timelineLoadVersion++;
+    this._coverLoadVersion++;
+    this.clearFriendTimeline();
+  },
+
+  clearFriendTimeline() {
+    this._friendLoadVersion++;
+    this.setData({
+      friendItems: [],
+      friendCursor: null,
+      friendHasMore: false,
+      friendLoaded: false,
+      isFriendLoading: false,
+      isFriendLoadingMore: false,
+    });
+  },
+
+  isCurrentFriendRequest(version: number, scope: string): boolean {
+    if (version !== this._friendLoadVersion) return false;
+    if (scope !== memoryRepository.getListScope()) {
+      this.clearFriendTimeline();
+      return false;
+    }
+    return true;
+  },
+
+  async loadTimeline(forceRefresh: unknown = false) {
+    const version = ++this._timelineLoadVersion;
+    const scope = memoryRepository.getListScope();
+    const cached = memoryRepository.getCachedMemories();
+    const visible = cached ?? (this._loadedScope === scope ? this.data.allMemories : null);
+    if (visible !== null) this._loadedScope = scope;
+    if (visible !== null) {
+      this.applyKeywordSearch(visible, this.data.keyword, {
+        isLoading: false,
+        replaceMemories: true,
+      });
+    } else {
+      this.setData({ allMemories: [], groups: [], resultCount: 0, isSearchEmpty: false });
+    }
     this.setData({
       actionMessage: '',
       errorMessage: '',
-      isEmpty: false,
-      isLoading: true,
+      refreshMessage: '',
+      isEmpty: visible !== null && visible.length === 0,
+      isLoading: visible === null,
+      isRefreshing: true,
     });
 
     try {
-      const memories = await memoryRepository.listMemories();
+      const memories = await memoryRepository.listMemories(forceRefresh === true);
+      if (version !== this._timelineLoadVersion || scope !== memoryRepository.getListScope())
+        return;
+      this._loadedScope = scope;
       this.applyKeywordSearch(memories, this.data.keyword, {
         isLoading: false,
         replaceMemories: true,
       });
+      this.setData({ isRefreshing: false });
     } catch (error: unknown) {
+      if (version !== this._timelineLoadVersion || scope !== memoryRepository.getListScope())
+        return;
       this.setData({
-        errorMessage: error instanceof Error ? error.message : '本地时光记录读取失败，请重试。',
-        allMemories: [],
-        groups: [],
+        errorMessage:
+          visible === null
+            ? error instanceof Error
+              ? error.message
+              : '时光记录读取失败，请重试。'
+            : '',
+        refreshMessage: visible === null ? '' : '更新未完成，正在显示上次内容；下拉可重试。',
         isLoading: false,
-        isSearchEmpty: false,
-        resultCount: 0,
+        isRefreshing: false,
       });
     }
   },
@@ -366,6 +430,9 @@ Page({
     if (this.data.isFriendLoading || this.data.isFriendLoadingMore) {
       return;
     }
+
+    const version = ++this._friendLoadVersion;
+    const scope = memoryRepository.getListScope();
 
     const isCloudActive = cloudModeService.getState().mode === 'cloud';
     if (!isCloudActive) {
@@ -393,17 +460,21 @@ Page({
       const page = await cloudMemoryRepository.listFriendTimeline(
         reset ? null : this.data.friendCursor,
       );
+      if (!this.isCurrentFriendRequest(version, scope)) return;
       const nextItems = page.items.map(createFriendTimelineView);
+      const items = new Map((reset ? [] : this.data.friendItems).map((item) => [item.id, item]));
+      for (const item of nextItems) items.set(item.id, item);
       this.setData({
         friendCursor: page.nextCursor,
         friendErrorMessage: '',
         friendHasMore: Boolean(page.nextCursor),
-        friendItems: reset ? nextItems : [...this.data.friendItems, ...nextItems],
+        friendItems: [...items.values()],
         friendLoaded: true,
         isFriendLoading: false,
         isFriendLoadingMore: false,
       });
     } catch (error: unknown) {
+      if (!this.isCurrentFriendRequest(version, scope)) return;
       this.setData({
         friendErrorMessage:
           error instanceof Error ? error.message : '好友时光暂时无法读取，请稍后重试。',
@@ -444,7 +515,7 @@ Page({
     });
 
     this.setData({
-      allMemories: options.replaceMemories ? [...memories] : this.data.allMemories,
+      ...(options.replaceMemories ? { allMemories: [...memories] } : {}),
       groups: createMonthViews(filteredMemories),
       isEmpty: memories.length === 0,
       isLoading: options.isLoading,
@@ -506,24 +577,21 @@ Page({
       return;
     }
 
-    this.setData({
-      groups: this.data.groups.map((group) => ({
-        ...group,
-        items: group.items.map((item) =>
-          item.id === memoryId ? { ...item, imageFailed: true } : item,
-        ),
-      })),
-    });
+    const groupIndex = this.data.groups.findIndex((group) =>
+      group.items.some((item) => item.id === memoryId),
+    );
+    const group = this.data.groups[groupIndex];
+    const itemIndex = group?.items.findIndex((item) => item.id === memoryId) ?? -1;
+    if (itemIndex < 0 || group?.items[itemIndex]?.imageFailed) return;
+    this.setData({ [`groups[${groupIndex}].items[${itemIndex}].imageFailed`]: true });
   },
 
   handleFriendImageError(event: WechatMiniprogram.BaseEvent) {
     const memoryId = (event.currentTarget.dataset as { memoryId?: unknown }).memoryId;
     if (typeof memoryId !== 'string') return;
-    this.setData({
-      friendItems: this.data.friendItems.map((item) =>
-        item.id === memoryId ? { ...item, imageFailed: true } : item,
-      ),
-    });
+    const index = this.data.friendItems.findIndex((item) => item.id === memoryId);
+    if (index < 0 || this.data.friendItems[index]?.imageFailed) return;
+    this.setData({ [`friendItems[${index}].imageFailed`]: true });
   },
 
   openDetail(event: WechatMiniprogram.BaseEvent) {
@@ -613,6 +681,13 @@ Page({
         consumeMapFocusIntent();
         this.setData({ actionMessage: '地图暂时无法打开，请稍后重试。' });
       },
+    });
+  },
+
+  openMemoryBottle() {
+    void wx.navigateTo({
+      url: '/pages/memory-bottle/index',
+      fail: () => this.setData({ actionMessage: '记忆瓶暂时没有打开，请稍后重试。' }),
     });
   },
 

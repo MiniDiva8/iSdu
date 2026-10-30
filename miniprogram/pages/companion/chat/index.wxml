@@ -1,0 +1,82 @@
+<view class="companion-page pal-ai-page" style="padding-top:{{topInset}}px">
+  <view class="companion-header"
+    ><button bindtap="back" aria-label="返回伙伴小屋">
+      <t-icon name="chevron-left" size="25px" /></button
+    ><text>和 {{partnerName}} 聊几句</text
+    ><button class="companion-link" bindtap="openMail" aria-label="打开小院信箱">
+      <t-icon name="mail" size="24px" /></button
+  ></view>
+  <view class="companion-card pal-ai-intro">
+    <image class="pal-ai-avatar pal-ai-avatar--{{action}}" src="{{avatarSrc}}" mode="aspectFit" />
+    <view class="pal-ai-intro__copy"
+      ><text class="companion-title">今天，想说点什么？</text
+      ><text class="companion-muted">{{hint}}</text></view
+    >
+  </view>
+  <view class="pal-ai-local"
+    ><button class="companion-secondary" bindtap="greet">摸摸头</button
+    ><text class="companion-muted">{{localMessage || '普通互动随时可用'}}</text></view
+  >
+  <text wx:if="{{error}}" class="companion-message" role="status">{{error}}</text>
+  <view wx:if="{{isLoading}}" class="companion-empty">正在打开交流记录…</view>
+  <view wx:elif="{{!cloudActive}}" class="companion-card"
+    ><text class="companion-copy">开启云端功能后，再来和伙伴聊聊吧。</text
+    ><button class="companion-primary" bindtap="openDataManagement">去开启云端功能</button></view
+  >
+  <view wx:elif="{{status && !status.enabled && status.available}}" class="companion-card"
+    ><text class="companion-copy"
+      >聊几句话，或者让伙伴把你的日记写成一封短信。由你决定何时开启。</text
+    ><button class="companion-primary" disabled="{{busy}}" bindtap="enableAI">
+      开启AI交流
+    </button></view
+  >
+  <block wx:elif="{{status && status.enabled}}">
+    <view class="pal-ai-messages" aria-live="polite">
+      <view wx:if="{{!messages.length}}" class="companion-empty">这里会保留最近两轮对话。</view>
+      <view wx:for="{{messages}}" wx:key="key" class="pal-ai-bubble pal-ai-bubble--{{item.role}}"
+        ><text class="pal-ai-bubble__name">{{item.role === 'user' ? '你' : partnerName}}</text
+        ><text class="companion-copy">{{item.content}}</text></view
+      >
+    </view>
+    <view wx:if="{{status.available && status.chatsRemaining > 0}}" class="pal-ai-openings"
+      ><button data-text="今天有点累" bindtap="chooseOpening" disabled="{{busy}}">今天有点累</button
+      ><button data-text="想分享一件开心的小事" bindtap="chooseOpening" disabled="{{busy}}">
+        分享一件小事
+      </button></view
+    >
+    <view class="companion-card pal-ai-composer">
+      <textarea
+        id="pal-ai-input"
+        class="companion-input pal-ai-input"
+        aria-label="想和伙伴说的话，最多160字"
+        placeholder="说一句今天想说的话…"
+        value="{{input}}"
+        maxlength="160"
+        auto-height
+        disabled="{{busy || hasPending || !status.available || status.chatsRemaining === 0}}"
+        bindinput="onInput"
+      /><view class="pal-ai-composer__actions"
+        ><text class="companion-muted">{{input.length}} / 160</text
+        ><button
+          class="companion-primary"
+          loading="{{busy}}"
+          disabled="{{busy || !input || (!hasPending && (!status.available || status.chatsRemaining === 0))}}"
+          bindtap="sendMessage"
+        >
+          {{busy ? '送出中' : hasPending ? '查看结果' : '发送'}}
+        </button></view
+      ></view
+    >
+    <button
+      wx:if="{{hasPending && !busy}}"
+      class="companion-link pal-ai-clear"
+      bindtap="dismissPending"
+    >
+      先收起这句话
+    </button>
+    <button class="companion-link pal-ai-clear" bindtap="disableAI" disabled="{{busy}}">
+      停用并清空AI记录
+    </button>
+  </block>
+  <text class="pal-ai-footnote">AI生成的简短回应 · 日记仅在你确认写信时使用</text>
+</view>

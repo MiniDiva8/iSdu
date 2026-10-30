@@ -1,6 +1,10 @@
+import { companionService } from '../../services/companion-service';
+import { cloudCompanionRepository } from '../../services/repository/cloud-companion-repository';
 import { journalPreferencesService } from '../../services/journal-preferences-service';
 import { journalDraftService } from '../../services/journal-draft-service';
+import { stickerDraftService } from '../../services/sticker-draft-service';
 import { timelineCoverService } from '../../services/timeline-cover-service';
+import { journalBackgroundService } from '../../services/journal-background-service';
 import { localImageService } from '../../services/local-image-service';
 import { memoryMigrationService } from '../../services/memory-migration-service';
 import { cloudModeService } from '../../services/cloud/cloud-mode-service';
@@ -13,7 +17,7 @@ function confirmClearAllData(): Promise<boolean> {
     wx.showModal({
       title: '清除全部本机数据？',
       content:
-        '这会永久删除本机保存的所有回忆、文字草稿、偏好设置、照片、时光封面、名字和个性签名，且无法恢复。请确认当前没有需要保留的内容。',
+        '这会永久删除本机保存的所有回忆、文字和贴纸草稿、偏好设置、图片、时光封面、首页背景、名字、个性签名以及本机伙伴、光点和家具，且无法恢复。请确认当前没有需要保留的内容。',
       confirmText: '全部清除',
       confirmColor: '#c65a55',
       cancelText: '取消',
@@ -42,7 +46,7 @@ function confirmDeleteCloudData(): Promise<boolean> {
     wx.showModal({
       title: '删除全部 iSdu 云端数据？',
       content:
-        '这会删除你的云端回忆、云端照片、点赞、好友关系和云端资料，且无法恢复。本机迁移前备份不会自动删除，完成后将切回本地模式。',
+        '这会删除你的云端回忆、云端照片、点赞、好友关系、云端资料及已发布小屋和来访记录，且无法恢复。本机迁移前备份不会自动删除，完成后将切回本地模式。',
       confirmText: '删除云端数据',
       confirmColor: '#c65a55',
       cancelText: '取消',
@@ -177,6 +181,14 @@ Page({
 
     const cleanupWarnings: string[] = [];
     try {
+      companionService.clear();
+    } catch (error: unknown) {
+      cleanupWarnings.push(
+        error instanceof Error ? '伙伴小屋未能清除：' + error.message : '伙伴小屋未能清除',
+      );
+    }
+
+    try {
       journalPreferencesService.clear();
     } catch (error: unknown) {
       cleanupWarnings.push(
@@ -193,9 +205,23 @@ Page({
     }
 
     try {
+      stickerDraftService.clear();
+    } catch {
+      cleanupWarnings.push('贴纸草稿未能清除，请稍后重试。');
+    }
+
+    try {
       await userProfileRepository.clearProfile();
     } catch (error: unknown) {
       cleanupWarnings.push(error instanceof Error ? error.message : '个人资料未能清除');
+    }
+
+    try {
+      await journalBackgroundService.clear();
+    } catch (error: unknown) {
+      cleanupWarnings.push(
+        error instanceof Error ? '首页背景未能清除：' + error.message : '首页背景未能清除',
+      );
     }
 
     try {
@@ -213,7 +239,7 @@ Page({
     const actionMessage =
       cleanupWarnings.length > 0
         ? `回忆已经清除，但仍有部分数据未完成：${cleanupWarnings.join('；')}`
-        : '本机保存的回忆、文字草稿、偏好设置、照片、时光封面和个人资料已清除。';
+        : '本机保存的回忆、文字草稿、偏好设置、照片、时光封面、首页背景、个人资料和本机伙伴小屋已清除。';
 
     this.setData({ actionMessage, isClearing: false });
 
@@ -227,7 +253,17 @@ Page({
     try {
       if (!(await confirmDeleteCloudData())) return;
       this.setData({ actionMessage: '正在删除全部云端数据…', isDeletingCloud: true });
+      const hadCompanionCloud = companionService.cloudWasUsed();
+      if (hadCompanionCloud) await cloudCompanionRepository.deleteMyData();
       const result = await cloudAuthRepository.deleteCloudAccount();
+      if (hadCompanionCloud) {
+        try {
+          companionService.clearCloudMarker();
+        } catch {
+          /* Cloud data is deleted; a stale cleanup marker is safe to retry. */
+        }
+      }
+
       cloudModeService.resetToLocal();
       this.setData({
         actionMessage:

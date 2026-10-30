@@ -1,0 +1,5 @@
+<view class="route-page"
+  ><text>{{errorMessage || '正在打开伙伴页面…'}}</text
+  ><button wx:if="{{errorMessage}}" bindtap="retry">再试一次</button
+  ><button bindtap="back">返回</button></view
+>

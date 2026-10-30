@@ -236,3 +236,56 @@ test('clearing all local data also clears preference metadata', async (t) => {
   await page('data-management').clearAllLocalData();
   assert.equal(values.has(JOURNAL_PREFERENCES_STORAGE_KEY), false);
 });
+
+test('pending profile reload removes old chart data immediately', async (t) => {
+  const profile = page('profile');
+  let resolve;
+  profile.data.moodCounts = [{ mood: 'happy', label: '开心', count: 8, percentage: 100 }];
+  profile.data.entryCount = 8;
+  profile.data.insightsReady = true;
+  t.mock.method(
+    memoryRepository,
+    'listMemories',
+    () =>
+      new Promise((done) => {
+        resolve = done;
+      }),
+  );
+  const loading = profile.loadInsights();
+  assert.deepEqual(profile.data.moodCounts, []);
+  assert.equal(profile.data.entryCount, 0);
+  resolve([record()]);
+  await loading;
+  assert.equal(profile.data.entryCount, 1);
+});
+test('preference confirmation can retry after a temporary storage failure', (t) => {
+  const save = journalPreferencesService.save.bind(journalPreferencesService);
+  let calls = 0;
+  t.mock.method(journalPreferencesService, 'save', (patch) => {
+    calls++;
+    if (calls === 1) throw Error('temporary storage failure');
+    return save(patch);
+  });
+  const wheel = page('selection-wheel');
+  wheel.onLoad({ source: 'preferences', kind: 'category', value: 'study' });
+  wheel.confirmSelection();
+  assert.match(wheel.data.errorMessage, /storage/);
+  wheel.confirmSelection();
+  assert.equal(calls, 2);
+  assert.equal(journalPreferencesService.read().defaultCategory, 'study');
+  assert.equal(navigation.at(-1).type, 'back');
+});
+test('a selection returned to a hidden editor enables its leave guard only after onShow', (t) => {
+  const guards = [];
+  let route = 'wheel';
+  t.mock.method(wx, 'enableAlertBeforeUnload', () => guards.push(route));
+  const editor = page('editor');
+  editor.onLoad({ source: 'journal', date: '2024-02-29' });
+  editor.onHide();
+  editor.applyWheelSelection({ kind: 'mood', value: 'happy' });
+  assert.equal(editor.data.isDirty, true);
+  assert.deepEqual(guards, []);
+  route = 'editor';
+  editor.onShow();
+  assert.deepEqual(guards, ['editor']);
+});

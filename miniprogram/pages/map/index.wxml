@@ -17,6 +17,7 @@
       <button
         class="map-layer-switch__button {{mapLayer === 'mine' ? 'map-layer-switch__button--active' : ''}}"
         data-layer="mine"
+        aria-label="我的记忆地图{{mapLayer === 'mine' ? '，已选择' : ''}}"
         bindtap="handleMapLayerTap"
       >
         我的
@@ -24,6 +25,7 @@
       <button
         class="map-layer-switch__button {{mapLayer === 'friends' ? 'map-layer-switch__button--active' : ''}}"
         data-layer="friends"
+        aria-label="好友24小时地图{{mapLayer === 'friends' ? '，已选择' : ''}}"
         bindtap="handleMapLayerTap"
       >
         好友 24h
@@ -33,6 +35,7 @@
       wx:if="{{mapLayer === 'mine'}}"
       class="map-floating-control {{activeFilterCount ? 'map-floating-control--active' : ''}}"
       bindtap="toggleFilterPanel"
+      aria-label="筛选回忆{{activeFilterCount ? '，已启用' + activeFilterCount + '项' : ''}}"
     >
       筛选<text wx:if="{{activeFilterCount}}"> · {{activeFilterCount}}</text>
     </button>

@@ -90,15 +90,19 @@ export function buildJournalMonth(
 ): JournalMonth {
   const { year, month } = monthParts(monthKey);
   const today = getJournalDayKey(nowIso);
-  const ordered = [...memories]
-    .filter((memory) => getJournalDayKey(memory.recordedAt).startsWith(monthKey + '-'))
-    .sort((a, b) => b.recordedAt.localeCompare(a.recordedAt) || a.id.localeCompare(b.id));
+  const ordered = memories
+    .map((memory) => ({ memory, dayKey: getJournalDayKey(memory.recordedAt) }))
+    .filter(({ dayKey }) => dayKey.startsWith(monthKey + '-'))
+    .sort(
+      (a, b) =>
+        b.memory.recordedAt.localeCompare(a.memory.recordedAt) ||
+        a.memory.id.localeCompare(b.memory.id),
+    );
   const byDay = new Map<string, Memory[]>();
-  for (const memory of ordered) {
-    const key = getJournalDayKey(memory.recordedAt);
-    const group = byDay.get(key) ?? [];
+  for (const { memory, dayKey } of ordered) {
+    const group = byDay.get(dayKey) ?? [];
     group.push(memory);
-    byDay.set(key, group);
+    byDay.set(dayKey, group);
   }
   const length = new Date(Date.UTC(year, month, 0)).getUTCDate();
   const days: JournalDay[] = Array.from({ length }, (_, index) => {
@@ -124,12 +128,12 @@ export function buildJournalMonth(
     year: String(year),
     monthLabel: MONTH_NAMES[month - 1] ?? '',
     days,
-    photos: ordered.flatMap((memory) =>
+    photos: ordered.flatMap(({ memory, dayKey }) =>
       memory.imagePaths.map((path, index) => ({
         key: memory.id + '-' + index,
         memoryId: memory.id,
         path,
-        dateLabel: getJournalDayKey(memory.recordedAt).replace(/-/g, '.'),
+        dateLabel: dayKey.replace(/-/g, '.'),
         placeName: memory.placeName || getMemoryMoodLabel(memory),
         mood: memory.mood,
       })),

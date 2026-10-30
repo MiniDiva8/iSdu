@@ -1,8 +1,8 @@
 <view class="journal-detail">
-  <view wx:if="{{isLoading}}" class="detail-wait">正在翻开这页日记…</view>
-  <view wx:elif="{{loadError}}" class="detail-wait"
+  <view wx:if="{{isLoading}}" class="detail-wait" role="status">正在翻开这页日记…</view>
+  <view wx:elif="{{loadError}}" class="detail-wait" role="alert"
     ><text class="detail-wait__title">{{loadErrorTitle}}</text><text>{{loadError}}</text
-    ><button wx:if="{{memoryId && memory}}" bindtap="loadMemory">重新读取</button
+    ><button wx:if="{{canRetryLoad}}" bindtap="loadMemory">重新读取</button
     ><button bindtap="returnToMap">回校园看看</button></view
   >
   <block wx:elif="{{memory}}">
@@ -26,6 +26,9 @@
             wx:if="{{!item.isMissing}}"
             src="{{item.path}}"
             mode="widthFix"
+            lazy-load="{{true}}"
+            aria-role="button"
+            aria-label="预览第{{index + 1}}张日记照片"
             data-index="{{index}}"
             binderror="handleImageError"
             bindtap="previewPhoto"
@@ -37,22 +40,28 @@
       >
     </view>
     <view wx:if="{{hasLocation}}" class="detail-location"
-      ><view
-        ><t-icon name="location" size="20px" /><text
-          >{{memory.placeName || '校园里的这个地方'}}</text
-        ></view
-      ><view class="detail-map" bindtap="showOnMap"
-        ><image src="{{mapPreviewSource}}" mode="scaleToFill" lazy-load /><view
-          class="detail-map__pin"
-          style="left:{{mapPreviewMarkerX}};top:{{mapPreviewMarkerY}}"
-        ></view></view
-      ><button bindtap="showOnMap">
-        回到故事发生的地方 <t-icon name="chevron-right" size="17px" /></button
-    ></view>
+      ><block wx:if="{{canShowOnMap}}"
+        ><view
+          ><t-icon name="location" size="20px" /><text
+            >{{memory.placeName || '校园里的这个地方'}}</text
+          ></view
+        ><view
+          class="detail-map"
+          bindtap="showOnMap"
+          aria-role="button"
+          aria-label="在校园地图中查看日记位置"
+          ><image src="{{mapPreviewSource}}" mode="scaleToFill" lazy-load /><view
+            class="detail-map__pin"
+            style="left:{{mapPreviewMarkerX}};top:{{mapPreviewMarkerY}}"
+          ></view></view
+        ><button bindtap="showOnMap">
+          回到故事发生的地方 <t-icon name="chevron-right" size="17px" /></button></block
+      ><text wx:else class="detail-map-unavailable">{{mapUnavailableReason}}</text></view
+    >
     <view wx:else class="detail-no-location"
       ><t-icon name="leaf" size="19px" /><text>这一页，只收藏心情与生活。</text></view
     >
-    <view wx:if="{{actionMessage}}" class="detail-message">{{actionMessage}}</view>
+    <view wx:if="{{actionMessage}}" class="detail-message" role="status">{{actionMessage}}</view>
     <view wx:if="{{isFriendMemory}}" class="detail-friend"
       ><button
         class="{{likedByMe ? 'is-liked' : ''}}"

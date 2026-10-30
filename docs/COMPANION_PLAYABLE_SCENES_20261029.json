@@ -1,0 +1,24 @@
+[
+  {
+    "theme": "meadow",
+    "original": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\assets\\pal-scene-rework-20261029\\ginkgo_playable_v2.png",
+    "runtime": "/pages/companion/assets/ginkgo_playable_v2.jpg",
+    "width": 800,
+    "height": 1100,
+    "bytes": 159150,
+    "sha256": "64ab5687f72d4190924f5ed3583b45e733aba6a536aaf5f2086d1e232885deeb",
+    "purpose": "Portrait empty playable environment; separate character and furniture sprites",
+    "provenance": "ImageGen edit of existing project scene, 2026-10-29; original scene retained"
+  },
+  {
+    "theme": "dusk",
+    "original": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\assets\\pal-scene-rework-20261029\\jixia_playable_v2.png",
+    "runtime": "/pages/companion/assets/jixia_playable_v2.jpg",
+    "width": 800,
+    "height": 1100,
+    "bytes": 190554,
+    "sha256": "31b380d4e7983e8e0294294bac7048134c34130a23f0c8d7b53bcc593cc7c010",
+    "purpose": "Portrait empty playable environment; separate character and furniture sprites",
+    "provenance": "ImageGen edit of existing project scene, 2026-10-29; original scene retained"
+  }
+]

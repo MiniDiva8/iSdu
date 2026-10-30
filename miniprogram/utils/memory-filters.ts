@@ -93,9 +93,7 @@ function getTimestampRange(criteria: MemoryFilterCriteria, now: Date): Timestamp
   return { maximumExclusive: null, minimumInclusive: null };
 }
 
-function matchesKeyword(memory: Memory, keyword: string): boolean {
-  const terms = keyword.trim().toLocaleLowerCase().split(/\s+/u).filter(Boolean);
-
+function matchesKeyword(memory: Memory, terms: readonly string[]): boolean {
   if (terms.length === 0) {
     return true;
   }
@@ -118,6 +116,8 @@ export function filterMemories(
   now = new Date(),
 ): Memory[] {
   const range = getTimestampRange(criteria, now);
+  const terms = criteria.keyword.trim().toLocaleLowerCase().split(/\s+/u).filter(Boolean);
+  const hasDateRange = range.minimumInclusive !== null || range.maximumExclusive !== null;
 
   return memories.filter((memory) => {
     if (criteria.mood !== 'all' && memory.mood !== criteria.mood) {
@@ -128,10 +128,11 @@ export function filterMemories(
       return false;
     }
 
-    if (!matchesKeyword(memory, criteria.keyword)) {
+    if (!matchesKeyword(memory, terms)) {
       return false;
     }
 
+    if (!hasDateRange) return true;
     const timestamp = Date.parse(memory.recordedAt);
 
     if (range.minimumInclusive !== null && timestamp < range.minimumInclusive) {

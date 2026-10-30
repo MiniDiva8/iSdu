@@ -4,6 +4,9 @@ import { cloudModeService } from '../miniprogram/services/cloud/cloud-mode-servi
 import { cloudAuthRepository } from '../miniprogram/services/repository/cloud-auth-repository.ts';
 import { userProfileRepository } from '../miniprogram/services/repository/index.ts';
 import { localMemoryRepository } from '../miniprogram/services/repository/local-memory-repository.ts';
+import { journalBackgroundService } from '../miniprogram/services/journal-background-service.ts';
+import { localImageService } from '../miniprogram/services/local-image-service.ts';
+import { timelineCoverService } from '../miniprogram/services/timeline-cover-service.ts';
 
 const storage = new Map();
 const definitions = new Map();
@@ -115,6 +118,7 @@ test('opening the data page and cancelling confirmations never mutates data', as
   const bootstrap = t.mock.method(cloudAuthRepository, 'bootstrap', async () => ({}));
   const clear = t.mock.method(localMemoryRepository, 'clearMemories', async () => undefined);
   const removeCloud = t.mock.method(cloudAuthRepository, 'deleteCloudAccount', async () => ({}));
+  const background = t.mock.method(journalBackgroundService, 'clear', async () => undefined);
   const data = page('data-management');
   data.onShow();
   await data.enableCloudAndMigrate();
@@ -124,5 +128,37 @@ test('opening the data page and cancelling confirmations never mutates data', as
   assert.equal(bootstrap.mock.callCount(), 0);
   assert.equal(clear.mock.callCount(), 0);
   assert.equal(removeCloud.mock.callCount(), 0);
+  assert.equal(background.mock.callCount(), 0);
   assert.equal(storage.size, 0);
+});
+
+test('confirmed local cleanup includes homepage background without invoking cloud deletion', async (t) => {
+  t.mock.method(wx, 'showModal', (options) => options.success({ confirm: true, cancel: false }));
+  wx.showToast = async () => undefined;
+  t.mock.method(localMemoryRepository, 'clearMemories', async () => undefined);
+  t.mock.method(localImageService, 'clearAllManagedImages', async () => undefined);
+  t.mock.method(timelineCoverService, 'clearCover', async () => undefined);
+  const background = t.mock.method(journalBackgroundService, 'clear', async () => undefined);
+  const cloud = t.mock.method(cloudAuthRepository, 'deleteCloudAccount', async () => ({}));
+  const data = page('data-management');
+  await data.clearAllLocalData();
+  assert.equal(background.mock.callCount(), 1);
+  assert.equal(cloud.mock.callCount(), 0);
+  assert.equal(data.data.isClearing, false);
+  assert.match(data.data.actionMessage, /首页背景.*已清除/u);
+});
+
+test('failed homepage background cleanup is reported instead of claiming complete success', async (t) => {
+  t.mock.method(wx, 'showModal', (options) => options.success({ confirm: true, cancel: false }));
+  t.mock.method(localMemoryRepository, 'clearMemories', async () => undefined);
+  t.mock.method(localImageService, 'clearAllManagedImages', async () => undefined);
+  t.mock.method(timelineCoverService, 'clearCover', async () => undefined);
+  t.mock.method(journalBackgroundService, 'clear', async () => {
+    throw new Error('背景目录仍忙');
+  });
+  const data = page('data-management');
+  await data.clearAllLocalData();
+  assert.match(data.data.actionMessage, /首页背景.*背景目录仍忙/u);
+  assert.match(data.data.actionMessage, /部分数据未完成/u);
+  assert.equal(data.data.isClearing, false);
 });

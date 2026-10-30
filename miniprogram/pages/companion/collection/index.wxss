@@ -1,0 +1,60 @@
+@import '../../../styles/companion.wxss';
+
+.collection-hero {
+  width: 220rpx;
+  height: 200rpx;
+  align-self: center;
+}
+.companion-item__role {
+  font-size: 22rpx;
+  color: #6e8d77;
+  text-align: center;
+}
+.companion-item__description {
+  font-size: 21rpx;
+  line-height: 1.7;
+  color: #89937f;
+  text-align: center;
+  flex: 1;
+}
+.scene-ideas {
+  margin-top: 40rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 22rpx;
+}
+.scene-idea-image {
+  width: 100%;
+  border-radius: 22rpx;
+}
+.collection-reveal {
+  position: fixed;
+  inset: 0;
+  background: #173f386b;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 50rpx;
+}
+.collection-reveal .companion-card {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  max-height: 85vh;
+  overflow: auto;
+}
+.collection-reveal image {
+  width: 300rpx;
+  height: 290rpx;
+  align-self: center;
+}
+
+.companion-new-arrival {
+  font-size: 20rpx;
+  line-height: 1.5;
+  color: #a17a38;
+  background: #fbefd0;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+}

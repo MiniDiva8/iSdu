@@ -1,0 +1,31 @@
+@import '../../../styles/companion.wxss';
+.photo-preview {
+  margin: 25rpx 0;
+  border-radius: 28rpx;
+  overflow: hidden;
+  border: 2rpx solid #d6ddca;
+  background: #eceddf;
+  min-height: 500rpx;
+  box-shadow: 0 14rpx 35rpx #4d62310e;
+}
+.photo-preview image {
+  width: 100%;
+  display: block;
+}
+.photo-actions {
+  justify-content: center;
+  margin: 30rpx 0;
+}
+.photo-actions button {
+  flex: 1;
+  text-align: center;
+  font-size: 24rpx;
+}
+.photo-export-canvas {
+  position: absolute;
+  left: -2000px;
+  top: 0;
+  width: 300px;
+  height: 480px;
+  pointer-events: none;
+}

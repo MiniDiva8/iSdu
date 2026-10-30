@@ -1,0 +1,134 @@
+<view class="companion-page" style="padding-top:{{topInset}}px"
+  ><view class="companion-header"
+    ><button bindtap="back" aria-label="返回伙伴小屋">
+      <t-icon name="chevron-left" size="25px" /></button
+    ><text>伙伴收藏室</text
+    ><text class="companion-header__wallet"
+      >✦ {{state.crystals || 0}} · ✧ {{state.shards || 0}}</text
+    ></view
+  ><view class="companion-tabs"
+    ><button
+      aria-label="我的仓库{{mode === 'inventory' ? '，已选择' : ''}}"
+      class="{{mode==='inventory'?'active':''}}"
+      data-mode="inventory"
+      bindtap="changeMode"
+    >
+      我的仓库</button
+    ><button
+      aria-label="光点小铺{{mode === 'shop' ? '，已选择' : ''}}"
+      class="{{mode==='shop'?'active':''}}"
+      data-mode="shop"
+      bindtap="changeMode"
+    >
+      光点小铺
+    </button></view
+  ><view class="companion-tabs"
+    ><button class="{{tab==='skins'?'active':''}}" data-tab="skins" bindtap="changeTab">
+      伙伴形象</button
+    ><button class="{{tab==='accessories'?'active':''}}" data-tab="accessories" bindtap="changeTab">
+      随身装饰</button
+    ><button class="{{tab==='furniture'?'active':''}}" data-tab="furniture" bindtap="changeTab">
+      小院家具
+    </button></view
+  >
+  <view wx:if="{{tab==='skins'}}" class="companion-card"
+    ><image class="collection-hero" src="{{heroSrc}}" mode="aspectFit" /><text
+      class="companion-title"
+      >在校园里，遇见八位搭子</text
+    ><text class="companion-muted"
+      >每位伙伴都有自己的小性格，获得概率均为 12.5%。每次 100 光点；重复形象返还 20 光点和 5
+      星屑。</text
+    ><button
+      class="companion-primary"
+      disabled="{{busy || !state.adoptedAt || state.crystals<100}}"
+      loading="{{busy}}"
+      bindtap="drawSkin"
+    >
+      ✦ 100 · 抽取伙伴形象
+    </button></view
+  >
+  <text wx:if="{{actionMessage}}" class="companion-message">{{actionMessage}}</text
+  ><text class="companion-muted"
+    >{{tab==='furniture'?'把山大的银杏、书香与校园印记，一点点装进小家。':tab==='accessories'?'小小装饰，让今天的相遇多一点不同。':'每一种模样，都陪你认真收藏普通的日子。'}}</text
+  ><view wx:if="{{isLoading}}" class="companion-empty">正在打开仓库…</view
+  ><view class="companion-grid"
+    ><view
+      wx:for="{{items}}"
+      wx:key="id"
+      class="companion-item {{item.selected?'companion-item--selected':''}}"
+      ><view
+        wx:if="{{item.previewCropped}}"
+        class="companion-sprite-preview"
+        style="{{item.previewStyle}}"
+      ></view
+      ><image
+        wx:elif="{{item.src}}"
+        src="{{item.src}}"
+        mode="aspectFit"
+        lazy-load="{{true}}"
+      /><view
+        wx:else
+        class="companion-placeholder {{tab==='skins'?'companion-placeholder--pet':''}}"
+        style="background:{{item.color}}44"
+        >轻装出门</view
+      ><text class="companion-item__name">{{item.name}}</text
+      ><text wx:if="{{item.newArrival}}" class="companion-new-arrival">新到 · 第二批</text
+      ><text wx:if="{{item.role}}" class="companion-item__role">{{item.role}}</text
+      ><text class="companion-item__note">{{item.statusLabel}}</text
+      ><text class="companion-item__description">{{item.description}}</text>
+      <button
+        wx:if="{{tab==='skins'}}"
+        class="companion-secondary"
+        data-id="{{item.id}}"
+        disabled="{{busy || !item.owned || item.selected || !state.adoptedAt}}"
+        bindtap="actOnItem"
+      >
+        {{item.selected?'使用中':item.owned?'换上':'等待遇见'}}
+      </button>
+      <button
+        wx:elif="{{tab==='accessories'}}"
+        class="companion-secondary"
+        data-id="{{item.id}}"
+        disabled="{{busy || item.selected || !state.adoptedAt}}"
+        bindtap="actOnItem"
+      >
+        {{item.selected?'使用中':item.owned?'换上':'✧ '+item.price+' 兑换'}}
+      </button>
+      <button
+        wx:elif="{{mode==='shop'}}"
+        class="companion-secondary"
+        data-id="{{item.id}}"
+        disabled="{{busy || !state.adoptedAt || state.crystals<item.price}}"
+        bindtap="actOnItem"
+      >
+        ✦ {{item.price}} 兑换
+      </button>
+      <button
+        wx:else
+        class="companion-secondary"
+        data-id="{{item.id}}"
+        disabled="{{busy || !state.adoptedAt || item.available<1}}"
+        bindtap="actOnItem"
+      >
+        {{item.available>0?'摆到小院':'已全部摆出'}}
+      </button>
+    </view></view
+  >
+  <view wx:if="{{tab==='furniture'}}" class="scene-ideas">
+    <text class="companion-title">搭配灵感</text>
+    <view wx:for="{{sceneIdeas}}" wx:key="id" class="companion-card">
+      <image class="scene-idea-image" src="{{item.src}}" mode="widthFix" lazy-load="{{true}}" />
+      <text class="companion-title">{{item.name}}</text
+      ><text class="companion-muted">{{item.note}}</text>
+    </view>
+  </view>
+  <view wx:if="{{rewardName}}" class="collection-reveal" bindtap="closeReward">
+    <view class="companion-card"
+      ><text class="companion-kicker">把今天的小惊喜收进口袋</text
+      ><image src="{{rewardSrc}}" mode="aspectFit" /><text class="companion-title"
+        >你好，{{rewardName}}</text
+      ><text class="companion-muted">{{actionMessage}}</text
+      ><button class="companion-primary" bindtap="closeReward">收好这份相遇</button></view
+    >
+  </view>
+</view>

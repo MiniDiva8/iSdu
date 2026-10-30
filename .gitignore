@@ -38,3 +38,21 @@ Thumbs.db
 .verification/
 .preview/
 playwright-report/
+
+# Private runtime, archive attachments and local packaging
+.codex/
+.agents/
+.aws/
+.release-private/
+.artifacts/
+.tmp/
+.tools/
+.build/
+browser-profile/
+playwright-profile/
+*.pem
+*.key
+/*.zip
+/*.bundle
+/*.pptx
+/*.mp4

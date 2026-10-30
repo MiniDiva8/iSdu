@@ -48,7 +48,7 @@
   font-weight: 500;
   letter-spacing: 0.01em;
   line-height: 42px;
-  white-space: nowrap;
+  overflow-wrap: break-word;
 }
 
 .map-title-accent {

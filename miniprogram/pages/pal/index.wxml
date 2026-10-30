@@ -1,0 +1,18 @@
+<view class="pal-entry">
+  <view class="pal-entry__card">
+    <text class="pal-entry__eyebrow">Pal · 拾光伙伴</text>
+    <image class="pal-entry__portrait" src="/assets/companion/tutu_map.png" mode="aspectFit" />
+    <text class="pal-entry__title">家园就在这里</text>
+    <text class="pal-entry__description">和伙伴见个面，慢慢布置你们的小院。</text>
+    <view wx:if="{{errorMessage}}" class="pal-entry__error" role="alert">{{errorMessage}}</view>
+    <button
+      class="pal-entry__button"
+      bindtap="openHome"
+      loading="{{opening}}"
+      disabled="{{opening}}"
+    >
+      {{opening ? '正在前往小院…' : '进入家园'}}
+    </button>
+    <text class="pal-entry__hint">也可以从下方切换到日记、校园或时光。</text>
+  </view>
+</view>

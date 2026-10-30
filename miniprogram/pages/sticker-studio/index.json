@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "创作今日贴纸",
+  "navigationBarBackgroundColor": "#f5f3e9",
+  "backgroundColor": "#f5f3e9",
+  "usingComponents": { "t-icon": "tdesign-miniprogram/icon/icon" }
+}

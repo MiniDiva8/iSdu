@@ -1,0 +1,109 @@
+<view class="companion-page" style="padding-top:{{topInset}}px"
+  ><view class="companion-header"
+    ><button bindtap="back" aria-label="返回伙伴小屋">
+      <t-icon name="chevron-left" size="25px" /></button
+    ><text>小院信箱</text><t-icon name="mail" size="26px" /></view
+  ><view class="companion-card"
+    ><text class="companion-title">{{state.name || '伙伴'}} 的悄悄话</text
+    ><text class="companion-muted">日常积攒成故事，有些话会慢慢写成信。</text></view
+  ><view class="companion-tabs"
+    ><button class="{{tab==='letters'?'active':''}}" data-tab="letters" bindtap="changeTab">
+      伙伴来信 · {{letters.length}}</button
+    ><button class="{{tab==='guests'?'active':''}}" data-tab="guests" bindtap="changeTab">
+      好友来访 · {{visitorCount}}
+    </button></view
+  ><text wx:if="{{actionMessage}}" class="companion-message">{{actionMessage}}</text>
+  <block wx:if="{{tab==='letters'}}"
+    ><view class="companion-card ai-mail-card"
+      ><view class="companion-row companion-row--between"
+        ><text class="companion-title">给今天的你 · AI来信</text
+        ><button class="companion-link" bindtap="openChat">聊几句 ↗</button></view
+      ><text class="companion-muted">{{aiHint}}</text
+      ><text wx:if="{{aiMessage}}" class="companion-message">{{aiMessage}}</text
+      ><button
+        wx:if="{{aiStatus && aiStatus.enabled && (aiStatus.available || aiHasPending)}}"
+        class="companion-primary"
+        disabled="{{aiBusy || (!aiHasPending && aiStatus.lettersRemaining === 0)}}"
+        loading="{{aiBusy}}"
+        bindtap="requestAILetter"
+      >
+        {{aiHasPending ? '查看上封信的结果' : '读最新日记，写封短信'}}</button
+      ><button
+        wx:elif="{{aiStatus && aiStatus.available && !aiStatus.enabled}}"
+        class="companion-secondary"
+        bindtap="openChat"
+      >
+        去开启AI交流</button
+      ><text wx:if="{{aiLoading}}" class="companion-muted">正在读取来信状态…</text></view
+    >
+    <view wx:for="{{aiLetters}}" wx:key="id" class="ai-letter-item"
+      ><button
+        class="letter-row companion-card"
+        data-id="{{item.id}}"
+        disabled="{{aiBusy}}"
+        bindtap="openAILetter"
+      >
+        <view class="companion-row companion-row--between"
+          ><text class="companion-title">{{item.title}}</text
+          ><view wx:if="{{!item.read}}" class="unread-dot"></view></view
+        ><text class="letter-row__preview">{{item.text}}</text
+        ><text class="companion-muted"
+          >{{item.date}} · 来自 {{item.partnerName}} · AI生成</text
+        ></button
+      ><button
+        class="companion-link ai-letter-delete"
+        data-id="{{item.id}}"
+        bindtap="deleteAILetter"
+        disabled="{{aiBusy}}"
+        aria-label="删除AI来信：{{item.title}}"
+      >
+        删除这封信
+      </button></view
+    >
+    <text wx:if="{{aiLetters.length}}" class="companion-muted ai-template-label">伙伴日常来信</text>
+    <view wx:if="{{letters.length===0}}" class="companion-empty"
+      >领取伙伴后，第一封信就会送到这里。</view
+    ><button
+      wx:for="{{letters}}"
+      wx:key="id"
+      class="letter-row companion-card"
+      data-id="{{item.id}}"
+      disabled="{{busy}}"
+      bindtap="openLetter"
+    >
+      <view class="companion-row companion-row--between"
+        ><text class="companion-title">{{item.title}}</text
+        ><view wx:if="{{!item.read}}" class="unread-dot"></view></view
+      ><text class="letter-row__preview">{{item.body}}</text
+      ><text class="companion-muted">{{item.date}} · {{item.read?'已读':'未读'}}</text>
+    </button></block
+  >
+  <block wx:else
+    ><text wx:if="{{cloudError}}" class="companion-message">{{cloudError}}</text
+    ><view wx:if="{{!guests.length}}" class="companion-empty"
+      >这里会显示真实好友的来访和留言。在伙伴资料卡中主动开放小屋后，已确认的好友才可以来做客。</view
+    ><view wx:for="{{guests}}" wx:key="id" class="companion-card"
+      ><view class="companion-row companion-row--between"
+        ><text class="companion-title">{{item.visitor.displayName}}</text
+        ><button
+          class="companion-link"
+          data-id="{{item.id}}"
+          disabled="{{busy}}"
+          bindtap="deleteGuest"
+        >
+          删除
+        </button></view
+      ><text class="companion-copy">{{item.message || '来小院里坐了一会儿。'}}</text
+      ><text class="companion-muted">{{item.visitedAt}}</text></view
+    ></block
+  >
+  <view wx:if="{{activeLetter}}" class="letter-backdrop" bindtap="closeLetter"
+    ><view class="letter-paper" catchtap="noop"
+      ><button class="companion-link" bindtap="closeLetter">收好这封信 ×</button
+      ><text class="companion-kicker">来自 {{activeAIName || state.name}}</text
+      ><text class="companion-title">{{activeLetter.title}}</text
+      ><text class="companion-copy">{{activeLetter.body}}</text
+      ><text class="companion-muted">{{activeLetter.date}}</text></view
+    ></view
+  ></view
+>

@@ -7,7 +7,7 @@ const { createFriendHandler } = require('./lib/friend-handler');
 const { createCloudFriendStore } = require('./lib/cloud-friend-store');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
-const database = cloud.database();
+const database = cloud.database({ throwOnNotFound: false });
 
 const handler = createFriendHandler({
   getTrustedContext: () => cloud.getWXContext(),

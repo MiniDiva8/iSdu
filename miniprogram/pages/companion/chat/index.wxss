@@ -1,0 +1,130 @@
+@import '../../../styles/companion.wxss';
+.pal-ai-page {
+  padding-bottom: calc(40rpx + env(safe-area-inset-bottom));
+}
+.pal-ai-intro {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+.pal-ai-avatar {
+  flex: 0 0 124rpx;
+  width: 124rpx;
+  height: 140rpx;
+}
+.pal-ai-avatar--happy {
+  animation: pal-ai-hop 0.65s ease-out;
+}
+.pal-ai-avatar--rest {
+  transform: rotate(-4deg);
+}
+.pal-ai-intro__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  min-width: 0;
+}
+.pal-ai-local {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+  margin: 18rpx 0 30rpx;
+}
+.pal-ai-local button {
+  flex: 0 0 auto;
+  margin: 0;
+}
+.pal-ai-local text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.pal-ai-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 22rpx;
+  margin: 30rpx 0;
+}
+.pal-ai-bubble {
+  max-width: 88%;
+  box-sizing: border-box;
+  padding: 24rpx 28rpx;
+  border-radius: 24rpx 24rpx 24rpx 6rpx;
+  background: #fffdf4;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  box-shadow: 0 6rpx 22rpx #43583208;
+}
+.pal-ai-bubble--user {
+  align-self: flex-end;
+  background: #e5edd8;
+  border-radius: 24rpx 24rpx 6rpx 24rpx;
+}
+.pal-ai-bubble__name {
+  font-size: 22rpx;
+  color: #7b876f;
+}
+.pal-ai-bubble .companion-copy {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.pal-ai-openings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14rpx;
+  margin: 26rpx 0;
+}
+.pal-ai-openings button {
+  margin: 0;
+  padding: 12rpx 24rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  border-radius: 30rpx;
+  color: #667751;
+  background: #eef1e3;
+}
+.pal-ai-composer {
+  gap: 20rpx;
+}
+.pal-ai-input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 110rpx;
+  max-height: 300rpx;
+}
+.pal-ai-composer__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+}
+.pal-ai-composer__actions button {
+  margin: 0;
+  min-width: 140rpx;
+}
+.pal-ai-clear {
+  display: block;
+  margin: 30rpx auto;
+}
+.pal-ai-footnote {
+  display: block;
+  text-align: center;
+  color: #8c9480;
+  font-size: 21rpx;
+  line-height: 1.7;
+  margin: 30rpx 0;
+}
+@keyframes pal-ai-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(-18rpx) rotate(4deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pal-ai-avatar--happy {
+    animation: none;
+  }
+}

@@ -1,0 +1,26 @@
+<view class="companion-page" style="padding-top:{{topInset}}px"
+  ><view class="companion-header"
+    ><button bindtap="back" aria-label="返回伙伴小屋">
+      <t-icon name="chevron-left" size="25px" /></button
+    ><text>小院合影</text></view
+  ><text class="companion-muted">拍下完整布置，不包含日记、钱包和好友留言。</text
+  ><text wx:if="{{actionMessage}}" class="companion-message">{{actionMessage}}</text
+  ><view class="photo-preview"
+    ><image wx:if="{{imagePath}}" src="{{imagePath}}" mode="widthFix" /><view
+      wx:else
+      class="companion-empty"
+      >{{isLoading?'正在画一张小院卡片…':'卡片暂未生成，点击下方重试。'}}</view
+    ></view
+  ><canvas id="companion-photo-canvas" type="2d" class="photo-export-canvas"></canvas
+  ><view class="companion-row photo-actions"
+    ><button
+      class="companion-primary"
+      disabled="{{busy || !imagePath}}"
+      loading="{{busy}}"
+      bindtap="savePhoto"
+    >
+      <t-icon name="download" size="20px" /> 保存相册</button
+    ><button class="companion-secondary" open-type="share">分享小程序</button></view
+  ><button class="companion-link" disabled="{{busy}}" bindtap="generatePhoto">重新生成卡片</button
+  ><text class="companion-muted">把校园里的每个小日子，和伙伴一起收藏起来。</text></view
+>

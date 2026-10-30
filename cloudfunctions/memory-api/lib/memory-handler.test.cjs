@@ -53,29 +53,46 @@ function createHarness() {
         plan.usedAt = now;
         return plan;
       },
+      getUploadPlan: async (planId, ownerUserId, now) => {
+        const plan = plans.get(planId);
+        return plan && plan.ownerUserId === ownerUserId && !plan.usedAt && plan.expiresAt > now
+          ? plan
+          : null;
+      },
       findMigration: async (key) => migrations.get(key) ?? null,
-      createMigratedMemory: async (memory, migration) => {
+      createMigratedMemory: async (memory, migration, planId, now) => {
         const existing = migrations.get(migration.migrationKey);
         if (existing) {
           return { memoryId: existing.cloudMemoryId, status: 'existing' };
         }
+        if (planId && !(await options.store.consumeUploadPlan(planId, memory.ownerUserId, now)))
+          return { code: 'UPLOAD_PLAN_INVALID' };
         memories.set(memory._id, { ...memory });
         migrations.set(migration.migrationKey, { ...migration });
         return { memoryId: memory._id, status: 'created' };
       },
-      createMemory: async (memory) => {
+      createMemory: async (memory, planId, now) => {
+        if (planId && !(await options.store.consumeUploadPlan(planId, memory.ownerUserId, now)))
+          return { code: 'UPLOAD_PLAN_INVALID' };
         memories.set(memory._id, { ...memory });
         return memory;
       },
+      findMemoryByRequestId: async (ownerUserId, clientRequestId) =>
+        [...memories.values()].find(
+          (memory) =>
+            memory.ownerUserId === ownerUserId && memory.clientRequestId === clientRequestId,
+        ) ?? null,
       listMine: async (ownerUserId) =>
         [...memories.values()].filter((memory) => memory.ownerUserId === ownerUserId),
       getMine: async (ownerUserId, memoryId) => {
         const memory = memories.get(memoryId);
         return memory?.ownerUserId === ownerUserId && !memory.deletedAt ? memory : null;
       },
-      updateMine: async (ownerUserId, memoryId, data) => {
+      updateMine: async (ownerUserId, memoryId, data, planId, now) => {
         const current = memories.get(memoryId);
         if (!current || current.ownerUserId !== ownerUserId) return null;
+        if (planId && !(await options.store.consumeUploadPlan(planId, ownerUserId, now)))
+          return { code: 'UPLOAD_PLAN_INVALID' };
         const updated = { ...current, ...data };
         memories.set(memoryId, updated);
         return updated;
@@ -139,6 +156,7 @@ function createHarness() {
     },
   };
   return {
+    options,
     blockRateLimit(key) {
       blockedRateLimitKeys.add(key);
     },
@@ -165,6 +183,65 @@ const content = {
   mapYRatio: 0.6,
   recordedAt: '2026-08-14T08:00:00.000Z',
 };
+
+test('invalid content and mismatched files leave an upload plan available for a corrected retry', async () => {
+  const { handler, plans } = createHarness();
+  const planned = await handler({ action: 'createImageUploadPlan', payload: { imageCount: 1 } });
+  const { planId, files } = planned.data;
+  const payload = {
+    clientRequestId: 'retry-upload',
+    planId,
+    content,
+    uploaded: [{ imageId: files[0].imageId, fileId: `cloud://env/${files[0].cloudPath}` }],
+  };
+  const invalid = await handler({
+    action: 'create',
+    payload: { ...payload, content: { ...content, mapXRatio: 2 } },
+  });
+  assert.equal(invalid.code, 'INVALID_INPUT');
+  assert.equal(plans.get(planId).usedAt, null);
+  const wrongImage = await handler({
+    action: 'create',
+    payload: {
+      ...payload,
+      uploaded: [{ imageId: files[0].imageId, fileId: 'cloud://env/wrong.jpg' }],
+    },
+  });
+  assert.equal(wrongImage.code, 'UPLOAD_PLAN_INVALID');
+  assert.equal(plans.get(planId).usedAt, null);
+  const saved = await handler({ action: 'create', payload });
+  const retried = await handler({ action: 'create', payload });
+  assert.equal(saved.ok, true);
+  assert.equal(retried.ok, true);
+  assert.equal(retried.data.memory.id, saved.data.memory.id);
+});
+
+test('friend map reads the same owner once for a full page of memories', async () => {
+  const { handler, memories, options, setCurrentUser } = createHarness();
+  let ownerReads = 0;
+  const getUser = options.store.getUser;
+  options.store.getUser = async (id) => {
+    ownerReads++;
+    return getUser(id);
+  };
+  for (let index = 0; index < 50; index++) {
+    memories.set(`map-${index}`, {
+      ...content,
+      _id: `map-${index}`,
+      ownerUserId: 'usr_a',
+      visibility: 'friends',
+      images: [],
+      publishedAt: '2026-08-15T07:00:00.000Z',
+    });
+  }
+  setCurrentUser('usr_b');
+  const result = await handler({
+    action: 'listFriendRecentMap',
+    payload: { mapAssetVersion: 'campus-map-v3' },
+  });
+  assert.equal(result.data.points.length, 50);
+  assert.equal(ownerReads, 1);
+});
 
 test('migrates a text memory as private and keeps trusted ownership', async () => {
   const { handler, memories } = createHarness();
@@ -742,4 +819,71 @@ test('journal-only entries remain private and compatible with the existing cloud
   assert.equal(stored.visibility, 'private');
   assert.equal(stored.mapAssetVersion, 'journal-unlocated-v1');
   assert.deepEqual(stored.selectedGrants, []);
+});
+
+test('owner list signs images in batches of at most 50 preserving each memory image order', async () => {
+  const { handler, memories, options } = createHarness();
+  const batches = [];
+  options.getTempUrls = async (ids) => {
+    batches.push([...ids]);
+    return ids.map((id) => 'https://temp.invalid/' + id);
+  };
+  for (let i = 0; i < 18; i++) {
+    memories.set('m' + i, {
+      ...content,
+      _id: 'm' + i,
+      ownerUserId: 'usr_a',
+      images: [0, 1, 2].map((j) => ({
+        fileId: 'file-' + i + '-' + j,
+        imageId: 'img-' + i + '-' + j,
+      })),
+    });
+  }
+  memories.set('other', {
+    ...content,
+    _id: 'other',
+    ownerUserId: 'usr_b',
+    images: [{ fileId: 'private-other', imageId: 'other' }],
+  });
+  const result = await handler({ action: 'listMine', payload: {} });
+  assert.equal(result.ok, true);
+  assert.deepEqual(
+    batches.map((b) => b.length),
+    [50, 4],
+  );
+  assert.equal(result.data.memories.length, 18);
+  for (let i = 0; i < 18; i++) {
+    assert.deepEqual(
+      result.data.memories[i].imagePaths,
+      [0, 1, 2].map((j) => 'https://temp.invalid/file-' + i + '-' + j),
+    );
+  }
+  assert.ok(!batches.flat().includes('private-other'));
+});
+test('owner text-only and empty lists perform no image signing', async () => {
+  const { handler, memories, options } = createHarness();
+  let calls = 0;
+  options.getTempUrls = async () => {
+    calls++;
+    return [];
+  };
+  await handler({ action: 'listMine', payload: {} });
+  memories.set('text', { ...content, _id: 'text', ownerUserId: 'usr_a', images: [] });
+  const result = await handler({ action: 'listMine', payload: {} });
+  assert.equal(result.data.memories[0].text, content.text);
+  assert.equal(calls, 0);
+});
+
+test('owner list fails closed on a truncated image batch instead of shifting image URLs', async () => {
+  const { handler, memories, options } = createHarness();
+  for (let i = 0; i < 2; i++)
+    memories.set('m' + i, {
+      ...content,
+      _id: 'm' + i,
+      ownerUserId: 'usr_a',
+      images: [{ fileId: 'file-' + i, imageId: 'img-' + i }],
+    });
+  options.getTempUrls = async () => ['https://temp.invalid/only-second'];
+  const response = await handler({ action: 'listMine', payload: {} });
+  assert.equal(response.ok, false);
 });

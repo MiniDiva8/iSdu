@@ -57,3 +57,28 @@ test('clearing preferences only removes their own key and failures are observabl
   });
   assert.throws(() => broken.clear(), /busy/);
 });
+
+test('a transient preference read failure never overwrites previously saved defaults', () => {
+  const values = new Map();
+  let failing = false;
+  const service = new JournalPreferencesService({
+    has: (key) => values.has(key),
+    read: (key) => {
+      if (failing) throw Error('temporary read failure');
+      return values.get(key);
+    },
+    write: (key, value) => values.set(key, value),
+    remove: (key) => values.delete(key),
+  });
+  service.save({ defaultMood: 'proud', defaultCategory: 'study' });
+  const original = values.get(JOURNAL_PREFERENCES_STORAGE_KEY);
+  failing = true;
+  assert.throws(() => service.save({ haptics: true }), /读取|偏好|read/);
+  assert.equal(values.get(JOURNAL_PREFERENCES_STORAGE_KEY), original);
+  failing = false;
+  assert.deepEqual(service.save({ haptics: true }), {
+    defaultMood: 'proud',
+    defaultCategory: 'study',
+    haptics: true,
+  });
+});

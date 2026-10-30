@@ -45,6 +45,21 @@
       <button class="ui-text-button" bindtap="openMySpace">我的空间 ›</button>
     </view>
   </view>
+  <button class="timeline-bottle-entry" bindtap="openMemoryBottle" aria-label="打开我的记忆瓶">
+    <view class="timeline-bottle-entry__art" aria-hidden="true">
+      <view class="timeline-bottle-entry__jar">
+        <view class="timeline-bottle-entry__ball timeline-bottle-entry__ball--one"></view>
+        <view class="timeline-bottle-entry__ball timeline-bottle-entry__ball--two"></view>
+        <view class="timeline-bottle-entry__ball timeline-bottle-entry__ball--three"></view>
+      </view>
+    </view>
+    <view class="timeline-bottle-entry__body">
+      <text class="timeline-bottle-entry__title">记忆瓶</text>
+      <text class="timeline-bottle-entry__hint">晃一晃，每颗心情都有故事</text>
+    </view>
+    <text class="timeline-bottle-entry__arrow" aria-hidden="true">↗</text>
+  </button>
+
   <view wx:if="{{profileErrorMessage}}" class="timeline-profile-warning">
     <text>{{profileErrorMessage}}</text>
     <button bindtap="openMySpace">去设置</button>
@@ -54,6 +69,7 @@
     <button
       class="timeline-mode__button {{timelineMode === 'mine' ? 'timeline-mode__button--active' : ''}}"
       data-mode="mine"
+      aria-label="我的时光{{timelineMode === 'mine' ? '，已选择' : ''}}"
       bindtap="switchTimelineMode"
     >
       我的时光
@@ -61,6 +77,7 @@
     <button
       class="timeline-mode__button {{timelineMode === 'friends' ? 'timeline-mode__button--active' : ''}}"
       data-mode="friends"
+      aria-label="好友时光{{timelineMode === 'friends' ? '，已选择' : ''}}"
       bindtap="switchTimelineMode"
     >
       好友时光
@@ -73,6 +90,7 @@
         <text class="timeline-search__icon">⌕</text>
         <input
           class="timeline-search__input"
+          aria-label="搜索时光中的地点、文字或心情"
           value="{{keyword}}"
           maxlength="50"
           confirm-type="search"
@@ -93,6 +111,12 @@
       </text>
     </view>
 
+    <text
+      wx:if="{{isRefreshing && !isLoading || refreshMessage}}"
+      class="timeline-refresh-status"
+      role="status"
+      >{{refreshMessage || '正在更新时光…'}}</text
+    >
     <view wx:if="{{isLoading}}" class="timeline-skeleton" aria-label="正在整理时光">
       <view class="timeline-skeleton__month"></view>
       <view class="timeline-skeleton__card">
@@ -145,6 +169,8 @@
             wx:for-item="memory"
             wx:key="id"
             class="timeline-card"
+            aria-role="button"
+            aria-label="{{memory.dateLabel + '，' + memory.placeLabel + '，' + memory.summary}}"
             data-memory-id="{{memory.id}}"
             bindtap="openDetail"
           >
@@ -175,12 +201,14 @@
                   <text class="ui-chip ui-chip--mood">{{memory.moodLabel}}</text>
                 </view>
                 <button
+                  wx:if="{{memory.hasLocation}}"
                   class="timeline-card__map-action"
                   data-memory-id="{{memory.id}}"
                   catchtap="showOnMap"
                 >
                   在地图中查看
                 </button>
+                <text wx:else class="timeline-card__location-note">未关联校园地点</text>
               </view>
             </view>
           </view>
@@ -246,6 +274,8 @@
           class="timeline-card friend-timeline-card"
           data-memory-id="{{item.id}}"
           bindtap="openFriendDetail"
+          aria-role="button"
+          aria-label="{{item.ownerDisplayName + '的日记，' + item.dateLabel + '，' + item.summary}}"
         >
           <image
             wx:if="{{item.hasImage && !item.imageFailed}}"

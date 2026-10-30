@@ -1,10 +1,25 @@
+# 当前日记与 Pal 主线（2026-10-30）
+
+[项目首页](../README.md) · [当前整合状态](CURRENT_LOCAL_INTEGRATION.md) · [开发交接](AI_HANDOFF.md) · [本次 GitHub 同步](GITHUB_SYNC_20261030.md)
+
+| 主题       | 入口                                                                                                                                                           |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 资料与素材 | [资料索引](PROJECT_MATERIALS.md)、[结构化摘要](PROJECT_INDEX.json)、[第三方说明](THIRD_PARTY_NOTICES.md)                                                       |
+| 日记与回顾 | [日记交付](EMMO_JOURNAL_DELIVERY.md)、[贴纸](DIARY_STICKER.md)、[记忆瓶](MEMORY_BOTTLE_MERGE.md)、[动态头像](PROFILE_AVATAR_MOTION.md)                         |
+| 伙伴       | [正式内容](COMPANION_CONTENT_DELIVERY.md)、[装饰扩展](COMPANION_DECOR_EXPANSION.md)、[游乐场](POTETO_FIDELITY_20261029.md)、[云服务](COMPANION_CLOUD_SETUP.md) |
+| 交付与验证 | [rc10 体验记录](EXPERIENCE_RELEASE_3_2_RC10.md)、[质量复核](QUALITY_REVIEW_20261029.md)、[暂停的 AI](PAL_AI_SETUP.md)                                          |
+
+以下保留历史工程导航。版本、部署与验收结论按对应文档日期理解。
+
+---
+
 > 当前本地日记版本请先看 [本轮交付说明](EMMO_JOURNAL_DELIVERY.md)。以下保留既有工程文档导航。
 
 # 文档导航
 
 [返回项目首页](../README.md)
 
-第一次了解 iSDU，建议先阅读 [项目与技术导读](PROJECT_GUIDE.md)，再按兴趣查看对应实现。本文档索引面向默认分支 Social V2。
+第一次了解 iSDU，建议先阅读 [项目与技术导读](PROJECT_GUIDE.md)，再按兴趣查看对应实现。下方旧设计与验收资料主要面向历史 Social V2，当前功能先读本页新增导航。
 
 ## 快速了解与运行
 

@@ -1,0 +1,55 @@
+@import '../../../styles/companion.wxss';
+.card-avatar {
+  width: 160rpx;
+  height: 160rpx;
+}
+.card-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+  flex: 1;
+  min-width: 0;
+}
+.theme-option {
+  margin: 0;
+  border: 3rpx solid transparent;
+  padding: 15rpx 20rpx;
+  border-radius: 24rpx;
+  font-size: 23rpx;
+  line-height: 1.7;
+  color: #43523e;
+}
+.theme-option--selected {
+  border-color: #627851;
+}
+.publication-status {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 20rpx;
+  background: #eff0e4;
+  color: #59634f;
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 1.6;
+}
+.publication-status--open {
+  background: #e2edd5;
+  color: #3e6039;
+}
+.publication-status--unknown {
+  background: #f6ead6;
+  color: #805b2d;
+}
+.publication-status__dot {
+  flex-shrink: 0;
+  font-size: 18rpx;
+}
+.publication-error {
+  display: block;
+  margin-top: 16rpx;
+  color: #805b2d;
+  font-size: 24rpx;
+  line-height: 1.7;
+}

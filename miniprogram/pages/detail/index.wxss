@@ -13,7 +13,7 @@ button {
   color: inherit;
 }
 .journal-detail {
-  padding: 30rpx 30rpx 70rpx;
+  padding: 30rpx 30rpx calc(70rpx + env(safe-area-inset-bottom));
 }
 .detail-caption {
   display: flex;
@@ -112,6 +112,8 @@ button {
 }
 .detail-paper__end {
   display: flex;
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
   justify-content: space-between;
   gap: 20rpx;
   font-size: 20rpx;
@@ -140,6 +142,13 @@ button {
   overflow: hidden;
   border-radius: 13rpx;
   height: 240rpx;
+}
+.detail-map-unavailable {
+  display: block;
+  color: var(--ui-color-text-secondary);
+  font-size: 12px;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
 }
 .detail-map image {
   display: block;
@@ -244,4 +253,33 @@ button {
   border-radius: 13rpx;
   padding: 14rpx 30rpx;
   font-size: 24rpx;
+}
+
+.detail-caption,
+.detail-paper__head,
+.detail-paper__head > text:last-child,
+.detail-paper__end,
+.detail-no-location,
+.detail-writing--empty {
+  color: var(--ui-color-text-secondary);
+  font-size: 12px;
+}
+.detail-caption,
+.detail-paper__head {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.detail-writing {
+  font-size: 15px;
+}
+.detail-location button,
+.detail-edit,
+.detail-delete,
+.detail-wait button {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+.detail-delete {
+  padding: 8px 20px;
+  color: #965647;
 }

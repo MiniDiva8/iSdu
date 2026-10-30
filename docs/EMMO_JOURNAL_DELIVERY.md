@@ -1,4 +1,4 @@
-> 体验版 3.1.0rc.1 已上传，最新状态与入口见 [体验版记录](EMMO_EXPERIENCE_RELEASE.md)。
+> 体验版 3.1.0rc.2 已更新个人主页与旋转转盘，最新状态与入口见 [体验版记录](PROFILE_WHEEL_RELEASE.md)。
 
 # iSdu 心情日记版本交付
 

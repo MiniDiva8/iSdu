@@ -36,15 +36,19 @@ export class JournalPreferencesService {
   constructor(storage: StorageAdapter = wechatStorageAdapter) {
     this.storage = storage;
   }
+  private readForUpdate(): JournalPreferences {
+    if (!this.storage.has(JOURNAL_PREFERENCES_STORAGE_KEY)) return { ...defaults };
+    const raw = this.storage.read(JOURNAL_PREFERENCES_STORAGE_KEY);
+    if (typeof raw !== 'string') throw new Error('偏好设置读取失败，原设置已保留');
+    const envelope = JSON.parse(raw) as { schemaVersion?: unknown; preferences?: unknown } | null;
+    const preferences =
+      envelope?.schemaVersion === 1 ? parsePreferences(envelope.preferences) : null;
+    if (!preferences) throw new Error('偏好设置版本或格式无效，原设置已保留');
+    return preferences;
+  }
   read(): JournalPreferences {
     try {
-      if (!this.storage.has(JOURNAL_PREFERENCES_STORAGE_KEY)) return { ...defaults };
-      const raw = this.storage.read(JOURNAL_PREFERENCES_STORAGE_KEY);
-      if (typeof raw !== 'string') return { ...defaults };
-      const envelope = JSON.parse(raw) as { schemaVersion?: unknown; preferences?: unknown } | null;
-      return envelope?.schemaVersion === 1
-        ? (parsePreferences(envelope.preferences) ?? { ...defaults })
-        : { ...defaults };
+      return this.readForUpdate();
     } catch {
       return { ...defaults };
     }
@@ -56,7 +60,7 @@ export class JournalPreferencesService {
       Object.keys(patch).some((key) => !['defaultMood', 'defaultCategory', 'haptics'].includes(key))
     )
       throw new Error('偏好设置格式无效');
-    const preferences = parsePreferences({ ...this.read(), ...patch });
+    const preferences = parsePreferences({ ...this.readForUpdate(), ...patch });
     if (!preferences) throw new Error('偏好设置格式无效');
     this.storage.write(
       JOURNAL_PREFERENCES_STORAGE_KEY,

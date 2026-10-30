@@ -1,0 +1,283 @@
+{
+  "source": "iSdu-Pal-Handoff-20261026.zip",
+  "archiveSha256": "480e1a654f0395ce61902d024c67d396cf40ed09bb57184a61f8a1293016f269",
+  "method": "Runtime resize and PNG palette/JPEG encode; composition unchanged; original ZIP retained by user",
+  "totalBytes": 714322,
+  "assets": [
+    {
+      "id": "tutu_gift",
+      "source": "01_宠物系统方案/art/actions/tutu_gift.png",
+      "sourceSha256": "d2ee82e325fb833138e50bf40e26481af0186db72b6c21229eaca7d83d8e3126",
+      "runtime": "/pages/companion/assets/tutu_gift.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 21976,
+      "sha256": "71e6fbbdaddc2fd52654e2f6ae9fb6a2d6cf1657b7552dcd9560905f10392d57"
+    },
+    {
+      "id": "tutu_happy",
+      "source": "01_宠物系统方案/art/actions/tutu_happy.png",
+      "sourceSha256": "bc967ef6a473cf585ff22194a99d74ad0405152ab4ad565089f6aa0b9952a01a",
+      "runtime": "/pages/companion/assets/tutu_happy.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 18711,
+      "sha256": "b2c3b256b9045cd9a7b9eeb7b8fda3ec539fd969e47088898d961c48960f5e57"
+    },
+    {
+      "id": "tutu_recording",
+      "source": "01_宠物系统方案/art/actions/tutu_recording.png",
+      "sourceSha256": "46d3173d35bce666b96f4ece8a9c2bdbf1bcd0188d4033db8375e58acbc443d6",
+      "runtime": "/pages/companion/assets/tutu_recording.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 19595,
+      "sha256": "bd66da322baff169861db6b86449b08938b4947e1ee645c5b88d6ffc12d9f5de"
+    },
+    {
+      "id": "tutu_resting",
+      "source": "01_宠物系统方案/art/actions/tutu_resting.png",
+      "sourceSha256": "90f707aa010273c9686d19d5025962a91054bcc80e4f72a783f676b647e048bd",
+      "runtime": "/pages/companion/assets/tutu_resting.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 17104,
+      "sha256": "27c07e9c4514aebc08eb862234493a7cc296f96c7e4d423c45a42907f1552144"
+    },
+    {
+      "id": "campus_corner",
+      "source": "01_宠物系统方案/art/backgrounds/campus_corner.png",
+      "sourceSha256": "6db533e604cbdb78c28bdb8edeea380fcc646fcaf3ccbd604ea6dd38b157478a",
+      "runtime": "/pages/companion/assets/campus_corner.jpg",
+      "width": 1000,
+      "height": 750,
+      "alpha": false,
+      "bytes": 92920,
+      "sha256": "c42d186371f0cae912118ec4ceb90259b28c0efb07942728336115a0b4ad32a0"
+    },
+    {
+      "id": "diandian_pin",
+      "source": "01_宠物系统方案/art/characters/diandian_pin.png",
+      "sourceSha256": "9eaa3e4141cccda7aaeef0c7665c1b39e85b1eab2fd8be8372c66ea86d28fc0d",
+      "runtime": "/assets/companion/diandian_pin.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 19002,
+      "sha256": "860a79d15bcec3fa601e2728132c93c617c4fd8cfa37111982c7b0232e52a66d"
+    },
+    {
+      "id": "kaka_camera",
+      "source": "01_宠物系统方案/art/characters/kaka_camera.png",
+      "sourceSha256": "0a95a2bbb0a8530cf77e701e740e14a4c278b60e4541a81f8e9d3e84507a39e7",
+      "runtime": "/assets/companion/kaka_camera.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 25385,
+      "sha256": "12e7b9bc00329ab65c097925061d4b8f30aa0043c118b503e307dc6a92ce9f03"
+    },
+    {
+      "id": "tutu_map",
+      "source": "01_宠物系统方案/art/characters/tutu_map.png",
+      "sourceSha256": "2b145a149a4470121ceb393a5686f66712fb19d6227aebe7998492bcbde5cf89",
+      "runtime": "/assets/companion/tutu_map.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 20338,
+      "sha256": "648317cc2567d7f28ccc8ae85b354a39e01440db7fb26d094790528e15c80daa"
+    },
+    {
+      "id": "xingxing_star",
+      "source": "01_宠物系统方案/art/characters/xingxing_star.png",
+      "sourceSha256": "4cdf92596a6e732606f0127e1fffb10a28c9f7adc6bf274479173babeaf1bbe3",
+      "runtime": "/assets/companion/xingxing_star.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 21713,
+      "sha256": "97363e236b4b4ca2f72903cc45473500c72d92045b81048624ac75bf56feea4f"
+    },
+    {
+      "id": "yaya_ginkgo",
+      "source": "01_宠物系统方案/art/characters/yaya_ginkgo.png",
+      "sourceSha256": "b1b31e7194bb9fde334a5edbc80fa42ef145c2d1abd9f8257dbde70169392049",
+      "runtime": "/assets/companion/yaya_ginkgo.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 25108,
+      "sha256": "0c0fa5625caa7fe6454d410de2c513afb68dcb755769b17f0130835d59d79e5e"
+    },
+    {
+      "id": "yeye_diary",
+      "source": "01_宠物系统方案/art/characters/yeye_diary.png",
+      "sourceSha256": "5df5f1133ee011fee857f2641d4b7aa1164eabe3b2d9c4d7a5952ce178f6291e",
+      "runtime": "/assets/companion/yeye_diary.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 18440,
+      "sha256": "31615ca60bd5b869bf414c896c68921cd472cf1ea927f091d01f67d63f0060ad"
+    },
+    {
+      "id": "yinyin_stamp",
+      "source": "01_宠物系统方案/art/characters/yinyin_stamp.png",
+      "sourceSha256": "909fed734308a50b1ae75227de2ec2d7b7aa26b57eb02b34feee61f6cec5bc2a",
+      "runtime": "/assets/companion/yinyin_stamp.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 19746,
+      "sha256": "6172af370e340c94aa21824f0e9e962990f8897abf08746a8c09bcd94c20a421"
+    },
+    {
+      "id": "youyou_letter",
+      "source": "01_宠物系统方案/art/characters/youyou_letter.png",
+      "sourceSha256": "b52107c1ddfcfd059693829b0ea47c420c8e08fe0af1f045ff7d696a578c0e4f",
+      "runtime": "/assets/companion/youyou_letter.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 20645,
+      "sha256": "aa1f5bdcbf35b7ae80e88b3b96ca3a0a6bd926e82da0ce542d7b9be89aa4c253"
+    },
+    {
+      "id": "alumni_gate_garden_arch",
+      "source": "02_山大家具与场景/art/props/alumni_gate_garden_arch.png",
+      "sourceSha256": "5134f9f8dad0b7a53fd9e0952f9950a9fdb3b7ee149b055128856bc0017d9fec",
+      "runtime": "/pages/companion/assets/alumni_gate_garden_arch.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 25269,
+      "sha256": "e0db20b7f940bbf7c98e8cd32efcd7aebf29c3517290db0e615a489aff7202fd"
+    },
+    {
+      "id": "ginkgo_reading_chair",
+      "source": "02_山大家具与场景/art/props/ginkgo_reading_chair.png",
+      "sourceSha256": "d4a93987184bf7f8a487810c3c7498d99441286a257ca2bb1f559cb2068e523a",
+      "runtime": "/pages/companion/assets/ginkgo_reading_chair.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 20031,
+      "sha256": "57a1429fcec144029a6498abf26b20ce91d863121a9255d7dba4de6d3a2a3d2e"
+    },
+    {
+      "id": "ginkgo_window_bonsai",
+      "source": "02_山大家具与场景/art/props/ginkgo_window_bonsai.png",
+      "sourceSha256": "851e90f8837c2357f40085cabd30ae43d8a7c5bf132ee70a4acd028c934f99b1",
+      "runtime": "/pages/companion/assets/ginkgo_window_bonsai.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 20538,
+      "sha256": "21cd402471037b2fe108e560cca963af9b6ab5d9269780817d65211705081ea3"
+    },
+    {
+      "id": "jixia_windchime_screen",
+      "source": "02_山大家具与场景/art/props/jixia_windchime_screen.png",
+      "sourceSha256": "9a951f225198ff15365ba3d71ad97d7d92919aabcd500acab1da0ecac53ef50f",
+      "runtime": "/pages/companion/assets/jixia_windchime_screen.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 19255,
+      "sha256": "d6faf250c6b44afab7b8b486133fdaa2ce61111be3eb4d4b99632047c0c0c881"
+    },
+    {
+      "id": "magnolia_floor_lamp",
+      "source": "02_山大家具与场景/art/props/magnolia_floor_lamp.png",
+      "sourceSha256": "09380745a74a4058d3d074ad462143450d339c6b2e73ac98aba0a63e77dc2cee",
+      "runtime": "/pages/companion/assets/magnolia_floor_lamp.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 14984,
+      "sha256": "8798b7d7339e0a91405d4fdd8bfea46449b945a9e2e5b52bc973d44a92eed130"
+    },
+    {
+      "id": "magnolia_ginkgo_rug",
+      "source": "02_山大家具与场景/art/props/magnolia_ginkgo_rug.png",
+      "sourceSha256": "6408dfa66a1a63ea5918f93c92a2e17d5dbb3815f4ff9330bd4d01d95cfecd99",
+      "runtime": "/pages/companion/assets/magnolia_ginkgo_rug.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 14245,
+      "sha256": "be3ba76f35d254ccba6aafef1453f3f41f04fb61dee72f3e8cb5d6e9e8aa2439"
+    },
+    {
+      "id": "sdu_1901_memory_mailbox",
+      "source": "02_山大家具与场景/art/props/sdu_1901_memory_mailbox.png",
+      "sourceSha256": "0f20bc0ee02315be76ba18eb07acd63f87c1a4b0c54f0b5cba57042e465f3f8f",
+      "runtime": "/pages/companion/assets/sdu_1901_memory_mailbox.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 18635,
+      "sha256": "a089a00455359d2c005605860abb214917db4420872cc809dd4408b6b847b40c"
+    },
+    {
+      "id": "sdu_motto_wall_plaque",
+      "source": "02_山大家具与场景/art/props/sdu_motto_wall_plaque.png",
+      "sourceSha256": "e589baa5aff49b75278158dd23334e42be6c92b155342ec35f5eff712703e429",
+      "runtime": "/pages/companion/assets/sdu_motto_wall_plaque.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 22674,
+      "sha256": "a532995fc0d35383cf433643131a9c59ddf171c7c0677d472534cd2c14772db0"
+    },
+    {
+      "id": "wenshizhe_book_side_table",
+      "source": "02_山大家具与场景/art/props/wenshizhe_book_side_table.png",
+      "sourceSha256": "bef3462059f8525f6ff13725a68a024d74fe6b696681cb60dc1bc6c4b116757f",
+      "runtime": "/pages/companion/assets/wenshizhe_book_side_table.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 18957,
+      "sha256": "777f8a0db9dda25b14d09611080da3cff062c5d179a453d810d054340618ef20"
+    },
+    {
+      "id": "zhixin_memory_lamp",
+      "source": "02_山大家具与场景/art/props/zhixin_memory_lamp.png",
+      "sourceSha256": "c79d49295e89d47eb5a4ca93addaf48141ebcc2b51692e604656a7bacfc4bbf9",
+      "runtime": "/pages/companion/assets/zhixin_memory_lamp.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 21908,
+      "sha256": "ebbce3ce9609e9f3b674a6476a03a10fdfd061ad3b93dd11a2b677af96555225"
+    },
+    {
+      "id": "ginkgo_reading_corner",
+      "source": "02_山大家具与场景/art/scenes/ginkgo_reading_corner.png",
+      "sourceSha256": "ef57aef1a557cc51a8da2e70e3dbe1f875ba8c29562054d3d44d2325ef9958d0",
+      "runtime": "/pages/companion/assets/ginkgo_reading_corner.jpg",
+      "width": 768,
+      "height": 576,
+      "alpha": false,
+      "bytes": 90984,
+      "sha256": "f0e731b042acbff0866f003ed133653babc7e353e4325c0c0b947a515a17b931"
+    },
+    {
+      "id": "jixia_breeze_courtyard",
+      "source": "02_山大家具与场景/art/scenes/jixia_breeze_courtyard.png",
+      "sourceSha256": "0e781259ff387eff6f43f2ca06d76d6687eee35e9b941f7eb5cad29a60b2a5c4",
+      "runtime": "/pages/companion/assets/jixia_breeze_courtyard.jpg",
+      "width": 768,
+      "height": 576,
+      "alpha": false,
+      "bytes": 86159,
+      "sha256": "6e8c6ae24e6c2bcf2e0ff292da3a1ffeb7f2128a037ca1d1f5fb847b88d344d2"
+    }
+  ]
+}

@@ -1,3 +1,23 @@
+# 最新体验版 3.2.0rc.3
+
+2026-10-26 14:38:46 已通过官方 CLI 上传，后台刷新后确认体验版标记与日记首页入口。
+保留日记、个人页、转盘和记忆瓶，包含伙伴内容、第二批装饰、文字重叠修复和 Pal 入口。
+最新验证、包体和二维码见 [3.2.0rc.3 体验版记录](EXPERIENCE_RELEASE_3_2_RC3.md)。
+
+# 历史合并体验版 3.1.0rc.3
+
+3.1.0rc.3 已在官方 CLI 上传成功，后台已确认体验版标记及日记首页入口。
+本次保留 3.1 日记版、新个人页与心情/主题转盘，合入优化后的记忆瓶。
+当前源码位于 D:/Codex/Projects/DesktopProjects/iSdu-Fqin/.worktrees/emmo-memory-bottle。
+完整说明和验证边界见 [日记版记忆瓶合并](MEMORY_BOTTLE_MERGE.md)。
+
+客户端包 1,129,434 字节；282 项测试及检查、23 项视觉检查和原生模拟器验收通过。
+二维码见 D:/Codex/Outputs/iSdu_Memory_Bottle_20261026/experience-3.1.0rc.3/experience-code.png。
+扫码入口 pages/journal/index。手机流畅度待真实设备体验。
+新个人页与转盘的原始发布记录见 [个人页与转盘](PROFILE_WHEEL_RELEASE.md)。
+
+以下为旧版发布记录，保留用于追溯。
+
 # 日记体验版 3.1.0rc.1
 
 - 平台已确认当前开发版本为体验版，上传时间为 2026-10-25 21:10:39（北京时间）。

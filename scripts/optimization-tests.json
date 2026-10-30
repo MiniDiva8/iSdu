@@ -1,0 +1,13 @@
+[
+  "scripts/optimization-page-flows.test.mjs",
+  "scripts/detail-recovery.test.mjs",
+  "scripts/review-editor.test.mjs",
+  "scripts/review-friend-detail.test.mjs",
+  "scripts/review-friends.test.mjs",
+  "scripts/review-companion-photo.test.mjs",
+  "scripts/review-companion-renderer.test.mjs",
+  "cloudfunctions/memory-api/lib/cloud-memory-store.test.cjs",
+  "cloudfunctions/memory-api/lib/cloud-storage-service.test.cjs",
+  "cloudfunctions/friend-api/lib/cloud-friend-store.test.cjs",
+  "cloudfunctions/memory-api/lib/test-support/sdk-entry.test.cjs"
+]

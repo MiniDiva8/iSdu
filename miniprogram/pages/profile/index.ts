@@ -10,9 +10,12 @@ import { cloudModeService } from '../../services/cloud/cloud-mode-service';
 import { memoryRepository, userProfileRepository } from '../../services/repository/index';
 Page({
   _active: true,
+  _avatarVersion: 0,
   _summaryVersion: 0,
   _profileVersion: 0,
   data: {
+    avatarActive: false,
+    avatarMotionEnabled: false,
     topInset: 24,
     displayName: '给自己取个名字',
     signature: '为校园生活，留一份自己的注脚。',
@@ -43,6 +46,8 @@ Page({
   },
   onShow() {
     this._active = true;
+    this.setData({ avatarActive: true, avatarMotionEnabled: false });
+    this.prepareAvatarMotion();
     void this.loadProfile();
     void this.loadInsights();
   },
@@ -50,12 +55,36 @@ Page({
     this._active = false;
     this._summaryVersion += 1;
     this._profileVersion += 1;
-    this.setData({ panel: '' });
+    this._avatarVersion += 1;
+    this.setData({ panel: '', avatarActive: false, avatarMotionEnabled: false });
   },
   onUnload() {
     this._active = false;
+    this._avatarVersion += 1;
     this._summaryVersion += 1;
     this._profileVersion += 1;
+  },
+  prepareAvatarMotion() {
+    const version = ++this._avatarVersion;
+    const current = () => this._active && version === this._avatarVersion && this.data.avatarActive;
+    if (typeof wx.getPrivacySetting !== 'function') return;
+    try {
+      void wx.getPrivacySetting({
+        success: (result) => {
+          if (current() && result.needAuthorization === false)
+            this.setData({ avatarMotionEnabled: true });
+        },
+        fail: () => undefined,
+      });
+    } catch {
+      /* Unavailable platform privacy state keeps the original avatar usable. */
+    }
+  },
+  handleAvatarMotionState(event: WechatMiniprogram.CustomEvent<{ status: string }>) {
+    if (event.detail.status === 'unavailable' || event.detail.status === 'error') {
+      this._avatarVersion += 1;
+      this.setData({ avatarMotionEnabled: false });
+    }
   },
   async loadProfile() {
     const version = ++this._profileVersion;
@@ -93,7 +122,16 @@ Page({
   async loadInsights() {
     const version = ++this._summaryVersion;
     const mode = cloudModeService.getState().mode;
-    this.setData({ insightsReady: false, insightError: '' });
+    this.setData({
+      insightsReady: false,
+      insightError: '',
+      entryCount: 0,
+      characterCount: 0,
+      currentStreak: 0,
+      recordedDayCount: 0,
+      campusPlaceCount: 0,
+      moodCounts: [],
+    });
     try {
       const memories = await memoryRepository.listMemories();
       if (
@@ -167,6 +205,8 @@ Page({
       friends: '/pages/friends/index',
       about: '/pages/about/index',
       album: '/pages/album/index',
+      'memory-bottle': '/pages/memory-bottle/index',
+      companion: '/pages/companion/index',
     };
     const url = typeof key === 'string' ? destinations[key] : undefined;
     if (!url) return;

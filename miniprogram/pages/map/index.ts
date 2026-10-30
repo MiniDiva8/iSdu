@@ -341,6 +341,10 @@ let isMapGestureActive = false;
 let mapGestureRevision = 0;
 let pendingFocusIntent: MapFocusIntent | null = null;
 Page({
+  _memoryLoadVersion: 0,
+  _friendLoadVersion: 0,
+  _cardLoadVersion: 0,
+  _loadedScope: '',
   data: {
     activeFilterCount: 0,
     availableMarkerCount: 0,
@@ -407,6 +411,7 @@ Page({
   onShow() {
     pendingFocusIntent = consumeMapFocusIntent();
     void this.refreshMemories();
+    if (this.data.mapLayer === 'friends' && !pendingFocusIntent) void this.refreshFriendLayer();
   },
   onResize(options: WechatMiniprogram.Page.IResizeOption) {
     this.applyLayout(
@@ -463,11 +468,24 @@ Page({
     });
   },
   async refreshMemories() {
+    const version = ++this._memoryLoadVersion;
+    const scope = memoryRepository.getListScope();
+    if (this._loadedScope && this._loadedScope !== scope) {
+      this.setData({
+        memories: [],
+        markers: [],
+        friendMarkers: [],
+        friendPoints: [],
+        selectedMemory: null,
+      });
+    }
+    this._loadedScope = scope;
     this.setData({
       isMemoryLoading: true,
     });
     try {
       const memories = await memoryRepository.listMemories();
+      if (version !== this._memoryLoadVersion || scope !== memoryRepository.getListScope()) return;
       const mapSize = { width: this.data.mapRenderWidth, height: this.data.mapRenderHeight };
       const markerResult = createMemoryMarkers(memories, mapSize, this.data.markerMode, this.data);
       const selectedId = this.data.selectedMemory?.id;
@@ -492,6 +510,7 @@ Page({
         () => void this.applyPendingFocusIntent(),
       );
     } catch (error) {
+      if (version !== this._memoryLoadVersion || scope !== memoryRepository.getListScope()) return;
       this.setData({
         hasNoMarkers: true,
         hasRepositoryError: true,
@@ -504,6 +523,8 @@ Page({
     }
   },
   async refreshFriendLayer() {
+    const version = ++this._friendLoadVersion;
+    const scope = memoryRepository.getListScope();
     if (cloudModeService.getState().mode !== 'cloud') {
       this.setData({
         friendLoadError: '请先在“时光 → 我的空间 → 备份与数据”中开启云端与好友功能。',
@@ -518,12 +539,18 @@ Page({
       const points = await cloudMemoryRepository.listFriendRecentMapPoints(
         campusMapConfig.assetVersion,
       );
+      if (version !== this._friendLoadVersion) return;
+      if (scope !== memoryRepository.getListScope()) {
+        this.setData({ friendMarkers: [], friendPoints: [], isFriendLayerLoading: false });
+        return;
+      }
       const friendMarkers = createFriendMarkers(points, {
         height: this.data.mapRenderHeight,
         width: this.data.mapRenderWidth,
       });
       this.setData({ friendMarkers, friendPoints: points, isFriendLayerLoading: false });
     } catch (error: unknown) {
+      if (version !== this._friendLoadVersion) return;
       this.setData({
         friendLoadError: error instanceof Error ? error.message : '好友 24 小时地图暂时无法读取。',
         friendMarkers: [],
@@ -535,6 +562,7 @@ Page({
   handleMapLayerTap(event: WechatMiniprogram.BaseEvent) {
     const layer = (event.currentTarget.dataset as { layer?: unknown }).layer;
     if (layer !== 'mine' && layer !== 'friends') return;
+    this._cardLoadVersion++;
     this.setData({
       filterPanelOpen: false,
       mapLayer: layer,
@@ -590,6 +618,8 @@ Page({
     }
 
     if (intent.source === 'friend-timeline') {
+      const version = ++this._cardLoadVersion;
+      const scope = memoryRepository.getListScope();
       this.setData({
         defaultViewMessage: '正在定位好友回忆…',
         filterPanelOpen: false,
@@ -598,6 +628,7 @@ Page({
         selectedMemorySource: 'friends',
       });
       await this.refreshFriendLayer();
+      if (version !== this._cardLoadVersion || scope !== memoryRepository.getListScope()) return;
       const point = this.data.friendPoints.find((item) => item.id === intent.memoryId);
       if (!point || point.mapAssetVersion !== campusMapConfig.assetVersion) {
         this.setData({ defaultViewMessage: '这段回忆已不在好友 24 小时地图中。' });
@@ -605,6 +636,7 @@ Page({
       }
       try {
         const sharedMemory = await cloudMemoryRepository.getSharedMemoryById(intent.memoryId);
+        if (version !== this._cardLoadVersion || scope !== memoryRepository.getListScope()) return;
         this.focusOnMemory(
           intent,
           sharedMemory,
@@ -612,6 +644,7 @@ Page({
           `已回到 ${sharedMemory.ownerDisplayName} 分享的位置`,
         );
       } catch (error: unknown) {
+        if (version !== this._cardLoadVersion || scope !== memoryRepository.getListScope()) return;
         this.setData({
           defaultViewMessage: error instanceof Error ? error.message : '这段好友回忆当前无法访问。',
           selectedMemory: null,
@@ -1026,6 +1059,7 @@ Page({
     }
   },
   handleMarkerTap(event: WechatMiniprogram.BaseEvent) {
+    this._cardLoadVersion++;
     if (this.data.isPickingLocation) {
       return;
     }
@@ -1047,15 +1081,19 @@ Page({
     if (this.data.isPickingLocation) return;
     const memoryId = (event.currentTarget.dataset as { memoryId?: unknown }).memoryId;
     if (typeof memoryId !== 'string') return;
+    const version = ++this._cardLoadVersion;
+    const scope = memoryRepository.getListScope();
     this.setData({ defaultViewMessage: '正在确认好友回忆权限…', selectedMemory: null });
     try {
       const memory = await cloudMemoryRepository.getSharedMemoryById(memoryId);
+      if (version !== this._cardLoadVersion || scope !== memoryRepository.getListScope()) return;
       this.setData({
         defaultViewMessage: `已选择 ${memory.ownerDisplayName} 的回忆`,
         selectedMemory: createMemoryCard(memory),
         selectedMemorySource: 'friends',
       });
     } catch (error: unknown) {
+      if (version !== this._cardLoadVersion || scope !== memoryRepository.getListScope()) return;
       this.setData({
         defaultViewMessage:
           error instanceof Error ? error.message : '这段好友回忆的权限可能已经改变。',
@@ -1085,6 +1123,7 @@ Page({
     }
   },
   closeMemoryCard() {
+    this._cardLoadVersion++;
     this.setData({
       selectedMemory: null,
     });
@@ -1111,7 +1150,25 @@ Page({
         }),
     });
   },
+  onHide() {
+    this._memoryLoadVersion++;
+    this._friendLoadVersion++;
+    this._cardLoadVersion++;
+    this.setData({
+      friendPoints: [],
+      friendMarkers: [],
+      isFriendLayerLoading: false,
+      selectedMemory: null,
+    });
+    if (mapBoundaryTimer) {
+      clearTimeout(mapBoundaryTimer);
+      mapBoundaryTimer = undefined;
+    }
+    isMapGestureActive = false;
+    mapGestureRevision++;
+  },
   onUnload() {
+    void this.onHide();
     if (mapBoundaryTimer) {
       clearTimeout(mapBoundaryTimer);
       mapBoundaryTimer = undefined;

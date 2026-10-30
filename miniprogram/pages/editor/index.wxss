@@ -14,17 +14,64 @@ button {
   border-radius: 0;
 }
 .journal-editor {
-  padding: 24rpx 28rpx 190rpx;
+  padding: 24rpx 28rpx calc(190rpx + env(safe-area-inset-bottom));
   min-height: 100vh;
   box-sizing: border-box;
 }
 .editor-topline {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   align-items: center;
   justify-content: space-between;
   font-size: 20rpx;
   color: #949a85;
   margin: 0 5rpx 24rpx;
+}
+.editor-sticker-entry {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 15rpx;
+  padding: 22rpx 18rpx;
+  margin-top: 24rpx;
+  background: #eaeddd;
+  border: 1rpx solid #d8dfc6;
+  border-radius: 13rpx;
+  text-align: left;
+}
+.editor-sticker-entry__icon {
+  width: 61rpx;
+  height: 67rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #6f8455;
+  transform: rotate(-9deg);
+}
+.editor-sticker-entry__copy {
+  flex: 1;
+  min-width: 0;
+}
+.editor-sticker-entry__copy > text {
+  display: block;
+  font-size: 25rpx;
+  color: #4d613b;
+}
+.editor-sticker-entry__copy > text + text {
+  margin-top: 8rpx;
+  font-size: 18rpx;
+  color: #8c9879;
+  line-height: 1.6;
+}
+.editor-sticker-entry__action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 3rpx;
+  color: #73885d;
+  font-size: 20rpx;
 }
 .editor-private {
   display: flex;
@@ -121,18 +168,30 @@ button {
 }
 .editor-photo__remove {
   position: absolute;
-  right: -12rpx;
-  top: -14rpx;
-  line-height: 35rpx;
-  width: 35rpx;
-  height: 35rpx;
+  right: -17px;
+  top: -17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: transparent;
+  overflow: visible;
+}
+.editor-photo__remove text {
+  display: block;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
   background: #f6f5ed;
   border-radius: 50%;
-  font-size: 27rpx;
+  font-size: 18px;
   box-shadow: 0 2rpx 8rpx rgba(48, 56, 37, 0.15);
 }
 .editor-paper-end {
   display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   align-items: center;
   justify-content: space-between;
   margin-top: 30rpx;
@@ -193,16 +252,19 @@ button {
 }
 .editor-section-title {
   display: block;
-  font-size: 25rpx;
+  font-size: 14px;
   color: #58664a;
   margin: 5rpx 0 17rpx;
   font-weight: 600;
 }
+.editor-visibility {
+  margin: 0 5rpx 24rpx;
+}
 .editor-options-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  margin: 10rpx 0 24rpx;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 10rpx 0 0;
 }
 .editor-options-grid button,
 .editor-friends button {
@@ -212,6 +274,16 @@ button {
   border-radius: 14rpx;
   border: 1rpx solid transparent;
 }
+.editor-options-grid button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  font-size: 13px;
+  padding: 8px 4px;
+  white-space: nowrap;
+}
 .editor-options-grid .is-selected,
 .editor-friends .is-selected {
   background: #e2e8ce;
@@ -219,11 +291,18 @@ button {
   color: #4c633b;
 }
 .editor-friends {
-  font-size: 22rpx;
-  color: #899274;
+  font-size: 12px;
+  color: var(--ui-color-text-secondary);
   display: flex;
   gap: 12rpx;
   flex-wrap: wrap;
+  margin-top: 12rpx;
+  line-height: 1.8;
+}
+.editor-friends button {
+  max-width: 100%;
+  font-size: 12px;
+  overflow-wrap: anywhere;
 }
 .custom-mood-input,
 .custom-option-input {
@@ -231,7 +310,7 @@ button {
   border: 1rpx dashed #d8d7b9;
   border-radius: 12rpx;
   text-align: center;
-  font-size: 25rpx;
+  font-size: 13px;
   padding: 17rpx;
   margin: 16rpx 0;
   color: #6c7255;
@@ -367,11 +446,100 @@ button {
   flex-direction: column;
   gap: 6rpx;
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .editor-topic-choice > view > text:first-child {
-  font-size: 28rpx;
+  font-size: 15px;
 }
 .editor-topic-choice > view > text + text {
   font-size: 20rpx;
   color: #929780;
+}
+
+.editor-companion-prompt {
+  margin: 12rpx 0 25rpx;
+  padding: 25rpx 28rpx;
+  border-radius: 22rpx;
+  background: #e5efe2;
+  color: #52745f;
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  font-size: 25rpx;
+  line-height: 1.8;
+}
+.editor-companion-prompt text:first-child {
+  font-size: 21rpx;
+  letter-spacing: 2rpx;
+  color: #8a9c7b;
+}
+
+.editor-tools button,
+.editor-place__row button,
+.editor-options-grid button,
+.editor-friends button,
+.editor-mood-only,
+.editor-draft-button,
+.editor-save,
+.editor-state button {
+  min-height: 44px;
+  box-sizing: border-box;
+}
+.editor-tools button {
+  min-width: 44px;
+}
+.editor-mood-only {
+  padding: 8px 0;
+}
+.editor-topline,
+.editor-private,
+.diary-edition,
+.editor-mood__hint,
+.editor-paper-end,
+.editor-tools button,
+.editor-place__row button,
+.editor-place > text,
+.editor-topic-choice > view > text + text,
+.editor-draft-notice,
+.editor-draft-button {
+  color: var(--ui-color-text-secondary);
+  font-size: 12px;
+}
+.diary-writing {
+  font-size: 15px;
+}
+.editor-tools {
+  gap: 8px;
+}
+.editor-tools button {
+  flex: 1;
+  white-space: normal;
+}
+.editor-error {
+  color: #934f43;
+}
+.editor-save-warning {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin: 24rpx 0;
+  padding: 24rpx;
+  border: 1rpx solid #dec9a5;
+  border-radius: 20rpx;
+  background: #fff8e9;
+  color: #6b5032;
+  font-size: 25rpx;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.editor-save-warning button {
+  min-height: 88rpx;
+  margin: 0;
+  padding: 0 24rpx;
+  border-radius: 16rpx;
+  background: #52694b;
+  color: #fffdf5;
+  font-size: 27rpx;
 }

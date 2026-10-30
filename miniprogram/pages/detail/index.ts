@@ -5,7 +5,7 @@ import { cloudModeService } from '../../services/cloud/cloud-mode-service';
 import { memoryRepository } from '../../services/repository/index';
 import { formatMemoryDateTime } from '../../utils/date-format';
 import { campusMapConfig } from '../../config/campus-map';
-import { setMapFocusIntent } from '../../services/map-focus-intent';
+import { consumeMapFocusIntent, setMapFocusIntent } from '../../services/map-focus-intent';
 import type { CloudMemory } from '../../models/cloud-memory';
 import { cloudMemoryRepository } from '../../services/repository/cloud-memory-repository';
 import { cloudLikeRepository } from '../../services/repository/cloud-like-repository';
@@ -75,15 +75,32 @@ function createPhotoItems(imagePaths: readonly string[]): DetailPhoto[] {
   }));
 }
 
+function friendMapUnavailableReason(memory: Memory): string {
+  if (!hasJournalLocation(memory)) return '这篇日记没有关联校园地点。';
+  if (memory.mapAssetVersion !== campusMapConfig.assetVersion)
+    return '这篇日记使用旧版地图，暂时无法在当前校园地图中定位。';
+  const publishedAt = (memory as CloudMemory).publishedAt;
+  const publishedTime = typeof publishedAt === 'string' ? Date.parse(publishedAt) : NaN;
+  const now = Date.now();
+  if (!Number.isFinite(publishedTime) || publishedTime > now)
+    return '暂时无法确认分享时间，重新打开日记后再试。';
+  return publishedTime < now - 24 * 60 * 60 * 1000
+    ? '已超过分享后的 24 小时，好友校园地图中不再显示；仍可在这里阅读日记。'
+    : '';
+}
+
 Page({
   data: {
     actionMessage: '',
+    canRetryLoad: false,
     categoryLabel: '',
     coordinateLabel: '',
     displayPlaceName: '',
     formattedRecordedAt: '',
     hasText: false,
     hasLocation: false,
+    canShowOnMap: false,
+    mapUnavailableReason: '',
     isDeleting: false,
     isFriendMemory: false,
     isLikeSaving: false,
@@ -124,8 +141,10 @@ Page({
   },
 
   async loadMemory() {
+    if (!this.data.memoryId || this.data.isDeleting) return;
     this.setData({
       actionMessage: '',
+      canRetryLoad: false,
       isLoading: true,
       loadError: '',
       loadErrorTitle: '',
@@ -148,8 +167,11 @@ Page({
       }
 
       const cloudMemory = this.data.isFriendMemory ? (memory as CloudMemory) : null;
+      const mapUnavailableReason = cloudMemory ? friendMapUnavailableReason(memory) : '';
       this.setData({
         hasLocation: hasJournalLocation(memory),
+        canShowOnMap: hasJournalLocation(memory) && !mapUnavailableReason,
+        mapUnavailableReason,
         categoryLabel: getMemoryCategoryLabel(memory),
         coordinateLabel: hasJournalLocation(memory)
           ? '已关联校园地图上的位置'
@@ -169,6 +191,7 @@ Page({
       });
     } catch (error: unknown) {
       this.setData({
+        canRetryLoad: true,
         isLoading: false,
         loadError: describeError(error, '读取本地日记失败，请稍后重试。'),
         loadErrorTitle: '记忆暂时无法读取',
@@ -245,14 +268,23 @@ Page({
       return;
     }
 
+    if (this.data.isFriendMemory) {
+      const reason = friendMapUnavailableReason(memory);
+      if (reason) {
+        this.setData({ canShowOnMap: false, mapUnavailableReason: reason, actionMessage: reason });
+        return;
+      }
+    }
+
     setMapFocusIntent({
       mapXRatio: memory.mapXRatio,
       mapYRatio: memory.mapYRatio,
       memoryId: memory.id,
-      source: 'detail',
+      source: this.data.isFriendMemory ? 'friend-timeline' : 'detail',
     });
 
     void switchToMap().catch((error: unknown) => {
+      consumeMapFocusIntent();
       this.setData({
         actionMessage: describeError(error, '地图暂时无法打开，请稍后重试。'),
       });
@@ -322,6 +354,7 @@ Page({
 
     this.setData({
       actionMessage: cleanupWarning || '日记已删除，正在返回日记首页。',
+      canRetryLoad: false,
       isDeleting: false,
       loadError: cleanupWarning || '这段记忆已经从本地日记中删除。',
       loadErrorTitle: '日记已删除',

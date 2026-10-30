@@ -276,3 +276,130 @@ test('editing an existing public cloud record preserves its visibility and keeps
   editor.onUnload();
   assert.deepEqual(visibilityCalls, [[existing.id, 'public', []]]);
 });
+
+test('theme wheel selection preserves the diary, place and selected-friend scope', (t) => {
+  const editor = page('editor');
+  editor.onLoad({ source: 'journal', date: '2024-02-29' });
+  editor.handleTextInput({ detail: { value: '写下的一页，换主题时也要保留' } });
+  editor.handlePlaceInput({ detail: { value: '图书馆' } });
+  Object.assign(editor.data, {
+    isCloudMode: true,
+    visibility: 'selected_friends',
+    selectedFriendIds: ['friend-a'],
+  });
+  let wheel;
+  t.mock.method(wx, 'navigateTo', (options) => {
+    wheel = options;
+    return Promise.resolve({});
+  });
+  editor.openCategoryPicker();
+  assert.equal(
+    wheel.url,
+    '/pages/selection-wheel/index?source=editor&kind=category&value=campus-life',
+  );
+  wheel.events.selection({ kind: 'category', value: 'custom' });
+  editor.handleCustomCategoryInput({ detail: { value: '读书与思考' } });
+  assert.equal(editor.data.category, 'custom');
+  assert.equal(editor.data.customCategory, '读书与思考');
+  assert.equal(editor.data.text, '写下的一页，换主题时也要保留');
+  assert.equal(editor.data.placeName, '图书馆');
+  assert.equal(editor.data.visibility, 'selected_friends');
+  assert.deepEqual(editor.data.selectedFriendIds, ['friend-a']);
+});
+test('selected-friend scope blocks saving until at least one listed friend is chosen', async () => {
+  const editor = page('editor');
+  editor.onLoad({ source: 'journal', date: '2024-02-29' });
+  editor.handleTextInput({ detail: { value: '只给选中的好友看' } });
+  editor.data.isCloudMode = true;
+  assert.equal(editor.data.visibility, 'private');
+  editor.selectVisibility({ currentTarget: { dataset: { value: 'selected_friends' } } });
+  await editor.saveMemory();
+  assert.equal(editor.data.hasSaved, false);
+  assert.equal(editor.data.isSaving, false);
+  assert.match(editor.data.formError, /请选择至少一位好友/);
+  assert.equal(await memoryRepository.getMemoryById(editor.data.memoryId), null);
+});
+test('inline sharing choices preserve selected friends and send the chosen scope through the existing save boundary', async (t) => {
+  const editor = page('editor');
+  editor.onLoad({ source: 'journal', date: '2024-02-29' });
+  editor.handleTextInput({ detail: { value: '选择范围不会丢掉正文' } });
+  editor.data.isCloudMode = true;
+  editor.data.friendChoices = [
+    {
+      relationshipId: 'relation-a',
+      createdAt: '2024-02-01T00:00:00.000Z',
+      friend: { userId: 'friend-a', displayName: '好友小林', signature: '' },
+      selected: false,
+    },
+    {
+      relationshipId: 'relation-b',
+      createdAt: '2024-02-01T00:00:00.000Z',
+      friend: { userId: 'friend-b', displayName: '好友小周', signature: '' },
+      selected: false,
+    },
+  ];
+  editor.selectVisibility({ currentTarget: { dataset: { value: 'selected_friends' } } });
+  editor.toggleFriendSelection({ currentTarget: { dataset: { userId: 'friend-b' } } });
+  editor.selectVisibility({ currentTarget: { dataset: { value: 'private' } } });
+  editor.selectVisibility({ currentTarget: { dataset: { value: 'friends' } } });
+  editor.selectVisibility({ currentTarget: { dataset: { value: 'selected_friends' } } });
+  assert.deepEqual(editor.data.selectedFriendIds, ['friend-b']);
+  assert.deepEqual(
+    editor.data.friendChoices.map((friend) => friend.selected),
+    [false, true],
+  );
+  const visibilityCalls = [];
+  t.mock.method(cloudMemoryRepository, 'setVisibility', async (...args) => {
+    visibilityCalls.push(args);
+    return memoryRepository.getMemoryById(args[0]);
+  });
+  await editor.saveMemory();
+  editor.onUnload();
+  assert.deepEqual(visibilityCalls, [[editor.data.memoryId, 'selected_friends', ['friend-b']]]);
+  assert.equal(editor.data.hasSaved, true);
+  assert.equal(
+    (await memoryRepository.getMemoryById(editor.data.memoryId)).text,
+    '选择范围不会丢掉正文',
+  );
+});
+test('theme and visibility controls cannot mutate a saving or saved diary', (t) => {
+  const editor = page('editor');
+  editor.onLoad({ source: 'journal', date: '2024-02-29' });
+  let navigated = false;
+  t.mock.method(wx, 'navigateTo', () => {
+    navigated = true;
+  });
+  for (const state of [
+    { isSaving: true, hasSaved: false },
+    { isSaving: false, hasSaved: true },
+  ]) {
+    Object.assign(editor.data, state);
+    editor.openCategoryPicker();
+    editor.selectVisibility({ currentTarget: { dataset: { value: 'friends' } } });
+    editor.toggleFriendSelection({ currentTarget: { dataset: { userId: 'friend-a' } } });
+    editor.applyWheelSelection({ kind: 'category', value: 'custom' });
+    assert.equal(editor.data.visibility, 'private');
+    assert.equal(editor.data.category, 'campus-life');
+    assert.deepEqual(editor.data.selectedFriendIds, []);
+  }
+  assert.equal(navigated, false);
+});
+test('local text draft keeps a custom theme and place without gaining cloud sharing fields', () => {
+  const editor = page('editor');
+  editor.onLoad({ source: 'journal', date: '2024-02-29' });
+  editor.handleTextInput({ detail: { value: '下次继续写读书笔记' } });
+  editor.applyWheelSelection({ kind: 'category', value: 'custom' });
+  editor.handleCustomCategoryInput({ detail: { value: '读书与思考' } });
+  editor.handlePlaceInput({ detail: { value: '图书馆' } });
+  assert.equal(editor.saveTextDraft(false), true);
+  const restored = page('editor');
+  restored.onLoad({ source: 'journal', restore: '1' });
+  assert.equal(restored.data.text, '下次继续写读书笔记');
+  assert.equal(restored.data.category, 'custom');
+  assert.equal(restored.data.customCategory, '读书与思考');
+  assert.equal(restored.data.placeName, '图书馆');
+  assert.equal(restored.data.isCloudMode, false);
+  assert.equal(restored.data.visibility, 'private');
+  assert.deepEqual(restored.data.selectedFriendIds, []);
+  assert.equal('visibility' in journalDraftService.read(), false);
+});

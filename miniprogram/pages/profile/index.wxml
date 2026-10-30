@@ -2,18 +2,20 @@
   <view class="profile-nav" style="top:{{topInset}}px"
     ><button bindtap="openJournal" aria-label="返回日记">
       <t-icon name="chevron-left" size="27px" /></button
-    ><text>设置</text></view
+    ><text>我的空间</text></view
   >
   <view class="profile-hero">
-    <button
-      class="profile-avatar"
+    <motion-avatar
+      class="profile-avatar-motion"
+      mood="{{defaultMood}}"
+      initial="{{initial}}"
+      size="{{176}}"
+      active="{{avatarActive}}"
+      motion-enabled="{{avatarMotionEnabled}}"
       data-page="profile-edit"
-      bindtap="openSection"
-      aria-label="编辑个人资料"
-    >
-      <view class="profile-avatar-face"><mood-face mood="{{defaultMood}}" size="normal" /></view
-      ><text>{{initial}}</text>
-    </button>
+      bindactivate="openSection"
+      bindmotionstatechange="handleAvatarMotionState"
+    />
     <view class="profile-hero-body"
       ><button class="profile-name" data-page="profile-edit" bindtap="openSection">
         {{isLoading ? '正在读取…' : displayName}}
@@ -45,6 +47,14 @@
   <view class="profile-group">
     <button class="profile-menu-row" data-page="friends" bindtap="openSection">
       <t-icon name="usergroup" size="25px" /><text>我的好友</text
+      ><t-icon name="chevron-right" size="23px" />
+    </button>
+    <button class="profile-menu-row" data-page="companion" bindtap="openSection">
+      <t-icon name="home" size="25px" /><text>伙伴小屋</text
+      ><t-icon name="chevron-right" size="23px" />
+    </button>
+    <button class="profile-menu-row" data-page="memory-bottle" bindtap="openSection">
+      <t-icon name="heart" size="25px" /><text>记忆瓶</text
       ><t-icon name="chevron-right" size="23px" />
     </button>
     <button class="profile-menu-row" data-page="album" bindtap="openSection">
@@ -89,7 +99,12 @@
   >
   <text class="profile-signature">{{signature}}</text>
   <view wx:if="{{panel}}" class="profile-mask" bindtap="closePanel"
-    ><view class="profile-sheet" catchtap="noop">
+    ><view
+      class="profile-sheet"
+      aria-role="dialog"
+      aria-label="{{panel === 'preferences' ? '偏好设置' : '我的日记图表'}}"
+      catchtap="noop"
+    >
       <view class="profile-sheet-head"
         ><text>{{panel === 'preferences' ? '偏好设置' : '我的日记图表'}}</text
         ><button bindtap="closePanel" aria-label="关闭"><t-icon name="close" size="23px" /></button
@@ -108,7 +123,11 @@
           ><view
             ><text>转盘轻振反馈</text
             ><text class="profile-sheet-muted">选中心情时，给一点轻轻的回应</text></view
-          ><switch checked="{{haptics}}" color="#788357" bindchange="toggleHaptics"
+          ><switch
+            aria-label="转盘轻振反馈"
+            checked="{{haptics}}"
+            color="#788357"
+            bindchange="toggleHaptics"
         /></view>
         <text class="profile-sheet-muted"
           >默认选择仅用于新建日记，已有记录保持原来的心情和主题。</text

@@ -1,0 +1,124 @@
+<view class="playground-page {{paused?'is-paused':''}}" style="height:{{stageHeight}}px">
+  <canvas
+    wx:if="{{state && state.adoptedAt && !canvasUnavailable}}"
+    id="playground-canvas"
+    type="2d"
+    class="playground-canvas"
+    bindtouchstart="onCanvasTouchStart"
+    bindtouchmove="onCanvasTouchMove"
+    bindtouchend="onCanvasTouchEnd"
+    bindtouchcancel="onCanvasTouchCancel"
+  ></canvas>
+  <button class="playground-back" style="top:{{controlTop}}px" bindtap="back" aria-label="返回小屋">
+    <t-icon name="chevron-left" size="24px"></t-icon>
+  </button>
+  <view wx:if="{{isLoading}}" class="playground-status">伙伴们正在赶来…</view>
+  <view wx:if="{{!state && !isLoading}}" class="playground-dialog"
+    ><text class="dialog-title">伙伴存档暂时没读懂</text><text>{{actionMessage}}</text
+    ><button bindtap="reload">重新读取</button><button bindtap="goHome">回小屋查看</button></view
+  >
+  <view wx:elif="{{state && !state.adoptedAt && !isLoading}}" class="playground-dialog"
+    ><image src="/assets/companion/tutu_map.png" mode="aspectFit" /><text class="dialog-title"
+      >先和途途认识一下</text
+    ><text>领一位校园伙伴，再来草地上碰个面。</text
+    ><button bindtap="goHome">去领取伙伴</button></view
+  >
+  <view wx:elif="{{canvasUnavailable && !selectedNote}}" class="playground-dialog"
+    ><text class="dialog-title">伙伴在名单里等你</text><text>点开名字，也能翻出小纸条。</text
+    ><button bindtap="toggleList">打开伙伴名单</button
+    ><button bindtap="retryCanvas">重新打开草地</button></view
+  >
+  <view wx:if="{{state && state.adoptedAt && !tasksReady && !isLoading}}" class="playground-dialog"
+    ><text>{{actionMessage}}</text><button bindtap="reload">重新读取小约定</button></view
+  >
+  <view
+    wx:for="{{paperCards}}"
+    wx:key="key"
+    class="playground-note {{selectedLucky?'playground-note--lucky':''}}"
+    data-note-key="{{paperKey}}"
+    style="left:{{paperLeft}}px;top:{{paperTop}}px;width:{{paperWidth}}px;height:{{paperHeight}}px"
+    aria-live="polite"
+  >
+    <view class="playground-note__tape"></view>
+    <button class="playground-note__close" bindtap="closeNote" aria-label="收起纸条">×</button>
+    <text class="playground-note__from">{{selectedLucky?'幸运伙伴':selectedNote.name}}</text>
+    <text class="playground-note__title"
+      >{{selectedLucky?'找到你啦！':selectedNote.task.title}}</text
+    >
+    <text class="playground-note__hint"
+      >{{selectedLucky?(allDone?'今天的光点都收好啦。':selectedNote.task.title):selectedNote.line}}</text
+    >
+    <button
+      class="playground-note__action"
+      disabled="{{busy || !tasksReady || selectedNote.task.claimed || (allDone && selectedLucky)}}"
+      loading="{{busy}}"
+      bindtap="performNoteAction"
+    >
+      <text wx:if="{{selectedNote.task.claimed}}">光点已收好 ✓</text
+      ><text wx:elif="{{selectedNote.task.eligible}}">领取 ✦ {{selectedNote.task.reward}} 光点</text
+      ><text wx:else>去完成小约定 ↗</text>
+    </button>
+    <view wx:if="{{countdown>0}}" class="playground-countdown"
+      ><text>{{countdown}} 秒后查看任务</text><button bindtap="cancelCountdown">留下</button></view
+    >
+    <text wx:if="{{actionMessage && !countdown}}" class="playground-note__message"
+      >{{actionMessage}}</text
+    >
+  </view>
+  <view
+    wx:if="{{actionMessage && !selectedNote && tasksReady}}"
+    class="playground-toast"
+    aria-role="status"
+    >{{actionMessage}}</view
+  >
+  <view wx:if="{{won}}" class="playground-confetti" aria-hidden="true"
+    ><view
+      wx:for="{{confetti}}"
+      wx:key="id"
+      class="confetti-bit"
+      style="left:{{item.x}}%;background:{{item.color}};animation-delay:{{item.delay}}s;animation-duration:{{1.8+(item.id%8)*0.2}}s"
+    ></view
+  ></view>
+  <view wx:if="{{state && state.adoptedAt}}" class="playground-bottom">
+    <button class="playground-more" bindtap="toggleMenu" aria-label="打开游乐场菜单">
+      <t-icon name="more" size="24px"></t-icon>
+    </button>
+    <text wx:if="{{!selectedNote && !won}}" class="playground-hint"
+      >{{seenIds.length?'再点点，幸运伙伴藏在谁身后？':'点一下，翻开伙伴的小纸条'}}</text
+    >
+    <button
+      wx:if="{{won || selectedNote}}"
+      class="playground-again"
+      bindtap="restart"
+      disabled="{{busy}}"
+      aria-label="重新开始本局"
+    >
+      <t-icon name="refresh" size="25px"></t-icon>
+    </button>
+  </view>
+  <view wx:if="{{menuOpen}}" class="playground-menu"
+    ><text>校园草地 · 已翻开 {{seenIds.length}} / 20</text
+    ><button bindtap="toggleMotion">{{paused?'继续跳动':'静静看一会儿'}}</button
+    ><button bindtap="goTasks">今天的小约定 ↗</button><button bindtap="toggleList">伙伴名单</button
+    ><button bindtap="restart" disabled="{{busy}}">重新开始</button
+    ><button bindtap="toggleMenu">收起菜单</button></view
+  >
+  <view wx:if="{{listOpen}}" class="playground-list-panel"
+    ><view class="playground-list-heading"
+      ><text>20 位伙伴 · 8 种校园搭子</text
+      ><button bindtap="toggleList" aria-label="收起伙伴名单">×</button></view
+    ><scroll-view scroll-y class="playground-partners"
+      ><button
+        wx:for="{{castNotes}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        disabled="{{busy || !tasksReady}}"
+        bindtap="selectPartner"
+        aria-label="{{'翻开'+item.name+'的纸条'}}"
+      >
+        <image src="{{item.src}}" mode="aspectFit" /><text>{{item.name}}</text
+        ><text class="partner-action">{{item.task.claimed?'已领':'翻翻看'}}</text>
+      </button></scroll-view
+    ></view
+  >
+</view>

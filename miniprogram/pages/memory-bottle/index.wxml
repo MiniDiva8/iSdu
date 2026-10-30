@@ -1,0 +1,120 @@
+<view class="page-shell bottle-page">
+  <view class="bottle-heading">
+    <text class="eyebrow">把每一种心情，好好收藏</text>
+    <text class="page-title">我的记忆瓶</text>
+    <text class="page-subtitle"
+      >{{totalCount ? '装着 ' + totalCount + ' 段校园时光，每一颗都有自己的故事。' :
+      '下一段校园时光，等你装进来。'}}</text
+    >
+  </view>
+
+  <view wx:if="{{errorMessage}}" class="bottle-notice bottle-notice--error" role="alert">
+    <text>记忆暂时没有读到</text>
+    <text class="bottle-notice__copy">{{errorMessage}}</text>
+    <button class="ui-text-button" bindtap="loadMemories">重新读取</button>
+  </view>
+
+  <view class="bottle-stage {{isCanvasUnavailable ? 'bottle-stage--fallback' : ''}}">
+    <canvas
+      id="memory-bottle-canvas"
+      type="2d"
+      class="bottle-canvas"
+      hidden="{{isCanvasUnavailable}}"
+      bindtouchstart="handleTouchStart"
+      bindtouchend="handleTouchEnd"
+      bindtouchcancel="handleTouchCancel"
+      aria-label="彩色心情记忆瓶；也可以通过下方查看记录按钮打开回忆"
+    ></canvas>
+    <view wx:if="{{isLoading}}" class="bottle-overlay">
+      <text class="bottle-overlay__title">正在装好你的回忆…</text>
+    </view>
+    <view wx:elif="{{isCanvasUnavailable}}" class="bottle-overlay bottle-overlay--fallback">
+      <t-icon name="heart" size="32px" color="#8d9f88" />
+      <text class="bottle-overlay__title">回忆都在下面，好好收着</text>
+      <text>瓶子画面暂时没有打开，仍可点击列表回顾。</text>
+      <button class="ui-text-button" bindtap="retryCanvas">重试瓶子画面</button>
+    </view>
+    <view wx:elif="{{!totalCount && !errorMessage}}" class="bottle-overlay bottle-overlay--empty">
+      <view class="bottle-empty-dot"></view>
+      <text class="bottle-overlay__title">还没有装进回忆</text>
+      <text>开心、平静，或有一点想念，</text>
+      <text>每一种心情都值得留下。</text>
+    </view>
+  </view>
+
+  <block wx:if="{{!isLoading && !errorMessage && totalCount}}">
+    <text class="bottle-hint">{{motionHint}}</text>
+    <view class="bottle-controls">
+      <button class="bottle-shake" disabled="{{isCanvasUnavailable}}" bindtap="shakeBottle">
+        <t-icon name="gesture-ranslation" size="18px" />
+        <text>摇一摇</text>
+      </button>
+      <button class="bottle-list-toggle" bindtap="toggleMemoryList" aria-expanded="{{isListOpen}}">
+        <t-icon name="view-list" size="18px" />
+        <text>{{isListOpen ? '收起记录' : '查看记录'}}</text>
+      </button>
+    </view>
+
+    <view wx:if="{{pageCount > 1}}" class="bottle-pagination">
+      <button disabled="{{pageIndex === 0}}" bindtap="previousBottle" aria-label="上一瓶回忆">
+        ‹ 上一瓶
+      </button>
+      <text>第 {{pageIndex + 1}} / {{pageCount}} 瓶</text>
+      <button
+        disabled="{{pageIndex + 1 >= pageCount}}"
+        bindtap="nextBottle"
+        aria-label="下一瓶回忆"
+      >
+        下一瓶 ›
+      </button>
+      <text class="bottle-pagination__note">每瓶最多 60 段，所有回忆都在。</text>
+    </view>
+
+    <scroll-view class="bottle-legend" scroll-x enhanced show-scrollbar="{{false}}">
+      <view class="bottle-legend__items">
+        <view wx:for="{{moodLegend}}" wx:key="label" class="bottle-legend__item">
+          <view class="bottle-color-dot" style="background: {{item.color}}"></view>
+          <text>{{item.label}} {{item.count}}</text>
+        </view>
+      </view>
+    </scroll-view>
+
+    <view wx:if="{{isListOpen}}" class="bottle-records">
+      <view class="bottle-records__heading">
+        <text>这一瓶的故事</text>
+        <text>{{visibleMemories.length}} 段回忆</text>
+      </view>
+      <button
+        wx:for="{{visibleMemories}}"
+        wx:key="id"
+        class="bottle-record"
+        data-memory-id="{{item.id}}"
+        bindtap="openMemory"
+      >
+        <view class="bottle-record__dot" style="background: {{item.color}}"></view>
+        <view class="bottle-record__body">
+          <view class="bottle-record__top">
+            <text class="bottle-record__mood">{{item.moodLabel}}</text>
+            <text wx:if="{{item.isDemo}}" class="bottle-record__demo">演示</text>
+            <text class="bottle-record__date">{{item.dateLabel}}</text>
+          </view>
+          <text class="bottle-record__summary">{{item.summary}}</text>
+          <text class="bottle-record__place">{{item.placeLabel}}</text>
+        </view>
+        <text class="bottle-record__chevron" aria-hidden="true">›</text>
+      </button>
+    </view>
+  </block>
+
+  <button
+    wx:if="{{!isLoading && !errorMessage && !totalCount}}"
+    class="bottle-empty-action"
+    bindtap="goToMap"
+  >
+    去地图上，留下一段回忆
+  </button>
+  <text wx:if="{{actionMessage}}" class="bottle-action-message" role="alert"
+    >{{actionMessage}}</text
+  >
+  <text class="bottle-footer">一颗心情，一段只属于你的时光。</text>
+</view>

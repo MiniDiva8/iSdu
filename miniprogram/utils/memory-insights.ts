@@ -1,5 +1,5 @@
 import { getJournalDayKey } from './journal';
-import { cloneMemory, sortMemoriesByDate, type Memory } from '../models/memory';
+import { sortMemoriesByDate, type Memory } from '../models/memory';
 
 export interface MemoryMonthGroup {
   readonly key: string;
@@ -39,9 +39,9 @@ export function groupMemoriesByMonth(memories: readonly Memory[]): MemoryMonthGr
     const group = groups.get(monthKey);
 
     if (group) {
-      group.push(cloneMemory(memory));
+      group.push(memory);
     } else {
-      groups.set(monthKey, [cloneMemory(memory)]);
+      groups.set(monthKey, [memory]);
     }
   }
 

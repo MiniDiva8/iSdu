@@ -1,0 +1,73 @@
+@import '../../../styles/companion.wxss';
+.letter-row {
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
+  line-height: 1.7;
+  margin-top: 20rpx;
+}
+.letter-row__preview {
+  font-size: 25rpx;
+  color: #7b876f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  text-align: left;
+}
+.unread-dot {
+  width: 14rpx;
+  height: 14rpx;
+  background: #a2b97a;
+  border-radius: 50%;
+}
+.letter-backdrop {
+  position: fixed;
+  inset: 0;
+  background: #26362375;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 35rpx;
+  z-index: 10;
+}
+.letter-paper {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+  max-height: 75vh;
+  overflow: auto;
+  background: #fffdf3;
+  border-radius: 25rpx;
+  padding: 40rpx;
+  box-shadow: 0 20rpx 70rpx #25371940;
+}
+.letter-paper .companion-link {
+  align-self: flex-end;
+}
+.ai-mail-card {
+  gap: 20rpx;
+  margin: 24rpx 0;
+}
+.ai-mail-card .companion-row {
+  gap: 18rpx;
+}
+.ai-mail-card .companion-row .companion-title {
+  min-width: 0;
+  flex: 1;
+}
+.ai-mail-card .companion-link {
+  flex-shrink: 0;
+}
+.ai-letter-item {
+  margin-bottom: 24rpx;
+}
+.ai-letter-delete {
+  display: block;
+  margin: 6rpx 0 0 auto;
+  font-size: 22rpx;
+}
+.ai-template-label {
+  display: block;
+  margin-top: 30rpx;
+}

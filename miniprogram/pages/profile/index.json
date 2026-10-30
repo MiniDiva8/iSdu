@@ -2,6 +2,7 @@
   "navigationStyle": "custom",
   "usingComponents": {
     "t-icon": "tdesign-miniprogram/icon/icon",
-    "mood-face": "/components/mood-face/index"
+    "mood-face": "/components/mood-face/index",
+    "motion-avatar": "/components/motion-avatar/index"
   }
 }

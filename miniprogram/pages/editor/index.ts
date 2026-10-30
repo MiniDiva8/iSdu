@@ -1,3 +1,4 @@
+import { COMPANION_INSPIRATIONS } from '../../data/companion-inspiration';
 import { journalPreferencesService } from '../../services/journal-preferences-service';
 import {
   MEMORY_CATEGORIES,
@@ -41,6 +42,7 @@ import { validateRatio } from '../../utils/map-coordinates';
 import { formatMemoryDateTime } from '../../utils/date-format';
 
 interface EditorImage {
+  isSticker?: boolean;
   id: string;
   isTemporary: boolean;
   loadFailed: boolean;
@@ -153,8 +155,12 @@ async function cleanupUnreferencedImages(candidatePaths: readonly string[]): Pro
 }
 
 Page({
+  _isVisible: false,
+  _stickerNavigation: 0,
+  _stickerPending: false,
   data: {
     editorStep: 'content',
+    companionPrompt: '',
     isJournalEntry: false,
     hasLocation: false,
     showMoodPicker: false,
@@ -181,6 +187,7 @@ Page({
     isEditMode: false,
     isFormReady: false,
     isLoading: false,
+    isChoosingImages: false,
     isCloudMode: false,
     isPageActive: true,
     isSaving: false,
@@ -208,6 +215,8 @@ Page({
     textMaxLength: MEMORY_TEXT_MAX_LENGTH,
     textRemaining: MEMORY_TEXT_MAX_LENGTH,
     visibility: createDefaultVisibility(),
+    visibilitySavePending: false,
+    savedCleanupWarning: '',
     visibilityOptions,
     xRatio: 0.5,
     yRatio: 0.5,
@@ -240,6 +249,11 @@ Page({
     }
 
     if (query.source === 'journal') {
+      if (query.restore !== '1')
+        this.setData({
+          companionPrompt:
+            COMPANION_INSPIRATIONS.find((p) => p.id === query.companionPrompt)?.text ?? '',
+        });
       try {
         const now = new Date().toISOString();
         const dateKey = query.date || getJournalDayKey(now);
@@ -564,7 +578,17 @@ Page({
     this.markDirty();
     await this.saveMemory();
   },
+  onShow() {
+    this._isVisible = true;
+    this._stickerPending = false;
+    if (this.data.isDirty && !this.data.hasSaved) this.enableLeaveGuard();
+  },
   onHide() {
+    this._isVisible = false;
+    if (navigationTimer) {
+      clearTimeout(navigationTimer);
+      navigationTimer = undefined;
+    }
     this.saveTextDraft(false);
   },
 
@@ -590,37 +614,54 @@ Page({
 
   selectVisibility(event: WechatMiniprogram.BaseEvent) {
     const value = (event.currentTarget.dataset as { value?: unknown }).value;
-    if (!isMemoryVisibility(value) || this.data.isSaving || this.data.hasSaved) return;
-    this.setData({ formError: '', visibility: value });
-    this.markDirty();
+    if (
+      !isMemoryVisibility(value) ||
+      this.data.isSaving ||
+      (this.data.hasSaved && !this.data.visibilitySavePending)
+    )
+      return;
+    this.setData({
+      formError: this.data.visibilitySavePending
+        ? '正文已保存，请重试确认新选择的可见范围；确认前请按原范围仍可能生效处理。'
+        : '',
+      visibility: value,
+    });
+    if (!this.data.visibilitySavePending) this.markDirty();
   },
 
   toggleFriendSelection(event: WechatMiniprogram.BaseEvent) {
     const userId = (event.currentTarget.dataset as { userId?: unknown }).userId;
-    if (typeof userId !== 'string' || this.data.isSaving || this.data.hasSaved) return;
+    if (
+      typeof userId !== 'string' ||
+      this.data.isSaving ||
+      (this.data.hasSaved && !this.data.visibilitySavePending)
+    )
+      return;
     const friendChoices = this.data.friendChoices.map((item) =>
       item.friend.userId === userId ? { ...item, selected: !item.selected } : item,
     );
     this.setData({
-      formError: '',
+      formError: this.data.visibilitySavePending
+        ? '正文已保存，请重试确认新选择的好友范围；确认前请按原范围仍可能生效处理。'
+        : '',
       friendChoices,
       selectedFriendIds: friendChoices
         .filter((item) => item.selected)
         .map((item) => item.friend.userId),
     });
-    this.markDirty();
+    if (!this.data.visibilitySavePending) this.markDirty();
   },
 
-  markDirty() {
-    if (this.data.isDirty) {
-      return;
-    }
-
-    this.setData({ isDirty: true });
+  enableLeaveGuard() {
     wx.enableAlertBeforeUnload({
       message: '当前回忆尚未保存，确定要离开吗？',
       fail: () => undefined,
     });
+  },
+  markDirty() {
+    if (this.data.isDirty) return;
+    this.setData({ isDirty: true });
+    if (this._isVisible) this.enableLeaveGuard();
   },
 
   handleTextInput(event: WechatMiniprogram.TextareaInput) {
@@ -708,67 +749,160 @@ Page({
     this.markDirty();
   },
 
+  openStickerStudio() {
+    if (
+      !this.data.isFormReady ||
+      this.data.isSaving ||
+      this.data.hasSaved ||
+      this.data.isChoosingImages ||
+      this._stickerPending
+    )
+      return;
+    if (this.data.images.length >= MEMORY_IMAGE_MAX_COUNT) {
+      this.setData({ formError: '照片和贴纸合计最多 3 张，先移除一张再创作吧。' });
+      return;
+    }
+    const request = ++this._stickerNavigation;
+    this._stickerPending = true;
+    let received = false;
+    wx.navigateTo({
+      url: '/pages/sticker-studio/index',
+      events: {
+        stickerCreated: (value: unknown) => {
+          if (
+            received ||
+            request !== this._stickerNavigation ||
+            !this.data.isPageActive ||
+            this.data.isSaving ||
+            this.data.hasSaved
+          )
+            return;
+          received = true;
+          this._stickerPending = false;
+          const path =
+            value && typeof value === 'object' ? (value as { path?: unknown }).path : undefined;
+          if (
+            typeof path !== 'string' ||
+            !/^(?:wxfile:\/\/|https?:\/\/(?:tmp|usr)\/)/u.test(path) ||
+            /[\s?#]/u.test(path)
+          ) {
+            this.setData({ formError: '贴纸未能加入，请回到创作页重新制作；草稿仍保留。' });
+            return;
+          }
+          if (this.data.images.length >= MEMORY_IMAGE_MAX_COUNT) {
+            this.setData({ formError: '照片和贴纸合计最多 3 张，请先移除一张；创作草稿仍保留。' });
+            return;
+          }
+          this.setData({
+            images: [
+              ...this.data.images,
+              { ...createEditorImage(path, this.data.images.length, true), isSticker: true },
+            ],
+            formError: '',
+          });
+          this.markDirty();
+        },
+      },
+      fail: () => {
+        if (request === this._stickerNavigation && this.data.isPageActive) {
+          this._stickerPending = false;
+          this.setData({ formError: '贴纸创作暂时无法打开，请稍后重试。' });
+        }
+      },
+    });
+  },
+
   async chooseImages() {
     const remainingCount = MEMORY_IMAGE_MAX_COUNT - this.data.images.length;
 
-    if (remainingCount <= 0 || this.data.isSaving || this.data.hasSaved) {
+    if (
+      remainingCount <= 0 ||
+      this.data.isSaving ||
+      this.data.hasSaved ||
+      this.data.isChoosingImages ||
+      this._stickerPending
+    ) {
       return;
     }
 
+    this.setData({ isChoosingImages: true });
     try {
       if (!(await confirmPhotoUse())) {
+        if (this.data.isPageActive) this.setData({ isChoosingImages: false });
         return;
       }
     } catch (error: unknown) {
+      if (!this.data.isPageActive) return;
       this.setData({
+        isChoosingImages: false,
         formError:
           error instanceof Error ? error.message : '照片用途说明暂时无法显示，请稍后重试。',
       });
       return;
     }
 
-    wx.chooseMedia({
-      count: remainingCount,
-      mediaType: ['image'],
-      sizeType: ['compressed'],
-      sourceType: ['album', 'camera'],
-      camera: 'back',
-      success: (result) => {
-        const selectedFiles = result.tempFiles.slice(0, remainingCount);
+    if (!this.data.isPageActive) return;
+    if (this.data.isSaving || this.data.hasSaved) {
+      this.setData({ isChoosingImages: false });
+      return;
+    }
+    try {
+      wx.chooseMedia({
+        count: remainingCount,
+        mediaType: ['image'],
+        sizeType: ['compressed'],
+        sourceType: ['album', 'camera'],
+        camera: 'back',
+        success: (result) => {
+          if (!this.data.isPageActive || this.data.isSaving || this.data.hasSaved) return;
+          const selectedFiles = result.tempFiles.slice(
+            0,
+            MEMORY_IMAGE_MAX_COUNT - this.data.images.length,
+          );
 
-        if (
-          selectedFiles.some(
-            (file) =>
-              !Number.isFinite(file.size) || file.size <= 0 || file.size > MAX_LOCAL_IMAGE_BYTES,
-          )
-        ) {
+          if (
+            selectedFiles.some(
+              (file) =>
+                !Number.isFinite(file.size) || file.size <= 0 || file.size > MAX_LOCAL_IMAGE_BYTES,
+            )
+          ) {
+            this.setData({
+              formError: `压缩后每张照片不能超过 ${this.data.imageMaxSizeLabel}，请重新选择较小的图片。`,
+            });
+            return;
+          }
+
+          const selectedImages = selectedFiles
+            .map((file) => file.tempFilePath)
+            .filter(Boolean)
+            .map((path, index) => createEditorImage(path, index, true));
+
+          if (selectedImages.length === 0) {
+            return;
+          }
+
           this.setData({
-            formError: `压缩后每张照片不能超过 ${this.data.imageMaxSizeLabel}，请重新选择较小的图片。`,
+            formError: '',
+            images: [...this.data.images, ...selectedImages],
           });
-          return;
-        }
-
-        const selectedImages = selectedFiles
-          .map((file) => file.tempFilePath)
-          .filter(Boolean)
-          .map((path, index) => createEditorImage(path, index, true));
-
-        if (selectedImages.length === 0) {
-          return;
-        }
-
+          this.markDirty();
+        },
+        fail: (result) => {
+          if (this.data.isPageActive && !this.data.hasSaved && !/cancel/iu.test(result.errMsg)) {
+            this.setData({ formError: '照片选择失败，请检查相册权限后重试。' });
+          }
+        },
+        complete: () => {
+          if (this.data.isPageActive) this.setData({ isChoosingImages: false });
+        },
+      });
+    } catch {
+      if (this.data.isPageActive)
         this.setData({
-          formError: '',
-          images: [...this.data.images, ...selectedImages],
+          isChoosingImages: false,
+          formError: '照片选择暂时无法打开，请稍后重试或更新微信；文字仍然保留。',
         });
-        this.markDirty();
-      },
-      fail: (result) => {
-        if (!/cancel/iu.test(result.errMsg)) {
-          this.setData({ formError: '照片选择失败，请检查相册权限后重试。' });
-        }
-      },
-    });
+    }
   },
 
   removeImage(event: WechatMiniprogram.BaseEvent) {
@@ -841,7 +975,12 @@ Page({
   },
 
   async saveMemory() {
-    if (!this.data.isFormReady || this.data.isSaving || this.data.hasSaved) {
+    if (!this.data.isPageActive || this.data.isSaving || this.data.isChoosingImages) return;
+    if (this.data.visibilitySavePending) {
+      await this.retryVisibility();
+      return;
+    }
+    if (!this.data.isFormReady || this.data.hasSaved) {
       return;
     }
 
@@ -897,7 +1036,7 @@ Page({
             selectedFriendIds,
           );
         } catch (error: unknown) {
-          visibilityWarning = `正文已保存，但可见范围未更新，仍按服务端原范围处理：${getErrorMessage(error)}`;
+          visibilityWarning = `正文已保存，但可见范围未确认，请重试；确认前请按原范围仍可能生效处理。${getErrorMessage(error)}`;
         }
       }
 
@@ -905,13 +1044,18 @@ Page({
         (path) => !finalImagePaths.includes(path),
       );
       const cleanupFailures = await cleanupUnreferencedImages(removedOriginalPaths);
+      if (!this.data.isPageActive) return;
+      const cleanupWarning =
+        cleanupFailures.length > 0 ? '回忆已保存，但部分旧照片未能清理，可稍后重试。' : '';
 
       wx.disableAlertBeforeUnload({ fail: () => undefined });
       this.clearTextDraft();
       this.setData({
-        formError:
-          visibilityWarning ||
-          (cleanupFailures.length > 0 ? '回忆已保存，但部分旧照片未能清理，可稍后重试。' : ''),
+        formError: [visibilityWarning, cleanupWarning].filter(Boolean).join(' '),
+        savedCleanupWarning: cleanupWarning,
+        visibilitySavePending: Boolean(visibilityWarning),
+        editorStep: visibilityWarning ? 'options' : this.data.editorStep,
+        memoryId: savedMemory.id,
         images: (savedMemory?.imagePaths ?? finalImagePaths).map((path, index) =>
           createEditorImage(path, index, false),
         ),
@@ -927,6 +1071,8 @@ Page({
         pageTitle: '编辑校园回忆',
       });
 
+      if (visibilityWarning) return;
+
       if (cleanupFailures.length > 0) {
         await showEditorNotice(
           '回忆已保存，照片清理未完成',
@@ -936,15 +1082,7 @@ Page({
         return;
       }
 
-      void wx.showToast({
-        title: wasEditMode ? '修改已保存' : '回忆已保存',
-        icon: 'success',
-        fail: () => {
-          this.setData({ formError: '回忆已保存，但成功提示未能显示。' });
-        },
-      });
-
-      navigationTimer = setTimeout(() => this.navigateBackToMap(), 650);
+      this.finishSuccessfulSave(wasEditMode ? '修改已保存' : '回忆已保存');
     } catch (error) {
       let rollbackWarning = '';
       const selectedImagesInvalidated = temporaryPaths.length > 0;
@@ -972,6 +1110,51 @@ Page({
         isSaving: false,
       });
     }
+  },
+
+  async retryVisibility() {
+    if (!this.data.isPageActive || this.data.isSaving || !this.data.visibilitySavePending) return;
+    if (this.data.visibility === 'selected_friends' && this.data.selectedFriendIds.length === 0) {
+      this.setData({
+        formError: '正文已保存，请至少选择一位好友，或改为“仅自己”后重试确认可见范围。',
+      });
+      return;
+    }
+    this.setData({ isSaving: true });
+    try {
+      await cloudMemoryRepository.setVisibility(this.data.memoryId, this.data.visibility, [
+        ...this.data.selectedFriendIds,
+      ]);
+      if (!this.data.isPageActive) return;
+      this.setData({
+        isSaving: false,
+        visibilitySavePending: false,
+        formError: this.data.savedCleanupWarning,
+      });
+      this.finishSuccessfulSave('可见范围已更新');
+    } catch (error: unknown) {
+      if (this.data.isPageActive)
+        this.setData({
+          isSaving: false,
+          formError:
+            `正文已保存，但可见范围仍未确认，请重试；确认前请按原范围仍可能生效处理。${getErrorMessage(error)} ${this.data.savedCleanupWarning}`.trim(),
+        });
+    }
+  },
+
+  finishSuccessfulSave(title: string) {
+    if (!this.data.isPageActive || !this._isVisible) return;
+    void wx.showToast({
+      title,
+      icon: 'success',
+      fail: () => {
+        if (this.data.isPageActive) this.setData({ formError: '回忆已保存，但成功提示未能显示。' });
+      },
+    });
+    navigationTimer = setTimeout(() => {
+      navigationTimer = undefined;
+      if (this.data.isPageActive && this._isVisible) this.navigateBackToMap();
+    }, 650);
   },
 
   cancelEditing() {
@@ -1018,6 +1201,10 @@ Page({
   },
 
   onUnload() {
+    this.data.isPageActive = false;
+    this._stickerNavigation++;
+    this._stickerPending = false;
+    this._isVisible = false;
     this.saveTextDraft(false);
     if (navigationTimer) {
       clearTimeout(navigationTimer);

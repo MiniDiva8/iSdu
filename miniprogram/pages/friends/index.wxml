@@ -30,19 +30,36 @@
   <text wx:if="{{actionMessage}}" class="friends-message">{{actionMessage}}</text>
 
   <view class="friends-list">
-    <text class="friends-section__title">我的好友 · {{friends.length}}</text>
+    <text class="friends-section__title"
+      >我的好友{{hasLoadedFriends ? ' · ' + friends.length : ''}}</text
+    >
     <text wx:if="{{isLoading}}" class="friends-empty">正在读取好友列表…</text>
-    <text wx:elif="{{friends.length === 0}}" class="friends-empty"
+    <view wx:elif="{{loadError}}" class="friends-load-error" role="alert">
+      <text>{{loadError}}</text
+      ><button class="friends-secondary-action" bindtap="loadFriends">重新读取好友</button>
+    </view>
+    <text wx:elif="{{hasLoadedFriends && friends.length === 0}}" class="friends-empty"
       >还没有好友，先发送一张邀请卡片吧。</text
     >
     <view wx:for="{{friends}}" wx:key="relationshipId" class="friend-row">
       <view class="friend-row__avatar">{{item.initial}}</view>
       <view class="friend-row__body">
-        <text class="friend-row__name">{{item.friend.displayName}}</text>
+        <text class="friend-row__name" aria-label="{{item.friend.displayName}}"
+          >{{item.friend.displayName}}</text
+        >
         <text class="friend-row__signature">{{item.friend.signature || '还没有填写个性签名'}}</text>
       </view>
       <button
+        class="friend-row__visit"
+        aria-label="去{{item.friend.displayName}}的小屋"
+        data-user-id="{{item.friend.userId}}"
+        bindtap="visitHome"
+      >
+        去小屋
+      </button>
+      <button
         class="friend-row__remove"
+        aria-label="删除好友{{item.friend.displayName}}"
         data-user-id="{{item.friend.userId}}"
         data-name="{{item.friend.displayName}}"
         disabled="{{removingUserId === item.friend.userId}}"

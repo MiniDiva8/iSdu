@@ -1,0 +1,23 @@
+<button
+  class="motion-avatar"
+  style="width:{{safeSize}}rpx;height:{{safeSize}}rpx"
+  bindtap="onActivate"
+  aria-label="{{label}}"
+>
+  <view class="motion-avatar-ring"></view>
+  <canvas
+    type="2d"
+    id="motion-avatar-canvas"
+    class="motion-avatar-canvas {{canvasReady ? '' : 'motion-avatar-canvas--hidden'}}"
+    aria-hidden="true"
+  ></canvas>
+  <view
+    class="motion-avatar-ball {{canvasReady ? 'motion-avatar-ball--hidden' : ''}}"
+    style="width:{{ballSize}}rpx;height:{{ballSize}}rpx;margin-left:{{ballOffset}}rpx;margin-top:{{ballOffset}}rpx;transform:{{poseStyle}}"
+  >
+    <view class="motion-avatar-face" style="transform:scale({{faceScale}})"
+      ><mood-face mood="{{mood}}" size="normal"
+    /></view>
+  </view>
+  <text wx:if="{{initial}}" class="motion-avatar-initial">{{initial}}</text>
+</button>

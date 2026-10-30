@@ -126,3 +126,83 @@ test('unknown cloud visibility values are rejected instead of being downgraded',
   });
   await assert.rejects(new CloudMemoryRepository(client).listMemories(), /可见范围无效/);
 });
+
+function imageEditingFixture() {
+  let current = {
+    ...ownedMemory(),
+    imagePaths: ['https://temp.invalid/original'],
+    imageIds: ['image-original'],
+  };
+  const calls = [];
+  const repository = new CloudMemoryRepository(
+    {
+      async call(_name, action, input) {
+        calls.push({ action, input });
+        if (action === 'createImageUploadPlan') throw new Error('unexpected image upload');
+        return {
+          ok: true,
+          requestId: 'image-edit',
+          data: action === 'listMine' ? { memories: [current] } : { memory: current },
+        };
+      },
+    },
+    { uploadPlannedFiles: async () => assert.fail('existing photos must not be uploaded') },
+  );
+  return { repository, calls, setCurrent: (memory) => (current = memory) };
+}
+
+test('an editor keeps existing image IDs across repeated signed URL refreshes', async () => {
+  const h = imageEditingFixture();
+  const editing = await h.repository.getMemoryById('existing-record');
+  for (let refresh = 0; refresh < 12; refresh++) {
+    h.setCurrent({ ...editing, imagePaths: [`https://temp.invalid/refresh-${refresh}`] });
+    await h.repository.listMemories();
+  }
+  await h.repository.updateMemory(editing.id, { ...editing, text: '修改正文，保留照片' });
+  assert.deepEqual(h.calls.at(-1).input.keepImageIds, ['image-original']);
+  assert.deepEqual(h.calls.at(-1).input.uploaded, []);
+});
+
+test('a list snapshot can still retain its current image when no editor was loaded', async () => {
+  const h = imageEditingFixture();
+  const [memory] = await h.repository.listMemories();
+  await h.repository.updateMemory(memory.id, { ...memory, text: '从当前快照编辑' });
+  assert.deepEqual(h.calls.at(-1).input.keepImageIds, ['image-original']);
+});
+
+test('an editor image alias cannot retain a photo removed by the latest server snapshot', async () => {
+  const h = imageEditingFixture();
+  const editing = await h.repository.getMemoryById('existing-record');
+  h.setCurrent({ ...editing, imagePaths: [], imageIds: [] });
+  await h.repository.listMemories();
+  await assert.rejects(h.repository.updateMemory(editing.id, editing), /unexpected image upload/);
+  assert.equal(h.calls.at(-1).action, 'createImageUploadPlan');
+});
+
+test('deleting or clearing records also clears editor image aliases', async () => {
+  for (const clear of [false, true]) {
+    const h = imageEditingFixture();
+    const editing = await h.repository.getMemoryById('existing-record');
+    if (clear) await h.repository.clearMemories();
+    else await h.repository.deleteMemory(editing.id);
+    await assert.rejects(h.repository.updateMemory(editing.id, editing), /unexpected image upload/);
+  }
+});
+
+test('a stale list reply cannot replace image mappings from a newer saved memory', async () => {
+  const h = imageEditingFixture();
+  const old = await h.repository.getMemoryById('existing-record');
+  const saved = {
+    ...old,
+    imagePaths: ['https://temp.invalid/new-photo'],
+    imageIds: ['image-new'],
+    updatedAt: '2026-08-15T09:00:00.000Z',
+  };
+  h.setCurrent(saved);
+  await h.repository.getMemoryById(saved.id);
+  h.setCurrent(old);
+  await h.repository.listMemories();
+  h.setCurrent(saved);
+  await h.repository.updateMemory(saved.id, { ...saved, text: '继续编辑已保存版本' });
+  assert.deepEqual(h.calls.at(-1).input.keepImageIds, ['image-new']);
+});

@@ -1,3 +1,11 @@
+# 当前工作入口（2026-10-30 整理）
+
+当前版本为 3.2.0-rc.10，功能与交付边界先读 [README](README.md)、[当前整合](docs/CURRENT_LOCAL_INTEGRATION.md)和[开发交接](docs/AI_HANDOFF.md)。下方原始阶段规则的技术、安全与 Git 约束继续有效；历史阶段的版本号和待办不能替代当前源码与用户后续授权。
+
+本机项目导航存在时，先运行 node "D:/Codex/Projects/DesktopProjects/iSdu/tools/project-context.mjs" context，并按需读取 registry 与命中的模块。独立 clone 时从本仓库根目录开始，不要求复制本机 junction 或外部目录。Git 命令前核对真实仓库根和 git status；不要移动共享 Git 元数据或丢弃既有改动。
+
+用户本轮已明确授权整理并上传到 MiniDiva8/iSdu。该授权仅覆盖本次 GitHub 同步，不扩展为微信上传、云部署、启用 AI 或正式提审/发布；后续外部操作仍遵循用户实际指令。
+
 # iSdu：项目执行规则
 
 本文件对仓库内所有开发、评审和自动化任务生效。若任务与本文件冲突，先停止并向用户说明，不得自行扩大范围。

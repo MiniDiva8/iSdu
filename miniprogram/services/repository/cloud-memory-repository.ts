@@ -140,7 +140,10 @@ function parseFriendTimelinePage(value: unknown): FriendTimelinePage {
 
 export class CloudMemoryRepository implements MemoryRepository {
   private readonly client: CloudFunctionClient;
-  private readonly imageIdsByMemory = new Map<string, Map<string, string>>();
+  private readonly imageIdsByMemory = new Map<
+    string,
+    { current: Map<string, string>; editing: Map<string, string>; updatedAt: string }
+  >();
   private readonly images: CloudImageServiceApi;
 
   constructor(
@@ -164,7 +167,7 @@ export class CloudMemoryRepository implements MemoryRepository {
       return null;
     }
     const memory = parseResult(response, parseMemoryData);
-    this.cacheImages(memory);
+    this.cacheImages(memory, true);
     return memory;
   }
 
@@ -211,18 +214,18 @@ export class CloudMemoryRepository implements MemoryRepository {
       uploaded: upload.uploaded,
     });
     const memory = parseResult(response, parseMemoryData);
-    this.cacheImages(memory);
+    this.cacheImages(memory, true);
     return memory;
   }
 
   async updateMemory(id: string, input: UpdateMemoryInput): Promise<Memory> {
     const normalized = normalizeMemoryContent(input);
-    const cache = this.imageIdsByMemory.get(id) ?? new Map<string, string>();
+    const cache = this.imageIdsByMemory.get(id);
     const keepImageIds: string[] = [];
     const newImagePaths: string[] = [];
 
     normalized.imagePaths.forEach((path) => {
-      const imageId = cache.get(path);
+      const imageId = cache?.current.get(path) ?? cache?.editing.get(path);
       if (imageId) {
         keepImageIds.push(imageId);
       } else {
@@ -250,7 +253,7 @@ export class CloudMemoryRepository implements MemoryRepository {
       uploaded: upload.uploaded,
     });
     const memory = parseResult(response, parseMemoryData);
-    this.cacheImages(memory);
+    this.cacheImages(memory, true);
     return memory;
   }
 
@@ -312,7 +315,9 @@ export class CloudMemoryRepository implements MemoryRepository {
     };
   }
 
-  private cacheImages(memory: CloudMemory): void {
+  private cacheImages(memory: CloudMemory, forEditing = false): void {
+    const previous = this.imageIdsByMemory.get(memory.id);
+    if (previous && previous.updatedAt > memory.updatedAt) return;
     const cache = new Map<string, string>();
     memory.imagePaths.forEach((path, index) => {
       const imageId = memory.imageIds[index];
@@ -320,7 +325,14 @@ export class CloudMemoryRepository implements MemoryRepository {
         cache.set(path, imageId);
       }
     });
-    this.imageIdsByMemory.set(memory.id, cache);
+    // A list refresh may rotate signed URLs while an editor still holds its original paths.
+    // Keep only that one editor snapshot plus the current URLs, never every historical URL.
+    const currentIds = new Set(cache.values());
+    const previousEditing = previous?.editing;
+    const editing = forEditing
+      ? new Map(cache)
+      : new Map([...(previousEditing ?? [])].filter(([, imageId]) => currentIds.has(imageId)));
+    this.imageIdsByMemory.set(memory.id, { current: cache, editing, updatedAt: memory.updatedAt });
   }
 }
 

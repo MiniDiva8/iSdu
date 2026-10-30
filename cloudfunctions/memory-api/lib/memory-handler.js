@@ -140,22 +140,50 @@ async function resolveImages(options, ownerUserId, payload, now) {
     return [];
   }
   const planId = requireString(payload.planId, '上传计划', 80, false);
-  const plan = await options.store.consumeUploadPlan(planId, ownerUserId, now);
+  const plan = await options.store.getUploadPlan(planId, ownerUserId, now);
   if (!plan || !Array.isArray(plan.files) || plan.files.length !== uploaded.length) {
     throw new PublicError('UPLOAD_PLAN_INVALID', '图片上传计划无效或已过期');
   }
-  return plan.files.map((expected) => {
+  const images = plan.files.map((expected) => {
     const actual = uploaded.find((item) => item.imageId === expected.imageId);
-    if (!actual || !actual.fileId.endsWith(`/${expected.cloudPath}`)) {
+    if (
+      !actual ||
+      !actual.fileId.startsWith('cloud://') ||
+      !actual.fileId.endsWith(`/${expected.cloudPath}`)
+    ) {
       throw new PublicError('UPLOAD_PLAN_INVALID', '上传图片与计划不匹配');
     }
     return { fileId: actual.fileId, imageId: expected.imageId };
   });
+  return images;
 }
 
-async function toOwnerView(options, user, memory) {
+function requireCommit(result) {
+  if (result?.code === 'UPLOAD_PLAN_INVALID') {
+    throw new PublicError('UPLOAD_PLAN_INVALID', '图片上传计划无效或已过期');
+  }
+  if (!result) throw new PublicError('NOT_FOUND', '没有找到这段云端回忆');
+  return result;
+}
+
+async function readOwners(options, memories) {
+  const ownerIds = [...new Set(memories.map((memory) => memory.ownerUserId))];
+  const owners = new Map();
+  for (let index = 0; index < ownerIds.length; index += 8) {
+    const batch = ownerIds.slice(index, index + 8);
+    const values = await Promise.all(batch.map((id) => options.store.getUser(id)));
+    values.forEach((owner, offset) => {
+      if (owner) owners.set(batch[offset], owner);
+    });
+  }
+  return owners;
+}
+
+async function toOwnerView(options, user, memory, signedUrls) {
   const images = Array.isArray(memory.images) ? memory.images : [];
-  const urls = await options.getTempUrls(images.map((image) => image.fileId));
+  const urls =
+    signedUrls ??
+    (images.length > 0 ? await options.getTempUrls(images.map((image) => image.fileId)) : []);
   return {
     id: memory._id,
     text: memory.text,
@@ -349,6 +377,7 @@ function createMemoryDocument(options, user, content, images, payload, now) {
       payload.clientRequestId ?? options.newId('request'),
       '请求 ID',
       100,
+      false,
     ),
     ...content,
     images,
@@ -420,9 +449,14 @@ function createMemoryHandler(options) {
             requestId,
           };
         }
-        const images = await resolveImages(options, user._id, payload, now);
-        const content = normalizeContent(payload.content, images.length);
+        const content = normalizeContent(
+          payload.content,
+          normalizeUploaded(payload.uploaded ?? []).length,
+        );
         const timestamps = isRecord(payload.localTimestamps) ? payload.localTimestamps : {};
+        const createdAt = requireIso(timestamps.createdAt, '创建');
+        const updatedAt = requireIso(timestamps.updatedAt, '更新');
+        const images = await resolveImages(options, user._id, payload, now);
         const memory = createMemoryDocument(
           options,
           user,
@@ -431,16 +465,23 @@ function createMemoryHandler(options) {
           { clientRequestId: localMemoryId },
           now,
         );
-        memory.createdAt = requireIso(timestamps.createdAt, '创建');
-        memory.updatedAt = requireIso(timestamps.updatedAt, '更新');
-        const result = await options.store.createMigratedMemory(memory, {
-          _id: options.newId('migration'),
-          migrationKey,
-          ownerUserId: user._id,
-          sourceLocalMemoryId: localMemoryId,
-          cloudMemoryId: memory._id,
-          createdAt: now,
-        });
+        memory.createdAt = createdAt;
+        memory.updatedAt = updatedAt;
+        const result = requireCommit(
+          await options.store.createMigratedMemory(
+            memory,
+            {
+              _id: options.newId('migration'),
+              migrationKey,
+              ownerUserId: user._id,
+              sourceLocalMemoryId: localMemoryId,
+              cloudMemoryId: memory._id,
+              createdAt: now,
+            },
+            payload.planId ?? null,
+            now,
+          ),
+        );
         return {
           ok: true,
           data: { cloudMemoryId: result.memoryId, localMemoryId, status: result.status },
@@ -449,19 +490,63 @@ function createMemoryHandler(options) {
       }
 
       if (event.action === 'create') {
+        const clientRequestId = requireString(
+          payload.clientRequestId ?? options.newId('request'),
+          '请求 ID',
+          100,
+          false,
+        );
+        const existing = await options.store.findMemoryByRequestId(user._id, clientRequestId);
+        if (existing) {
+          if (existing.deletedAt) throw new PublicError('NOT_FOUND', '这段云端回忆已经删除');
+          return {
+            ok: true,
+            data: { memory: await toOwnerView(options, user, existing) },
+            requestId,
+          };
+        }
+        const content = normalizeContent(
+          payload.content,
+          normalizeUploaded(payload.uploaded ?? []).length,
+        );
         const images = await resolveImages(options, user._id, payload, now);
-        const content = normalizeContent(payload.content, images.length);
-        const memory = createMemoryDocument(options, user, content, images, payload, now);
-        const created = await options.store.createMemory(memory);
+        const memory = createMemoryDocument(
+          options,
+          user,
+          content,
+          images,
+          { ...payload, clientRequestId },
+          now,
+        );
+        const created = requireCommit(
+          await options.store.createMemory(memory, payload.planId ?? null, now),
+        );
         return { ok: true, data: { memory: await toOwnerView(options, user, created) }, requestId };
       }
 
       if (event.action === 'listMine') {
         const items = await options.store.listMine(user._id);
-        const views = [];
-        for (const item of items) {
-          views.push(await toOwnerView(options, user, item));
+        const fileIds = items.flatMap((item) =>
+          (Array.isArray(item.images) ? item.images : []).map((image) => image.fileId),
+        );
+        const urls = [];
+        for (let offset = 0; offset < fileIds.length; offset += 50) {
+          const batch = fileIds.slice(offset, offset + 50);
+          const signed = await options.getTempUrls(batch);
+          if (!Array.isArray(signed) || signed.length !== batch.length) {
+            throw new PublicError('IMAGE_URL_UNAVAILABLE', '照片地址暂时没有读全，请重新读取。');
+          }
+          urls.push(...signed);
         }
+        let offset = 0;
+        const views = await Promise.all(
+          items.map((item) => {
+            const count = Array.isArray(item.images) ? item.images.length : 0;
+            const signedUrls = urls.slice(offset, offset + count);
+            offset += count;
+            return toOwnerView(options, user, item, signedUrls);
+          }),
+        );
         return { ok: true, data: { memories: views }, requestId };
       }
 
@@ -493,12 +578,14 @@ function createMemoryHandler(options) {
             : [];
         const publishedAt =
           visibility !== 'private' && !current.publishedAt ? now : (current.publishedAt ?? null);
-        const updated = await options.store.updateMine(user._id, memoryId, {
-          visibility,
-          selectedGrants,
-          publishedAt,
-          updatedAt: now,
-        });
+        const updated = requireCommit(
+          await options.store.updateMine(user._id, memoryId, {
+            visibility,
+            selectedGrants,
+            publishedAt,
+            updatedAt: now,
+          }),
+        );
         return {
           ok: true,
           data: { memory: await toOwnerView(options, user, updated) },
@@ -557,28 +644,30 @@ function createMemoryHandler(options) {
         }
         const ownerIds = [...relationshipByOwner.keys()];
         const since = new Date(Date.parse(now) - 24 * 60 * 60 * 1000).toISOString();
+        const accept = (memory) =>
+          memory.publishedAt >= since &&
+          memory.publishedAt <= now &&
+          memory.mapAssetVersion === mapAssetVersion &&
+          Number.isFinite(memory.mapXRatio) &&
+          memory.mapXRatio >= 0 &&
+          memory.mapXRatio <= 1 &&
+          Number.isFinite(memory.mapYRatio) &&
+          memory.mapYRatio >= 0 &&
+          memory.mapYRatio <= 1 &&
+          canFriendViewMemory(memory, user._id, relationshipByOwner.get(memory.ownerUserId));
         const candidates = [];
         for (let index = 0; index < ownerIds.length; index += 20) {
           candidates.push(
             ...(await options.store.listRecentMemoriesByOwners(
               ownerIds.slice(index, index + 20),
               since,
+              now,
+              { cursor, maximum: 51, accept },
             )),
           );
         }
         const allowed = candidates
-          .filter(
-            (memory) =>
-              memory.publishedAt >= since &&
-              memory.mapAssetVersion === mapAssetVersion &&
-              Number.isFinite(memory.mapXRatio) &&
-              memory.mapXRatio >= 0 &&
-              memory.mapXRatio <= 1 &&
-              Number.isFinite(memory.mapYRatio) &&
-              memory.mapYRatio >= 0 &&
-              memory.mapYRatio <= 1 &&
-              canFriendViewMemory(memory, user._id, relationshipByOwner.get(memory.ownerUserId)),
-          )
+          .filter(accept)
           .sort(
             (left, right) =>
               right.publishedAt.localeCompare(left.publishedAt) ||
@@ -586,9 +675,10 @@ function createMemoryHandler(options) {
           )
           .filter((memory) => isAfterCursor(memory, cursor));
         const page = allowed.slice(0, 50);
+        const ownerById = await readOwners(options, page);
         const points = [];
         for (const memory of page) {
-          const owner = await options.store.getUser(memory.ownerUserId);
+          const owner = ownerById.get(memory.ownerUserId);
           if (owner) points.push(toFriendMapPoint(memory, owner));
         }
         const last = allowed.length > page.length ? page[page.length - 1] : null;
@@ -612,6 +702,11 @@ function createMemoryHandler(options) {
           relationshipByOwner.set(friendUserId, friendship);
         }
         const ownerIds = [...relationshipByOwner.keys()];
+        const accept = (memory) =>
+          typeof memory.publishedAt === 'string' &&
+          Number.isFinite(Date.parse(memory.publishedAt)) &&
+          memory.publishedAt <= now &&
+          canFriendViewMemory(memory, user._id, relationshipByOwner.get(memory.ownerUserId));
         const candidates = [];
         for (let index = 0; index < ownerIds.length; index += 20) {
           candidates.push(
@@ -619,16 +714,12 @@ function createMemoryHandler(options) {
               ownerIds.slice(index, index + 20),
               '1970-01-01T00:00:00.000Z',
               cursor?.publishedAt ?? now,
+              { cursor, maximum: 21, accept },
             )),
           );
         }
         const allowed = candidates
-          .filter(
-            (memory) =>
-              typeof memory.publishedAt === 'string' &&
-              Number.isFinite(Date.parse(memory.publishedAt)) &&
-              canFriendViewMemory(memory, user._id, relationshipByOwner.get(memory.ownerUserId)),
-          )
+          .filter(accept)
           .sort(
             (left, right) =>
               right.publishedAt.localeCompare(left.publishedAt) ||
@@ -636,11 +727,7 @@ function createMemoryHandler(options) {
           )
           .filter((memory) => isAfterCursor(memory, cursor));
         const page = allowed.slice(0, 20);
-        const ownerById = new Map();
-        for (const ownerUserId of [...new Set(page.map((memory) => memory.ownerUserId))]) {
-          const owner = await options.store.getUser(ownerUserId);
-          if (owner) ownerById.set(ownerUserId, owner);
-        }
+        const ownerById = await readOwners(options, page);
         const thumbnailFileIds = page.map((memory) => {
           const images = Array.isArray(memory.images) ? memory.images : [];
           return images[0]?.fileId ?? '';
@@ -686,17 +773,29 @@ function createMemoryHandler(options) {
           throw new PublicError('INVALID_INPUT', '保留图片列表无效');
         }
         const kept = current.images.filter((image) => keepIds.includes(image.imageId));
+        const addedCount = normalizeUploaded(payload.uploaded ?? []).length;
+        if (kept.length + addedCount > MAX_IMAGES) {
+          throw new PublicError('INVALID_INPUT', '照片不能超过 3 张');
+        }
+        const content = normalizeContent(payload.content, kept.length + addedCount);
         const added = await resolveImages(options, user._id, payload, now);
         const images = [...kept, ...added];
         if (images.length > MAX_IMAGES) {
           throw new PublicError('INVALID_INPUT', '照片不能超过 3 张');
         }
-        const content = normalizeContent(payload.content, images.length);
-        const updated = await options.store.updateMine(user._id, memoryId, {
-          ...content,
-          images,
-          updatedAt: now,
-        });
+        const updated = requireCommit(
+          await options.store.updateMine(
+            user._id,
+            memoryId,
+            {
+              ...content,
+              images,
+              updatedAt: now,
+            },
+            payload.planId ?? null,
+            now,
+          ),
+        );
         return { ok: true, data: { memory: await toOwnerView(options, user, updated) }, requestId };
       }
 

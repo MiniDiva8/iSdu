@@ -44,6 +44,10 @@
   "libVersion": "3.7.6",
   "packOptions": {
     "ignore": [
+      { "value": "services/repository/pal-ai-repository.test.mjs", "type": "file" },
+      { "value": "utils/sticker-document.test.mjs", "type": "file" },
+      { "value": "services/sticker-draft-service.test.mjs", "type": "file" },
+      { "value": "pages/sticker-studio/sticker-renderer.test.mjs", "type": "file" },
       {
         "value": "assets/demo/campus-map-placeholder.jpg",
         "type": "file"
@@ -95,6 +99,98 @@
       {
         "value": "services/journal-draft-service.test.mjs",
         "type": "file"
+      },
+      {
+        "value": "utils/memory-bottle.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "utils/memory-bottle-renderer.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "utils/companion-engine.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "utils/companion-scene.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "services/companion-service.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "services/repository/cloud-companion-repository.test.mjs",
+        "type": "file"
+      },
+      {
+        "value": "utils/companion-content.test.mjs",
+        "type": "file"
+      },
+      {
+        "type": "file",
+        "value": "utils/companion-expansion.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "services/accelerometer-hub.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "services/cloud/cloud-image-service.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "services/image-safety-service.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "services/journal-preferences-service.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "services/memory-migration-service.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "services/memory-service.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "services/repository/cloud-auth-repository.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "services/repository/cloud-like-repository.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "services/repository/cloud-memory-repository.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "services/timeline-cover-service.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "utils/avatar-motion.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "utils/profile-summary.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "utils/selection-wheel.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "utils/companion-playground.test.mjs"
+      },
+      {
+        "type": "file",
+        "value": "services/journal-background-service.test.mjs"
       }
     ],
     "include": []

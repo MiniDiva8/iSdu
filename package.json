@@ -1,6 +1,6 @@
 {
   "name": "isdu-miniprogram",
-  "version": "3.1.0-rc.2",
+  "version": "3.2.0-rc.10",
   "private": true,
   "description": "iSdu：基于校园地图的个人空间日记微信小程序",
   "license": "UNLICENSED",
@@ -17,8 +17,9 @@
     "test:cloud-auth": "node --test cloudfunctions/auth-api/lib/auth-handler.test.cjs cloudfunctions/auth-api/lib/cloud-user-store.test.cjs && node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/services/repository/cloud-auth-repository.test.mjs",
     "test:cloud-memory": "node --test cloudfunctions/memory-api/lib/memory-handler.test.cjs && node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/services/memory-migration-service.test.mjs miniprogram/services/memory-service.test.mjs miniprogram/services/repository/cloud-like-repository.test.mjs miniprogram/services/repository/cloud-memory-repository.test.mjs",
     "test:cloud-friends": "node --test cloudfunctions/friend-api/lib/friend-handler.test.cjs",
-    "test:pages": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test scripts/page-flows.test.mjs scripts/timeline-cover-flows.test.mjs",
-    "test": "npm run test:coordinates && npm run test:memory && npm run test:image && npm run test:cloud-auth && npm run test:cloud-memory && npm run test:cloud-friends && npm run test:pages && npm run test:journal && npm run test:profile-wheel",
+    "test:pages": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test scripts/page-flows.test.mjs scripts/timeline-cover-flows.test.mjs scripts/load-rewards-flows.test.mjs",
+    "test": "npm run test:coordinates && npm run test:memory && npm run test:image && npm run test:cloud-auth && npm run test:cloud-memory && npm run test:cloud-friends && npm run test:pages && npm run test:journal && npm run test:profile-wheel && npm run test:bottle && npm run test:companion && npm run test:avatar-motion && npm run test:optimization && npm run test:playground && npm run test:pal-ai && npm run test:sticker",
+    "test:sticker": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/sticker-document.test.mjs miniprogram/services/sticker-draft-service.test.mjs miniprogram/pages/sticker-studio/sticker-renderer.test.mjs scripts/sticker-flows.test.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"miniprogram/**/*.ts\" \"cloudfunctions/**/*.js\"",
     "format:check": "npm run format:check:base && npm run format:check:wxml && npm run format:check:wxss",
@@ -27,8 +28,15 @@
     "format:check:wxss": "prettier --check \"miniprogram/**/*.wxss\" --parser css",
     "scan:security": "node scripts/security-scan.mjs",
     "check": "npm run test && npm run typecheck && npm run lint && npm run format:check && npm run scan:security",
-    "test:journal": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/journal.test.mjs miniprogram/services/journal-draft-service.test.mjs scripts/journal-flows.test.mjs scripts/journal-editor-flows.test.mjs",
-    "test:profile-wheel": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/selection-wheel.test.mjs miniprogram/utils/profile-summary.test.mjs miniprogram/services/journal-preferences-service.test.mjs scripts/profile-wheel-flows.test.mjs"
+    "test:journal": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/journal.test.mjs miniprogram/services/journal-draft-service.test.mjs scripts/journal-flows.test.mjs scripts/journal-editor-flows.test.mjs miniprogram/services/journal-background-service.test.mjs scripts/journal-background-flows.test.mjs",
+    "test:profile-wheel": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/selection-wheel.test.mjs miniprogram/utils/profile-summary.test.mjs miniprogram/services/journal-preferences-service.test.mjs scripts/profile-wheel-flows.test.mjs",
+    "test:bottle": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/memory-bottle.test.mjs scripts/memory-bottle-flows.test.mjs miniprogram/utils/memory-bottle-renderer.test.mjs",
+    "test:companion": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/companion-engine.test.mjs miniprogram/utils/companion-scene.test.mjs miniprogram/utils/companion-content.test.mjs miniprogram/utils/companion-expansion.test.mjs scripts/companion-routes.test.mjs scripts/pal-entry.test.mjs miniprogram/services/companion-service.test.mjs miniprogram/services/repository/cloud-companion-repository.test.mjs scripts/companion-flows.test.mjs && node --test cloudfunctions/companion-api/lib/*.test.cjs",
+    "test:avatar-motion": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/avatar-motion.test.mjs miniprogram/services/accelerometer-hub.test.mjs scripts/avatar-motion-component.test.mjs scripts/profile-avatar-flows.test.mjs",
+    "test:optimization": "node scripts/run-optimization-tests.mjs",
+    "audit:package": "node scripts/package-audit.mjs",
+    "test:playground": "node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/utils/companion-playground.test.mjs scripts/playground-flows.test.mjs",
+    "test:pal-ai": "node --test cloudfunctions/pal-ai/lib/policy.test.cjs cloudfunctions/pal-ai/lib/openai-client.test.cjs cloudfunctions/pal-ai/lib/cloud-store.test.cjs cloudfunctions/pal-ai/lib/handler.test.cjs && node --experimental-strip-types --import ./scripts/register-typescript-imports.mjs --test miniprogram/services/repository/pal-ai-repository.test.mjs scripts/pal-ai-flows.test.mjs"
   },
   "dependencies": {
     "tdesign-miniprogram": "1.15.3"

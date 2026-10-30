@@ -1,0 +1,379 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-10-30",
+  "project": "iSdu / 校迹拾光",
+  "sourceVersion": "3.2.0-rc.10",
+  "repository": "https://github.com/MiniDiva8/iSdu",
+  "scope": "Current diary/Pal source and runtime assets; release attachments preserve selected finished materials and original art; historical paths are local navigation only.",
+  "modules": [
+    {
+      "id": "journal",
+      "title": "心情日记、编辑与草稿",
+      "status": "integrated"
+    },
+    {
+      "id": "map",
+      "title": "校园地图与比例坐标",
+      "status": "integrated"
+    },
+    {
+      "id": "friends",
+      "title": "好友、可见范围与点赞",
+      "status": "integrated_client"
+    },
+    {
+      "id": "timeline-cover",
+      "title": "时光列表与本机封面",
+      "status": "integrated"
+    },
+    {
+      "id": "album",
+      "title": "照片墙",
+      "status": "integrated"
+    },
+    {
+      "id": "profile-wheel",
+      "title": "新个人主页、偏好与旋转转盘",
+      "status": "integrated"
+    },
+    {
+      "id": "memory-bottle",
+      "title": "顺滑记忆瓶",
+      "status": "integrated_optimized"
+    },
+    {
+      "id": "companion-home",
+      "title": "校园伙伴小屋、本机养成与美术接入",
+      "status": "integrated"
+    },
+    {
+      "id": "pal-playground",
+      "title": "伙伴游乐场与真实任务便签",
+      "status": "integrated"
+    },
+    {
+      "id": "companion-cloud",
+      "title": "伙伴好友来访与留言后端",
+      "status": "deployed_pending_two_account_acceptance"
+    },
+    {
+      "id": "avatar-motion",
+      "title": "个人主页动态头像",
+      "status": "integrated"
+    },
+    {
+      "id": "public-circle",
+      "title": "旧线公开圈子与热点",
+      "status": "legacy_not_integrated_in_diary"
+    },
+    {
+      "id": "experience-website",
+      "title": "比赛扫码体验网站",
+      "status": "separate_static_site"
+    },
+    {
+      "id": "journal-home-background",
+      "title": "日记首页本机自定义背景",
+      "status": "integrated"
+    },
+    {
+      "id": "pal-ai",
+      "title": "Pal AI简单聊天与日记来信",
+      "status": "deployed_ai_paused_openai_timeout"
+    },
+    {
+      "id": "diary-sticker",
+      "title": "日记贴纸创作",
+      "status": "integrated"
+    }
+  ],
+  "assetCollections": [
+    {
+      "id": "brand",
+      "title": "已选地图 Logo",
+      "status": "approved_brand_source",
+      "localPath": "D:\\Codex\\Outputs\\iSdu-logo-20261025"
+    },
+    {
+      "id": "pals-original",
+      "title": "Pal 拾光伙伴设计源图",
+      "status": "design_source",
+      "localPath": "D:\\Codex\\Outputs\\iSdu-Pet-Preparation-20261026\\art"
+    },
+    {
+      "id": "sdu-decor-original",
+      "title": "山大特色家具与场景设计源图",
+      "status": "design_source",
+      "localPath": "D:\\Codex\\Outputs\\iSdu-SDU-Decor-20261026\\art"
+    },
+    {
+      "id": "runtime-companion",
+      "title": "主包伙伴头像运行副本",
+      "status": "runtime_files_present",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu-Fqin\\.worktrees\\emmo-memory-bottle\\miniprogram\\assets\\companion"
+    },
+    {
+      "id": "runtime-maps",
+      "title": "运行地图与兼容原图",
+      "status": "runtime_map_assets",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu-Fqin\\.worktrees\\emmo-memory-bottle\\miniprogram\\assets\\demo"
+    },
+    {
+      "id": "ppt-backgrounds",
+      "title": "PPT 背景",
+      "status": "presentation_asset",
+      "localPath": "D:\\Codex\\Outputs\\iSdu-PPT-Assets-Extended-20261025\\01_Backgrounds"
+    },
+    {
+      "id": "ppt-illustrations",
+      "title": "PPT 透明插画",
+      "status": "presentation_asset",
+      "localPath": "D:\\Codex\\Outputs\\iSdu-PPT-Assets-Extended-20261025\\02_Transparent_Illustrations"
+    },
+    {
+      "id": "ppt-decorations",
+      "title": "PPT 装饰",
+      "status": "presentation_asset",
+      "localPath": "D:\\Codex\\Outputs\\iSdu-PPT-Assets-Extended-20261025\\03_Decorative_Elements"
+    },
+    {
+      "id": "stickers",
+      "title": "原始校园贴纸",
+      "status": "presentation_asset",
+      "localPath": "D:\\Codex\\Outputs\\iSdu-PPT-Stickers-20261025\\PNG"
+    },
+    {
+      "id": "runtime-companion-package",
+      "title": "伙伴小屋分包运行素材",
+      "status": "runtime_files_present",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu-Fqin\\.worktrees\\emmo-memory-bottle\\miniprogram\\pages\\companion\\assets"
+    },
+    {
+      "id": "sdu-decor-expansion-original",
+      "title": "第二批山大装饰与观星场景源图",
+      "status": "design_source",
+      "localPath": "D:\\Codex\\Outputs\\iSdu-SDU-Decor-Expansion-20261026\\art"
+    },
+    {
+      "id": "runtime-tabbar",
+      "title": "日记/校园/时光/Pal/我的底部导航运行图标",
+      "status": "runtime_files_present",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu-Fqin\\.worktrees\\emmo-memory-bottle\\miniprogram\\assets\\journal\\tabbar"
+    },
+    {
+      "id": "formal-entry-code",
+      "title": "正式版微信小程序码原图",
+      "status": "user_provided_public_entry",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\presentation-20261028\\assets"
+    },
+    {
+      "id": "brand-transparent",
+      "title": "小程序Logo透明底衍生PNG",
+      "status": "transparent_brand_variant",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\assets\\brand-transparent"
+    },
+    {
+      "id": "pal-playable-scenes-20261029",
+      "title": "银杏书屋与稷下暖庭竖版空场景原稿",
+      "status": "integrated_experience_rc10",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\assets\\pal-scene-rework-20261029"
+    }
+  ],
+  "materials": [
+    {
+      "id": "competition-ppt",
+      "title": "早期比赛 PPT",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\presentations\\competition-20260829"
+    },
+    {
+      "id": "report-presentation",
+      "title": "13 页汇报与讲解稿工程",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\presentations\\report-20261024"
+    },
+    {
+      "id": "version-poster",
+      "title": "版本成长时间线海报",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\posters\\version-history-20261026\\校迹拾光_版本成长时间线_定稿.png"
+    },
+    {
+      "id": "brand-poster",
+      "title": "品牌宣传海报",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\posters\\brand-20261025"
+    },
+    {
+      "id": "opening-video",
+      "title": "开场视频制作目录",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\videos\\opening-20261026"
+    },
+    {
+      "id": "avatar-delivery",
+      "title": "动态头像独立演示与合并包",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\components\\avatar-motion"
+    },
+    {
+      "id": "companion-preview",
+      "title": "小屋框架验证截图与原型",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\previews\\companion-framework"
+    },
+    {
+      "id": "pet-design-docs",
+      "title": "伙伴设计文档与配置提案",
+      "localPath": "D:\\Codex\\Outputs\\iSdu-Pet-Preparation-20261026\\docs"
+    },
+    {
+      "id": "decor-config",
+      "title": "山大装饰配置与来源提案",
+      "localPath": "D:\\Codex\\Outputs\\iSdu-SDU-Decor-20261026\\config"
+    },
+    {
+      "id": "version-timeline",
+      "title": "已核对的历史版本时间线",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\knowledge\\VERSION_TIMELINE.md"
+    },
+    {
+      "id": "git-bundle",
+      "title": "V2 Git bundle 备份",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\archive\\git-bundles\\iSdu-v2.0.0.bundle"
+    },
+    {
+      "id": "pal-completed-preview",
+      "title": "伙伴正式内容可操作预览",
+      "localPath": "D:\\Codex\\Outputs\\iSdu_Pal_Completed_20261026"
+    },
+    {
+      "id": "decor-expansion-completed-preview",
+      "title": "第二批装饰已接入可操作预览",
+      "localPath": "D:\\Codex\\Outputs\\iSdu_Decor_Expansion_Completed_20261026"
+    },
+    {
+      "id": "companion-footer-fix",
+      "title": "小屋底部文字重叠修复截图与验证",
+      "localPath": "D:\\Codex\\Outputs\\iSdu_Companion_Footer_Fix_20261026"
+    },
+    {
+      "id": "pal-tab-entry-preview",
+      "title": "Pal第五入口本地预览与检查",
+      "localPath": "D:\\Codex\\Outputs\\iSdu_Pal_Tab_Entry_20261026"
+    },
+    {
+      "id": "cg-production-plan-20261026",
+      "title": "45秒CG分镜与完整制作指导",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\videos\\cg-production-plan-20261026"
+    },
+    {
+      "id": "cg-preproduction-v2-20261026",
+      "title": "CG v2.1制作前审核与离线动画预演",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\videos\\CG_Preproduction_v2"
+    },
+    {
+      "id": "cg-flow-final-handoff-20261026",
+      "title": "Flow CG制作指导、纯文本素材包与45秒完整成片",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\videos\\Flow_Final_Handoff_20261026"
+    },
+    {
+      "id": "cg-minimax-h3-comfyui-20261026",
+      "title": "45秒CG MiniMax H3服务器ComfyUI制作资料包",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\videos\\MiniMax_H3_ComfyUI_20261026"
+    },
+    {
+      "id": "cg-flow-film-20261027",
+      "title": "校迹拾光45秒Flow CG完整首版（含原创配乐）",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\videos\\Flow_Final_Handoff_20261026\\iSdu_校迹拾光_45秒_比赛开场_1080p.mp4"
+    },
+    {
+      "id": "cg-flow-film-v2-20261027",
+      "title": "校迹拾光45秒Flow CG优化版比赛开场",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\videos\\Flow_Final_Handoff_20261026\\优化版_20261027\\iSdu_校迹拾光_45秒_比赛开场_优化版_1080p.mp4"
+    },
+    {
+      "id": "cg-flow-film-v2-mobile-20261027",
+      "title": "校迹拾光45秒CG手机版720p",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\videos\\Flow_Final_Handoff_20261026\\优化版_20261027\\iSdu_校迹拾光_45秒_手机版_720p.mp4"
+    },
+    {
+      "id": "cg-h3-detail-edit-20261027",
+      "title": "H3海螺网页及官方API两处细节修改包（未生成）",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\videos\\H3_Detail_Edit_20261027"
+    },
+    {
+      "id": "cg-flow-detail-refinement-20261027",
+      "title": "校迹拾光45秒Flow照片与画心细节优化成片",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\videos\\Flow_Detail_Refinement_20261027\\iSdu_校迹拾光_45秒_Flow细节优化_1080p.mp4"
+    },
+    {
+      "id": "minimax-ppt-handoff-20261027",
+      "title": "MiniMax比赛汇报PPT素材、功能玩法与逐页讲稿交接包",
+      "localPath": "D:\\Codex\\Outputs\\校迹拾光_MiniMaxPPT资料包_20261027"
+    },
+    {
+      "id": "competition-deck-new-20261028",
+      "title": "新版比赛汇报PPT，18页主讲与2页隐藏答辩页",
+      "localPath": "D:\\Codex\\Outputs\\校迹拾光_新版比赛汇报_20261028"
+    },
+    {
+      "id": "competition-deck-refined-v3-20261028",
+      "title": "比赛汇报PPT v3 动画与版面精修版",
+      "localPath": "D:\\Codex\\Outputs\\校迹拾光_新版比赛汇报_20261028\\校迹拾光_比赛汇报_动画精修_v3.pptx"
+    },
+    {
+      "id": "optimization-candidate-20261028",
+      "title": "全面优化候选（供选择，未合入当前版）",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\optimization-lab-20261028\\START_HERE.html"
+    },
+    {
+      "id": "pal-playground-proposal-20261028",
+      "title": "Poteto 伙伴游乐场方案与本地交付",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\components\\pal-playground-20261028\\POTETO_INTEGRATION_PROPOSAL.md"
+    },
+    {
+      "id": "competition-launch-show-v4-20261028",
+      "title": "决赛游戏发布会PPT v4，8分钟互动讲述版",
+      "localPath": "D:\\Codex\\Outputs\\校迹拾光_决赛游戏发布会_8分钟_20261028\\校迹拾光_决赛游戏发布会_8分钟_v4.pptx"
+    },
+    {
+      "id": "experience-rc7-editor-background-20261028",
+      "title": "3.2.0rc.7体验版与编辑/首页背景交付",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\optimization-lab-20261028\\integration-rc7-20261028"
+    },
+    {
+      "id": "experience-rc8-background-scenes-status-20261028",
+      "title": "rc8背景、原图场景与开放状态修复上传",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\optimization-lab-20261028\\integration-rc8-20261028"
+    },
+    {
+      "id": "poteto-fidelity-20261029",
+      "title": "Poteto画面纠偏：原站/旧版/本次对照与动态",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\components\\poteto-refinement-20261029\\index.html"
+    },
+    {
+      "id": "experience-rc9-merged-20261029",
+      "title": "rc9合并修复与Poteto游乐场体验上传",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\release-rc9-20261029"
+    },
+    {
+      "id": "diary-sticker-20261029",
+      "title": "日记贴纸界面与原创成品预览",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\materials\\components\\diary-sticker-20261029\\index.html"
+    },
+    {
+      "id": "product-upgrade-proposal-20261029",
+      "title": "校园记忆小世界升级提案（待确认）",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\product-upgrade-proposal-20261029"
+    },
+    {
+      "id": "competition-deck-real-photos-v4-20261029",
+      "title": "比赛汇报PPT v4 真实使用照片替换版（承接动画精修v3）",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\presentation-20261028\\real-photos-20261029\\output\\校迹拾光_比赛汇报_真实使用照片_v4.pptx"
+    },
+    {
+      "id": "competition-deck-cg-opening-v5-20261029",
+      "title": "比赛汇报PPT v5 CG开场与小程序码（承接真实照片v4）",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\presentation-20261028\\cg-opening-v5-20261029\\output\\校迹拾光_比赛汇报_CG开场与小程序码_v5.pptx"
+    },
+    {
+      "id": "competition-deck-under100mb-v6-20261029",
+      "title": "比赛汇报PPT v6 100MB内上传版（含CG与真实照片）",
+      "localPath": "D:\\Codex\\Projects\\DesktopProjects\\iSdu\\presentation-20261028\\upload-under100mb-v6-20261029\\output\\校迹拾光_比赛汇报_100MB内上传版_v6.pptx"
+    }
+  ]
+}

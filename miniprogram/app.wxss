@@ -11,8 +11,8 @@ page {
   --ui-color-accent: #947449;
   --ui-color-accent-soft: #f1ebe0;
   --ui-color-text-primary: #35412f;
-  --ui-color-text-secondary: #7e896d;
-  --ui-color-text-tertiary: #697d77;
+  --ui-color-text-secondary: #626f55;
+  --ui-color-text-tertiary: #586e64;
   --ui-color-disabled: #b7bbb5;
   --ui-color-divider: rgba(36, 93, 89, 0.12);
   --ui-color-danger: #c65a55;
@@ -210,6 +210,16 @@ page {
   line-height: 18px;
   background: var(--ui-color-primary-soft);
   border-radius: var(--ui-radius-pill);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+picker:focus-visible {
+  outline: 2px solid var(--ui-color-primary-strong);
+  outline-offset: 3px;
 }
 
 .ui-chip--mood {

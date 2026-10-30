@@ -33,6 +33,8 @@ Page({
     invite: null as FriendInvite | null,
     isCreatingInvite: false,
     isLoading: true,
+    hasLoadedFriends: false,
+    loadError: '',
     removingUserId: '',
   },
 
@@ -43,14 +45,14 @@ Page({
   },
 
   async loadFriends() {
-    this.setData({ actionMessage: '', isLoading: true });
+    this.setData({ actionMessage: '', loadError: '', isLoading: true });
     try {
       await cloudAuthRepository.bootstrap();
       const friends = await cloudFriendRepository.listFriends();
-      this.setData({ friends: friends.map(toViewItem), isLoading: false });
+      this.setData({ friends: friends.map(toViewItem), hasLoadedFriends: true, isLoading: false });
     } catch (error: unknown) {
       this.setData({
-        actionMessage:
+        loadError:
           error instanceof Error
             ? error.message
             : '好友列表暂时无法读取，请先在数据管理中开启云端功能。',
@@ -90,6 +92,14 @@ Page({
           title: 'iSdu · 校园记忆地图',
           path: '/pages/map/index',
         };
+  },
+
+  visitHome(event: WechatMiniprogram.BaseEvent) {
+    const userId = event.currentTarget.dataset.userId as unknown;
+    if (typeof userId !== 'string' || !/^[A-Za-z0-9_-]{1,100}$/.test(userId)) return;
+    void wx.navigateTo({
+      url: '/pages/companion/index?targetUserId=' + encodeURIComponent(userId),
+    });
   },
 
   async removeFriend(event: WechatMiniprogram.BaseEvent) {

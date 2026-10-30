@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "记忆瓶",
+  "enablePullDownRefresh": true,
+  "usingComponents": {
+    "t-icon": "tdesign-miniprogram/icon/icon"
+  }
+}

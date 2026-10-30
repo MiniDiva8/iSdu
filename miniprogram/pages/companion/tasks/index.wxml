@@ -1,0 +1,95 @@
+<view class="companion-page" style="padding-top:{{topInset}}px"
+  ><view class="companion-header"
+    ><button bindtap="back" aria-label="返回伙伴小屋">
+      <t-icon name="chevron-left" size="25px" /></button
+    ><text>今天的小约定</text
+    ><text class="companion-header__wallet">✦ {{state.crystals || 0}}</text></view
+  >
+  <view wx:if="{{state.adoptedAt}}" class="companion-card task-playground-entry"
+    ><view
+      ><text class="task-card__title">把小约定，翻成小惊喜</text
+      ><text class="companion-muted">去草地上，找找幸运伙伴。</text></view
+    ><button class="companion-secondary" bindtap="openPlayground">去游乐场 ↗</button></view
+  >
+  <view class="companion-card"
+    ><text class="companion-kicker">一日一面，慢慢积攒</text
+    ><text class="companion-title">七日签到</text
+    ><view class="checkin-grid"
+      ><button
+        wx:for="{{week}}"
+        wx:key="day"
+        data-day="{{item.day}}"
+        disabled="{{item.checked || item.future || busy || !state.adoptedAt}}"
+        class="checkin-day {{item.checked?'checkin-day--done':''}} {{item.label==='今天'?'checkin-day--today':''}}"
+        bindtap="selectDay"
+      >
+        <text>{{item.label}}</text><text class="checkin-day__star">{{item.checked?'✓':'✦'}}</text
+        ><text>{{item.checked?'已见面':item.reward+' 光点'}}</text
+        ><text wx:if="{{item.canMakeup}}" class="checkin-day__makeup">可补签</text>
+      </button></view
+    ><text class="companion-muted"
+      >七日满勤：100 光点、3 星屑和一件家具礼物。过去六天可补签，每次需 30 光点。</text
+    ><button
+      class="companion-primary"
+      disabled="{{busy || checkedToday || !state.adoptedAt}}"
+      loading="{{busy}}"
+      bindtap="checkin"
+    >
+      {{checkedToday?'今天已经见过面啦':'收下今天的签到光点'}}
+    </button></view
+  >
+  <view wx:if="{{makeupDays.length}}" class="companion-card">
+    <button class="companion-link" bindtap="toggleMakeup">
+      补签近六天错过的见面 {{showMakeup?'收起':'展开'}}
+    </button>
+    <view wx:if="{{showMakeup}}" class="companion-row"
+      ><button
+        wx:for="{{makeupDays}}"
+        wx:key="day"
+        class="companion-secondary"
+        data-day="{{item.day}}"
+        disabled="{{busy || state.crystals<30}}"
+        bindtap="selectDay"
+      >
+        {{item.label}} · 补签
+      </button></view
+    >
+  </view>
+  <text wx:if="{{actionMessage}}" class="companion-message">{{actionMessage}}</text
+  ><view class="companion-row companion-row--between"
+    ><text class="companion-title">日常任务</text
+    ><text class="companion-muted">{{completed}} / {{tasks.length}}</text></view
+  ><text class="companion-muted">每日任务按北京时间零点刷新；示例日记不计入任务。</text
+  ><view wx:if="{{isLoading}}" class="companion-empty">正在整理今天的小约定…</view
+  ><view class="companion-card task-claim-summary">
+    <view
+      ><text class="task-card__title">可领取 {{claimableCount}} 项奖励</text>
+      <text class="task-card__reward">共 {{claimableReward}} 光点</text></view
+    >
+    <button
+      class="companion-primary"
+      bindtap="claimAllTasks"
+      disabled="{{busy || isLoading || !state.adoptedAt || claimableCount === 0}}"
+      loading="{{busy}}"
+    >
+      {{claimableCount ? '一键领取' : '暂无可领取'}}
+    </button> </view
+  ><view wx:for="{{tasks}}" wx:key="id" class="companion-card task-card"
+    ><view
+      ><text class="task-card__title">{{item.title}}</text
+      ><text class="companion-muted">{{item.hint}}</text
+      ><text class="task-card__reward">✦ {{item.reward}} 光点</text></view
+    ><button
+      wx:if="{{item.eligible && !item.claimed}}"
+      class="companion-primary"
+      data-id="{{item.id}}"
+      disabled="{{busy || !state.adoptedAt}}"
+      bindtap="claimTask"
+    >
+      领取</button
+    ><text wx:elif="{{item.claimed}}" class="task-card__claimed">已领取</text
+    ><button wx:else class="companion-secondary" data-id="{{item.id}}" bindtap="goTask">
+      去完成
+    </button></view
+  ></view
+>

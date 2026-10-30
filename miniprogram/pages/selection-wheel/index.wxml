@@ -51,7 +51,7 @@
       ><button
         class="wheel-next"
         aria-label="确认选择"
-        disabled="{{isSubmitting || errorMessage}}"
+        disabled="{{isSubmitting || !isReady}}"
         bindtap="confirmSelection"
       >
         <t-icon name="arrow-right" size="27px" /></button

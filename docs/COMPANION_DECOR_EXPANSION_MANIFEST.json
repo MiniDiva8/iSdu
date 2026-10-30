@@ -1,0 +1,162 @@
+{
+  "source": "iSdu-SDU-Decor-Expansion-20261026.zip",
+  "archiveSha256": "cb9f9e4eafb4379ef0dd59437541d42b47d72c39aca4f20afc5069b2ebed6c2c",
+  "method": "Runtime resize and encoding only; original composition unchanged",
+  "totalBytes": 441958,
+  "assets": [
+    {
+      "id": "campus_postmark_workbench",
+      "source": "art/props/campus_postmark_workbench.png",
+      "sourceSha256": "ff2f2a5f8b8de10777e06a431f9d0acee235a751605ed6a0366fcb35e7c326da",
+      "runtime": "/pages/companion/assets/campus_postmark_workbench.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 25987,
+      "sha256": "dd6ab73ccb9eb412af66d7ed8fe6210b5d23926a414ee9ccd5f409138fdbff57"
+    },
+    {
+      "id": "dacheng_cong_garden_lantern",
+      "source": "art/props/dacheng_cong_garden_lantern.png",
+      "sourceSha256": "ceed6cf3b19c2c3bc383fbff90be2c592f3e0c643560a9d9e5b6821bdc99541b",
+      "runtime": "/pages/companion/assets/dacheng_cong_garden_lantern.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 22185,
+      "sha256": "3fe22b88d8e66d13440cd817605442dc4023d7bfa7d09f1c30eb1e0de471c80b"
+    },
+    {
+      "id": "dacheng_eight_relief_platform",
+      "source": "art/props/dacheng_eight_relief_platform.png",
+      "sourceSha256": "e8d289d8febb66be1eacc73b75366bea59ace9b21543b5a6c98866e77bab7f83",
+      "runtime": "/pages/companion/assets/dacheng_eight_relief_platform.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 22568,
+      "sha256": "d767502fcdec8d777f8b60bc30a5d1eb19a1ac0f2cbb013fa8c559ab3b0ce6fa"
+    },
+    {
+      "id": "doctoral_cat_bookends",
+      "source": "art/props/doctoral_cat_bookends.png",
+      "sourceSha256": "57c079ada94679fe84045f9c4c4311d0df4525b986da52cb056af33b6ce539c5",
+      "runtime": "/pages/companion/assets/doctoral_cat_bookends.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 23076,
+      "sha256": "e816d48edb134d90c0a1b90ec5a4e65ef9f2509754e94abbe969673054cd2b3b"
+    },
+    {
+      "id": "grove_memory_swing",
+      "source": "art/props/grove_memory_swing.png",
+      "sourceSha256": "a00d2f5f73b854dee2a35acb518c878b8d290a996396ae5985629dd6141f5ad5",
+      "runtime": "/pages/companion/assets/grove_memory_swing.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 29402,
+      "sha256": "5ef663e0c39098400f263eaf875c3a930b3c51ac09b2abc8d4eb25f4189c39bd"
+    },
+    {
+      "id": "majia_stargazing_telescope",
+      "source": "art/props/majia_stargazing_telescope.png",
+      "sourceSha256": "284705ce05e1326358d6b93a93e7fac92b3ff0d1c9a1a8b9a2f059642fb39879",
+      "runtime": "/pages/companion/assets/majia_stargazing_telescope.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 19166,
+      "sha256": "8448762af586173304e9ec5fd58a6ec5913132065fdc30b5eaaaafaf7eeb9dc3"
+    },
+    {
+      "id": "majia_twin_dome_model",
+      "source": "art/props/majia_twin_dome_model.png",
+      "sourceSha256": "314f85f145fd7a08c71a9ca18688822c0fb00d7f4307183e31f5cd300072a721",
+      "runtime": "/pages/companion/assets/majia_twin_dome_model.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 22065,
+      "sha256": "92caaa423581af57058a9feeeddc4d9bc2b00bdf4c2a6bbfbbcdd1ac0455ad5c"
+    },
+    {
+      "id": "sdu_red_graduation_rack",
+      "source": "art/props/sdu_red_graduation_rack.png",
+      "sourceSha256": "9ec993e5d47276ad89884ed5d0f767c22b041f5bdec50782f8003a22d710437b",
+      "runtime": "/pages/companion/assets/sdu_red_graduation_rack.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 23833,
+      "sha256": "21f01b0d1eb638307ad14f2b3ff6f1a07e7e1ca060ccb694aa2d6093b97abdc0"
+    },
+    {
+      "id": "shanhai_collectible_chest",
+      "source": "art/props/shanhai_collectible_chest.png",
+      "sourceSha256": "97d93a854e5c569be54eef32af31e2d7758adfdc5914c9112bc5413d7b391b8d",
+      "runtime": "/pages/companion/assets/shanhai_collectible_chest.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 26160,
+      "sha256": "13ad842bf69e5b8fb6235ce5c7658ee4d85987e5d3f64aef782d306f822233b2"
+    },
+    {
+      "id": "starmap_observation_table",
+      "source": "art/props/starmap_observation_table.png",
+      "sourceSha256": "4e547692c7a70bc631b6c8c2a09ad173ec17ceef9d4d6e65d6856abeb9f60707",
+      "runtime": "/pages/companion/assets/starmap_observation_table.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 22265,
+      "sha256": "50d4463d209e27c3cbad964cc4b10a5ae05e3c1c34ab6a7d2a7e4d987fcc4d58"
+    },
+    {
+      "id": "three_cities_souvenir_cabinet",
+      "source": "art/props/three_cities_souvenir_cabinet.png",
+      "sourceSha256": "ed2e7758c540361e1a62ed4b13813d8637838bb95ae642ea05571a38d1fa06e6",
+      "runtime": "/pages/companion/assets/three_cities_souvenir_cabinet.png",
+      "width": 384,
+      "height": 256,
+      "alpha": true,
+      "bytes": 20286,
+      "sha256": "4034725ce9ec86fef31cbc03220527af97d264f5b763a5907c0aed4e7c46f908"
+    },
+    {
+      "id": "three_cities_travel_sign",
+      "source": "art/props/three_cities_travel_sign.png",
+      "sourceSha256": "4d433a4b782c4a7f688b4a6a858aa52412d4587324dbf5437588d567c971347f",
+      "runtime": "/pages/companion/assets/three_cities_travel_sign.png",
+      "width": 384,
+      "height": 384,
+      "alpha": true,
+      "bytes": 19489,
+      "sha256": "9076d4912b8138ce1fbb836b4b5dd1e0ed07d7eebcd15b122f2c182fd33f78d7"
+    },
+    {
+      "id": "majia_starlight_courtyard",
+      "source": "art/scenes/majia_starlight_courtyard.png",
+      "sourceSha256": "9e4b43a02c39ac76699dfd931da46c120c3e91d967705a97ba41d040d38f31e6",
+      "runtime": "/pages/companion/assets/majia_starlight_courtyard.jpg",
+      "width": 768,
+      "height": 576,
+      "alpha": false,
+      "bytes": 81418,
+      "sha256": "4d329e49bb929eb875d3abebde114b7b75f09d0ab969afcddd580b133468e0de"
+    },
+    {
+      "id": "ritual_grove_memory_corner",
+      "source": "art/scenes/ritual_grove_memory_corner.png",
+      "sourceSha256": "3defebf6e493250f68e2fdda068910c8ceeee0be3994e516db48d132c8452438",
+      "runtime": "/pages/companion/assets/ritual_grove_memory_corner.jpg",
+      "width": 768,
+      "height": 576,
+      "alpha": false,
+      "bytes": 84058,
+      "sha256": "02234d14d991a282f73ec4fafce97c25a1b9a6f6999be6cf8e941a32d7de75d7"
+    }
+  ]
+}

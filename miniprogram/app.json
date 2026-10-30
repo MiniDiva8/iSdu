@@ -4,6 +4,7 @@
     "pages/map/index",
     "pages/editor/index",
     "pages/timeline/index",
+    "pages/memory-bottle/index",
     "pages/detail/index",
     "pages/profile/index",
     "pages/friends/index",
@@ -13,7 +14,13 @@
     "pages/about/index",
     "pages/album/index",
     "pages/location-picker/index",
-    "pages/selection-wheel/index"
+    "pages/selection-wheel/index",
+    "pages/companion-tasks/index",
+    "pages/companion-collection/index",
+    "pages/companion-mail/index",
+    "pages/companion-card/index",
+    "pages/companion-photo/index",
+    "pages/pal/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#f7f5ec",
@@ -47,6 +54,12 @@
         "selectedIconPath": "assets/journal/tabbar/timeline-selected.png"
       },
       {
+        "pagePath": "pages/pal/index",
+        "text": "Pal",
+        "iconPath": "assets/journal/tabbar/pal.png",
+        "selectedIconPath": "assets/journal/tabbar/pal-selected.png"
+      },
+      {
         "pagePath": "pages/profile/index",
         "text": "我的",
         "iconPath": "assets/journal/tabbar/profile.png",
@@ -55,5 +68,26 @@
     ]
   },
   "renderer": "webview",
-  "sitemapLocation": "sitemap.json"
+  "sitemapLocation": "sitemap.json",
+  "subPackages": [
+    {
+      "root": "pages/sticker-studio",
+      "name": "sticker-studio",
+      "pages": ["index"]
+    },
+    {
+      "root": "pages/companion",
+      "name": "companion",
+      "pages": [
+        "index",
+        "tasks/index",
+        "collection/index",
+        "mail/index",
+        "card/index",
+        "photo/index",
+        "playground/index",
+        "chat/index"
+      ]
+    }
+  ]
 }

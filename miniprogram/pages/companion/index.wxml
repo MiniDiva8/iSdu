@@ -1,0 +1,240 @@
+<view class="companion-home">
+  <canvas
+    wx:if="{{sceneVisible && !canvasUnavailable}}"
+    id="companion-canvas"
+    type="2d"
+    class="companion-canvas"
+    bindtouchstart="onCanvasTouchStart"
+    catchtouchmove="onCanvasTouchMove"
+    bindtouchend="onCanvasTouchEnd"
+    bindtouchcancel="onCanvasTouchCancel"
+  ></canvas>
+  <view wx:if="{{sceneVisible && canvasUnavailable}}" class="companion-simple">
+    <text>小院简洁模式</text>
+    <button class="companion-secondary" bindtap="interactWithCompanion">和伙伴打个招呼</button>
+    <button class="companion-secondary" bindtap="retryCanvas">重新打开画面</button>
+    <scroll-view wx:if="{{!isVisitor}}" scroll-y class="fallback-furniture-list">
+      <button
+        wx:for="{{fallbackPlacements}}"
+        wx:key="id"
+        class="companion-secondary"
+        data-id="{{item.id}}"
+        bindtap="selectFallbackFurniture"
+      >
+        {{item.label}} · 选择布置
+      </button>
+    </scroll-view>
+    <view wx:if="{{selectedId && !isVisitor}}" class="fallback-direction-controls">
+      <button data-dx="-1" bindtap="nudgeFurniture">向左</button
+      ><button data-dy="-1" bindtap="nudgeFurniture">向上</button
+      ><button data-dy="1" bindtap="nudgeFurniture">向下</button
+      ><button data-dx="1" bindtap="nudgeFurniture">向右</button>
+    </view>
+  </view>
+  <view class="home-header" style="padding-top:{{topInset}}px"
+    ><button class="home-circle" aria-label="返回" bindtap="back">
+      <t-icon name="chevron-left" size="25px" /></button
+    ><text class="home-title">{{title}}</text
+    ><button
+      wx:if="{{!isVisitor}}"
+      class="home-circle"
+      aria-label="伙伴改名与场景设置"
+      data-page="card"
+      bindtap="openSection"
+    >
+      <t-icon name="setting" size="23px" /></button
+    ><button wx:else class="home-circle" aria-label="结束做客并返回" bindtap="back">
+      <t-icon name="close" size="23px" /></button
+  ></view>
+  <view wx:if="{{state.adoptedAt}}" class="home-wallet" style="top:{{topInset+65}}px"
+    ><text>✦ {{state.crystals}} 光点</text><text>✧ {{state.shards}} 星屑</text></view
+  >
+  <view wx:if="{{isVisitor}}" class="home-wallet" style="top:{{topInset+65}}px"
+    ><text
+      >{{ownerName ? '正在 ' + ownerName + ' 的小屋做客' : (isLoading ? '正在读取好友小屋' :
+      '好友小屋')}}</text
+    ></view
+  >
+  <button
+    wx:if="{{!isVisitor && state.adoptedAt && !editing}}"
+    class="home-playground-entry"
+    style="top:{{topInset+116}}px"
+    data-page="playground"
+    bindtap="openSection"
+    aria-label="打开伙伴游乐场，翻开今天的小约定"
+  >
+    <image src="/assets/companion/yeye_diary.png" mode="aspectFit" /><view
+      ><text>伙伴游乐场 ↗</text><text>翻开今天的小惊喜</text></view
+    >
+  </button>
+  <scroll-view
+    scroll-y
+    class="home-tools"
+    aria-label="小屋工具，可上下滚动"
+    style="top:{{topInset+115}}px;height:calc(100vh - {{topInset+115}}px - 128px - env(safe-area-inset-bottom))"
+    ><view class="home-tools__list">
+      <button
+        wx:if="{{!isVisitor && state.adoptedAt}}"
+        class="home-tool {{editing?'home-tool--active':''}}"
+        bindtap="toggleEditing"
+        aria-label="{{editing ? '完成小屋布置' : '开始布置小屋'}}"
+      >
+        <t-icon name="edit" size="23px" /><text>{{editing?'完成':'布置'}}</text>
+      </button>
+      <button
+        wx:if="{{!isVisitor && state.adoptedAt}}"
+        class="home-tool"
+        data-page="collection"
+        bindtap="openSection"
+      >
+        <t-icon name="app" size="23px" /><text>仓库</text>
+      </button>
+      <button
+        wx:if="{{!isVisitor && state.adoptedAt}}"
+        class="home-tool"
+        data-page="tasks"
+        bindtap="openSection"
+      >
+        <t-icon name="gift" size="23px" /><text>任务</text>
+      </button>
+      <button
+        wx:if="{{!isVisitor && state.adoptedAt}}"
+        class="home-tool"
+        data-page="mail"
+        bindtap="openSection"
+      >
+        <t-icon name="mail" size="23px" /><text>信箱</text>
+      </button>
+      <button
+        wx:if="{{!isVisitor && state.adoptedAt}}"
+        class="home-tool"
+        data-page="chat"
+        bindtap="openSection"
+        aria-label="和伙伴聊几句"
+      >
+        <t-icon name="chat" size="23px" /><text>聊天</text>
+      </button>
+      <button wx:if="{{!isVisitor && state.adoptedAt}}" class="home-tool" bindtap="showInspiration">
+        <t-icon name="lightbulb" size="23px" /><text>灵感</text>
+      </button>
+      <button
+        wx:if="{{!isVisitor && state.adoptedAt}}"
+        class="home-tool"
+        data-page="photo"
+        bindtap="openSection"
+      >
+        <t-icon name="camera" size="23px" /><text>合影</text>
+      </button>
+    </view></scroll-view
+  >
+  <view wx:if="{{isLoading}}" class="home-state-card"
+    ><text class="companion-title">正在打开小院…</text></view
+  >
+  <view wx:elif="{{errorMessage}}" class="home-state-card"
+    ><text class="companion-title">{{errorTitle}}</text><text>{{errorMessage}}</text
+    ><button class="companion-primary" bindtap="onShow">重新读取</button
+    ><button wx:if="{{!isVisitor}}" class="companion-link" bindtap="resetSave">
+      重置小屋存档
+    </button></view
+  >
+  <view wx:elif="{{!isVisitor && !state.adoptedAt}}" class="home-state-card"
+    ><image class="welcome-companion" src="{{welcomeSrc}}" mode="aspectFit" />
+    <text class="companion-kicker">校迹拾光 · 拾光伙伴</text
+    ><text class="companion-title">领取你的校园伙伴</text
+    ><text>写下心情、收集光点，一点点布置属于你们的小院。</text
+    ><input
+      class="companion-input"
+      aria-label="伙伴名字"
+      value="{{nameInput}}"
+      placeholder="给伙伴取个名字"
+      maxlength="16"
+      bindinput="onNameInput"
+    /><button class="companion-primary" loading="{{busy}}" disabled="{{busy}}" bindtap="adopt">
+      一起住进小院</button
+    ><text class="companion-muted">遇见途途，把校园的四季慢慢住进小家。</text></view
+  >
+  <view
+    wx:if="{{inspirationOpen && !isVisitor}}"
+    class="inspiration-backdrop"
+    bindtap="closeInspiration"
+  >
+    <view
+      class="inspiration-paper"
+      aria-role="dialog"
+      aria-label="给今天的一点灵感"
+      catchtap="noop"
+    >
+      <button class="inspiration-close" aria-label="收起灵感" bindtap="closeInspiration">×</button>
+      <text class="companion-kicker">给今天的一点灵感</text>
+      <image src="{{petSrc}}" mode="aspectFit" />
+      <text class="companion-title">{{inspiration.text}}</text>
+      <text class="companion-muted">想写多少都可以，一句话也值得留下。</text>
+      <button class="companion-primary" bindtap="writeFromInspiration">去写一页日记</button>
+      <button class="companion-link" bindtap="nextInspiration">再换一个想法 ↻</button>
+    </view>
+  </view>
+  <view class="home-camera-tools"
+    ><button aria-label="调整缩放" bindtap="zoomScene"><t-icon name="zoom-in" size="22px" /></button
+    ><button aria-label="回到小院中心" bindtap="centerScene">
+      <t-icon name="location" size="22px" /></button
+  ></view>
+  <view class="home-footer">
+    <view wx:if="{{actionMessage}}" class="home-message" role="status">{{actionMessage}}</view>
+    <view wx:if="{{guide && !isLoading && !editing}}" class="home-guide"
+      ><text class="companion-kicker">{{guideStep+1}} / 6</text
+      ><text class="companion-title">{{guide.title}}</text><text>{{guide.body}}</text
+      ><view class="companion-row"
+        ><button class="companion-link" bindtap="skipGuide">跳过引导</button
+        ><button class="companion-primary" disabled="{{busy}}" bindtap="advanceGuide">
+          {{guideStep===5?'开始我们的日常':'知道了'}}
+        </button></view
+      ></view
+    >
+    <view
+      wx:if="{{!isVisitor && state.adoptedAt && !guide && !editing && !inspirationOpen}}"
+      class="home-partner-card"
+    >
+      <image src="{{petSrc}}" mode="aspectFit" />
+      <view><text>{{state.name}}</text><text class="companion-muted">{{characterRole}}</text></view>
+      <button aria-label="换一个伙伴形象" data-page="collection" bindtap="openSection">
+        <t-icon name="chevron-right" size="18px" />
+      </button>
+    </view>
+    <view
+      wx:if="{{!isVisitor && state.adoptedAt && state.skinId==='sprout' && !guide && !editing && !inspirationOpen}}"
+      class="home-pose-controls"
+    >
+      <button
+        wx:for="{{poses}}"
+        wx:key="id"
+        class="{{activePose===item.id?'pose-active':''}}"
+        data-pose="{{item.id}}"
+        aria-label="{{item.name + (activePose === item.id ? '，已选择' : '')}}"
+        bindtap="choosePose"
+      >
+        {{item.name}}
+      </button>
+      <button wx:if="{{activePose!=='idle'}}" data-pose="idle" bindtap="choosePose">站好啦</button>
+    </view>
+    <view wx:if="{{editing && selectedId}}" class="home-edit-bar"
+      ><text>{{selectedName}}</text><button bindtap="rotateFurniture">旋转</button
+      ><button bindtap="removeFurniture">收回仓库</button></view
+    >
+    <view wx:if="{{isVisitor && !isLoading && !errorMessage}}" class="home-guest-note"
+      ><input
+        aria-label="给好友的留言，最多80字"
+        value="{{visitorMessage}}"
+        maxlength="80"
+        placeholder="给好友留一句话（80字以内）"
+        bindinput="onVisitorMessage"
+      /><button loading="{{busy}}" disabled="{{busy || !visitorMessage}}" bindtap="leaveMessage">
+        送到信箱
+      </button></view
+    >
+    <text
+      class="home-hint"
+      wx:if="{{sceneVisible && !isLoading && !errorMessage && !guide && !editing}}"
+      >点地面走动 · 拖动画面 · 双指缩放</text
+    >
+  </view>
+</view>

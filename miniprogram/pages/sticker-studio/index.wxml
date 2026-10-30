@@ -1,0 +1,231 @@
+<view class="sticker-studio">
+  <view class="studio-heading"
+    ><view
+      ><text class="studio-eyebrow">TODAY, BY ME.</text
+      ><text class="studio-title">把今天，画成一张贴纸</text></view
+    ><view class="studio-number">一日一贴<text>iSdu</text></view></view
+  >
+  <view class="studio-topbar"
+    ><view class="studio-history"
+      ><button
+        aria-label="撤销上一步"
+        disabled="{{!canUndo || isExporting || hasAdded}}"
+        bindtap="undo"
+      >
+        <t-icon name="rollback" size="20px" /></button
+      ><button
+        aria-label="重做上一步"
+        disabled="{{!canRedo || isExporting || hasAdded}}"
+        bindtap="redo"
+      >
+        <t-icon name="rollfront" size="20px" /></button></view
+    ><button
+      class="studio-background"
+      bindtap="toggleBackground"
+      disabled="{{isExporting || hasAdded}}"
+    >
+      {{background === 'paper' ? '纸色背景' : '透明贴纸'}}<t-icon name="swap" size="15px" /></button
+    ><button
+      class="studio-clear"
+      bindtap="clearCanvas"
+      disabled="{{!hasContent || isExporting || hasAdded}}"
+    >
+      清空
+    </button></view
+  >
+  <view class="sticker-board {{background === 'transparent' ? 'sticker-board--transparent' : ''}}">
+    <canvas
+      type="2d"
+      id="sticker-canvas"
+      class="sticker-canvas"
+      disable-scroll="{{true}}"
+      bindtouchstart="touchStart"
+      catchtouchmove="touchMove"
+      bindtouchend="touchEnd"
+      bindtouchcancel="touchCancel"
+      aria-label="贴纸创作画布"
+    />
+    <view wx:if="{{!hasContent && ready}}" class="studio-empty"
+      ><text class="studio-empty__star">✳</text><text>有些心情，画下来更刚好。</text
+      ><text>画一笔，或从下面选一点灵感</text></view
+    >
+    <view wx:if="{{!ready}}" class="studio-unavailable"
+      ><text>画布暂时没有准备好</text><button bindtap="initCanvas">重新打开画布</button></view
+    >
+  </view>
+  <view class="studio-caption"
+    ><text
+      >{{tool === 'pen' ? '用手指慢慢画，点一下也能留下小圆点。' : tool === 'eraser' ?
+      '橡皮只擦涂鸦，文字和素材会保留。' : '轻点选中，拖动摆放；也可以双指缩放、旋转。'}}</text
+    ><text>{{background === 'paper' ? '奶油纸' : '透明底'}}</text></view
+  >
+  <view wx:if="{{notice}}" class="studio-notice" role="alert">{{notice}}</view>
+  <view class="studio-toolbox">
+    <view class="studio-tools"
+      ><button
+        wx:for="{{tools}}"
+        wx:key="id"
+        class="studio-tool {{tool === item.id ? 'studio-tool--active' : ''}}"
+        data-tool="{{item.id}}"
+        bindtap="chooseTool"
+        disabled="{{isExporting || hasAdded}}"
+        aria-label="{{item.label}}工具"
+      >
+        <t-icon name="{{item.icon}}" size="23px" /><text>{{item.label}}</text>
+      </button></view
+    >
+    <view class="studio-colors"
+      ><text class="studio-field-label">颜色</text
+      ><button
+        wx:for="{{colors}}"
+        wx:key="*this"
+        class="studio-color {{color === item ? 'studio-color--active' : ''}}"
+        style="--swatch: {{item}};"
+        data-color="{{item}}"
+        aria-label="{{index === 0 ? '苔绿' : index === 1 ? '陶红' : index === 2 ? '秋黄' : index === 3 ? '湖绿' : index === 4 ? '浅紫' : '墨黑'}}{{color === item ? '，已选中' : ''}}"
+        bindtap="chooseColor"
+        disabled="{{isExporting || hasAdded}}"
+      >
+        <view /></button
+    ></view>
+    <view wx:if="{{tool === 'pen' || tool === 'eraser'}}" class="studio-panel studio-brush"
+      ><view class="studio-panel-heading"
+        ><text>{{tool === 'eraser' ? '轻轻擦掉，再画一次' : '一笔一画，都是今天'}}</text
+        ><text>{{penWidth}} px</text></view
+      ><view class="studio-slider-row"
+        ><text class="studio-field-label">粗细</text
+        ><slider
+          value="{{penWidth}}"
+          min="1"
+          max="24"
+          step="1"
+          activeColor="#6c7e54"
+          backgroundColor="#e7e8dc"
+          block-color="#fdfcf5"
+          block-size="23"
+          disabled="{{isExporting || hasAdded}}"
+          bindchange="changeWidth" /><view
+          class="studio-brush-dot"
+          style="width: {{penWidth + 4}}px; height: {{penWidth + 4}}px; background: {{color}};" /></view
+      ><text class="studio-panel-tip">不必画得很像，只要是你的样子。</text></view
+    >
+    <view wx:elif="{{tool === 'text'}}" class="studio-panel"
+      ><view class="studio-panel-heading"
+        ><text>写一句想留下的话</text><text>{{textInput.length}} / 60</text></view
+      ><textarea
+        class="studio-text-input"
+        value="{{textInput}}"
+        maxlength="60"
+        placeholder="今天，有什么小事值得记住？"
+        aria-label="贴纸文字"
+        disabled="{{isExporting || hasAdded}}"
+        bindinput="handleTextInput"
+      /><view class="studio-phrases"
+        ><button
+          wx:for="{{phrases}}"
+          wx:key="*this"
+          data-text="{{item}}"
+          bindtap="choosePhrase"
+          disabled="{{isExporting || hasAdded}}"
+        >
+          {{item}}
+        </button></view
+      ><button
+        class="studio-insert"
+        disabled="{{!textInput.length || isExporting || hasAdded}}"
+        bindtap="addText"
+      >
+        {{selectedIsText ? '更新这段文字' : '放到画布上'}}
+      </button></view
+    >
+    <view wx:elif="{{tool === 'stamp'}}" class="studio-panel"
+      ><view class="studio-categories"
+        ><button
+          wx:for="{{categories}}"
+          wx:key="id"
+          class="{{category === item.id ? 'studio-category--active' : ''}}"
+          data-id="{{item.id}}"
+          bindtap="chooseCategory"
+          disabled="{{isExporting || hasAdded}}"
+        >
+          {{item.label}}
+        </button></view
+      ><view class="studio-stamps"
+        ><button
+          wx:for="{{stamps}}"
+          wx:key="id"
+          data-id="{{item.id}}"
+          bindtap="addStamp"
+          disabled="{{isExporting || hasAdded}}"
+          aria-label="添加{{item.label}}素材"
+        >
+          <canvas type="2d" class="stamp-preview" aria-hidden="true" /><text>{{item.label}}</text>
+        </button></view
+      ><text class="studio-panel-tip">选一个小物件，记住今天的一个片段。</text></view
+    >
+    <view wx:else class="studio-panel"
+      ><view wx:if="{{selectedId}}"
+        ><view class="studio-panel-heading"
+          ><text>{{selectedIsText ? '把这句话放在喜欢的位置' : '给小物件找个位置'}}</text
+          ><button
+            class="studio-delete"
+            bindtap="removeSelected"
+            disabled="{{isExporting || hasAdded}}"
+          >
+            移除
+          </button></view
+        ><view class="studio-slider-row"
+          ><text class="studio-field-label">大小</text
+          ><slider
+            min="35"
+            max="240"
+            value="{{selectedScale}}"
+            data-kind="scale"
+            activeColor="#6c7e54"
+            block-size="22"
+            bindchange="changeTransform"
+            disabled="{{isExporting || hasAdded}}"
+          /><text>{{selectedScale}}%</text></view
+        ><view class="studio-slider-row"
+          ><text class="studio-field-label">旋转</text
+          ><slider
+            min="-180"
+            max="180"
+            value="{{selectedRotation}}"
+            data-kind="rotation"
+            activeColor="#6c7e54"
+            block-size="22"
+            bindchange="changeTransform"
+            disabled="{{isExporting || hasAdded}}"
+          /><text>{{selectedRotation}}°</text></view
+        ><button
+          wx:if="{{selectedIsText}}"
+          class="studio-insert"
+          bindtap="editSelectedText"
+          disabled="{{isExporting || hasAdded}}"
+        >
+          编辑这句话
+        </button></view
+      ><view wx:else class="studio-select-empty"
+        ><t-icon name="gesture-press" size="28px" /><text>轻点画布上的文字或素材</text
+        ><text>拖一拖、转一转，摆出你的风格</text></view
+      ></view
+    >
+  </view>
+  <view class="studio-draft-note"
+    ><t-icon name="lock-on" size="13px" /><text>{{draftNotice}}</text></view
+  >
+  <view class="studio-footer"
+    ><text>和照片一起，留在今天这一页</text
+    ><button
+      class="studio-primary"
+      bindtap="addToDiary"
+      disabled="{{!ready || !hasContent || isExporting}}"
+    >
+      {{hasAdded ? '已加入，返回日记' : isExporting ? '正在制作贴纸…' : '加入这页日记'}}<t-icon
+        wx:if="{{!isExporting}}"
+        name="arrow-right"
+        size="18px"
+      /></button
+  ></view>
+</view>

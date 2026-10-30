@@ -1,0 +1,139 @@
+<view class="companion-page" style="padding-top:{{topInset}}px"
+  ><view class="companion-header"
+    ><button bindtap="back" aria-label="返回伙伴小屋">
+      <t-icon name="chevron-left" size="25px" /></button
+    ><text>伙伴资料卡</text></view
+  ><view class="companion-card"
+    ><view class="companion-row"
+      ><view
+        wx:if="{{petCropped}}"
+        class="companion-sprite-preview card-avatar"
+        style="{{petPreviewStyle}}"
+      ></view
+      ><image wx:elif="{{petSrc}}" class="card-avatar" src="{{petSrc}}" mode="aspectFit" /><view
+        wx:else
+        class="companion-placeholder companion-placeholder--pet"
+        >校园伙伴</view
+      ><view class="card-summary"
+        ><text class="companion-title">{{state.name || '校园伙伴'}}</text
+        ><text class="companion-muted">初次见面 {{birthday}}</text
+        ><text class="companion-muted"
+          >陪伴 {{days}} 天 · 收藏 {{state.ownedSkins.length || 0}} 个形象</text
+        ></view
+      ></view
+    ><text class="companion-kicker">{{characterRole}}</text
+    ><text class="companion-copy">{{characterLine}}</text
+    ><text class="companion-muted">{{characterPersonality}}</text></view
+  >
+  <text wx:if="{{actionMessage}}" class="companion-message">{{actionMessage}}</text
+  ><view class="companion-card"
+    ><text class="companion-title">我们的小设定</text
+    ><text class="companion-muted">只用于伙伴角色设定，不用于判断你的真实性格。</text
+    ><text class="companion-copy">伙伴名字</text
+    ><input
+      class="companion-input"
+      aria-label="伙伴名字"
+      value="{{nameInput}}"
+      maxlength="16"
+      disabled="{{busy}}"
+      bindinput="nameChanged"
+    /><text class="companion-copy">角色性格</text
+    ><picker
+      aria-label="伙伴角色性格"
+      disabled="{{busy}}"
+      value="{{mbtiIndex}}"
+      range="{{mbtiLabels}}"
+      bindchange="mbtiChanged"
+      ><view class="companion-choice"
+        >{{mbtiInput || '暂不设置'}} <t-icon name="chevron-right" size="15px" /></view></picker
+    ><text class="companion-copy">小院场景</text
+    ><view class="companion-row"
+      ><button
+        wx:for="{{themes}}"
+        wx:key="id"
+        class="theme-option {{themeInput===item.id?'theme-option--selected':''}}"
+        data-id="{{item.id}}"
+        aria-label="{{item.name + (themeInput === item.id ? '，已选择' : '')}}"
+        disabled="{{busy}}"
+        style="background:{{item.color}}"
+        bindtap="themeChanged"
+      >
+        {{item.name}}
+      </button></view
+    ><view class="companion-switch-row"
+      ><text>在日记页显示小屋入口</text
+      ><switch
+        aria-label="在日记页显示小屋入口"
+        disabled="{{busy}}"
+        checked="{{showOnJournal}}"
+        color="#728c5e"
+        bindchange="widgetChanged" /></view
+    ><view class="companion-switch-row"
+      ><text>轻触反馈</text
+      ><switch
+        aria-label="轻触反馈"
+        disabled="{{busy}}"
+        checked="{{haptics}}"
+        color="#728c5e"
+        bindchange="hapticsChanged" /></view
+    ><button
+      class="companion-primary"
+      loading="{{busy}}"
+      disabled="{{busy || !state.adoptedAt}}"
+      bindtap="savePreferences"
+    >
+      保存伙伴资料
+    </button></view
+  >
+  <view class="companion-card companion-publication"
+    ><text class="companion-title">好友来做客</text
+    ><view
+      class="publication-status publication-status--{{cloudPhase}}"
+      role="status"
+      aria-live="polite"
+      ><text class="publication-status__dot" aria-hidden="true">●</text
+      ><text>{{cloudStatus}}</text></view
+    ><text wx:if="{{cloudError}}" class="publication-error" role="status">{{cloudError}}</text
+    ><text class="companion-muted"
+      >开放后仅展示伙伴名字、形象和布置；好友身份每次访问都要重新验证。布置变更后可手动同步。</text
+    ><button
+      class="companion-primary"
+      disabled="{{busy || !state.adoptedAt || cloudWasUsed && !cloudKnown}}"
+      loading="{{cloudPhase==='opening' || cloudPhase==='closing'}}"
+      bindtap="publishHome"
+    >
+      {{cloudPhase==='opening'?'正在开放小屋…':cloudPhase==='closing'?'正在关闭来访…':cloudKnown &&
+      visibility==='friends'?'关闭好友来访':'主动开放给现有好友'}}</button
+    ><button
+      class="companion-secondary publication-refresh"
+      disabled="{{busy || cloudPhase==='checking'}}"
+      loading="{{cloudPhase==='checking'}}"
+      bindtap="refreshCloudStatus"
+    >
+      {{cloudPhase==='checking'?'正在核对…':'重新核对开放状态'}}</button
+    ><button
+      wx:if="{{cloudKnown && visibility==='friends'}}"
+      class="companion-secondary"
+      disabled="{{busy}}"
+      bindtap="syncHome"
+    >
+      同步当前本机布置</button
+    ><button
+      wx:if="{{cloudKnown && visibility==='friends'}}"
+      class="companion-secondary"
+      open-type="share"
+      disabled="{{busy}}"
+    >
+      分享好友小屋入口</button
+    ><button
+      wx:if="{{cloudWasUsed}}"
+      class="companion-link"
+      disabled="{{busy}}"
+      bindtap="deletePublishedHome"
+    >
+      删除云端小屋与来访记录
+    </button></view
+  ><text class="companion-muted"
+    >养成、签到、光点和仓库保存在本机。云端只保存你主动展示的小屋外观及来访记录。</text
+  ></view
+>

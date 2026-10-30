@@ -5,12 +5,13 @@ const cloud = require('wx-server-sdk');
 
 const { createAuthHandler } = require('./lib/auth-handler');
 const { createCloudUserStore } = require('./lib/cloud-user-store');
+const { createDeleteFiles } = require('./lib/cloud-files');
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 
-const database = cloud.database();
+const database = cloud.database({ throwOnNotFound: false });
 const handler = createAuthHandler({
-  deleteFiles: (fileList) => cloud.deleteFile({ fileList }),
+  deleteFiles: createDeleteFiles(cloud),
   getTrustedContext: () => cloud.getWXContext(),
   hashIdentity: (appId, openId) =>
     crypto.createHash('sha256').update(appId).update('\0').update(openId).digest('hex'),

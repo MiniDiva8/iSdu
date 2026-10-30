@@ -8,13 +8,24 @@
     <view class="editor-topline"
       ><text>{{isEditMode ? '把回忆再整理一下' : '今天，也有值得记住的小事'}}</text
       ><text class="editor-private"
-        ><t-icon name="lock-on" size="14px" /> {{isCloudMode ? visibilityLabels[visibility] :
-        '仅存本机'}}</text
+        ><t-icon name="lock-on" size="14px" /> {{visibilitySavePending ? '可见范围待确认' :
+        isCloudMode ? visibilityLabels[visibility] : '仅存本机'}}</text
       ></view
+    >
+    <view wx:if="{{visibilitySavePending}}" class="editor-save-warning" role="alert">
+      <text class="editor-section-title">正文已保存，可见范围待确认</text>
+      <text>{{formError}}</text>
+      <button disabled="{{isSaving}}" loading="{{isSaving}}" bindtap="saveMemory">
+        重试可见范围
+      </button>
+    </view>
+    <view wx:if="{{companionPrompt}}" class="editor-companion-prompt"
+      ><text>伙伴的一点灵感</text><text>{{companionPrompt}}</text></view
     >
     <view class="diary-paper">
       <view class="diary-paper__head"
         ><picker
+          aria-label="日记日期，当前{{dateKey}}"
           mode="date"
           value="{{dateKey}}"
           start="2000-01-01"
@@ -25,7 +36,12 @@
           ><t-icon name="chevron-down" size="13px" /></picker
         ><text class="diary-edition">校园日记 / {{isEditMode ? '重读' : '今日一页'}}</text></view
       >
-      <button class="editor-mood" disabled="{{isSaving || hasSaved}}" bindtap="openMoodPicker">
+      <button
+        class="editor-mood"
+        aria-label="更换心情，当前{{mood === 'custom' ? (customMood || '自定义') : moodLabels[mood]}}"
+        disabled="{{isSaving || hasSaved}}"
+        bindtap="openMoodPicker"
+      >
         <mood-face mood="{{mood}}" size="large" /><text class="editor-mood__label"
           >{{mood === 'custom' ? (customMood || '给心情起个名字') : moodLabels[mood]}}</text
         ><text class="editor-mood__hint">轻点更换心情</text>
@@ -33,6 +49,7 @@
       <input
         wx:if="{{mood === 'custom'}}"
         class="custom-mood-input"
+        aria-label="自定义心情名称"
         value="{{customMood}}"
         maxlength="{{customLabelMaxLength}}"
         placeholder="这一刻，你想怎样形容？"
@@ -41,6 +58,7 @@
       />
       <textarea
         class="diary-writing"
+        aria-label="日记正文"
         value="{{text}}"
         maxlength="{{textMaxLength}}"
         placeholder="发生了什么？或者，只写一句今天想留下的话。"
@@ -53,9 +71,11 @@
           ><image
             wx:if="{{!item.loadFailed}}"
             src="{{item.path}}"
-            mode="aspectFill"
+            mode="{{item.isSticker ? 'aspectFit' : 'aspectFill'}}"
             data-path="{{item.path}}"
             bindtap="previewImage"
+            aria-role="button"
+            aria-label="预览第{{index + 1}}张照片"
             data-index="{{index}}"
             binderror="handleImageError"
           /><view wx:else class="editor-photo__missing">照片需重新选择</view
@@ -63,10 +83,10 @@
             class="editor-photo__remove"
             data-index="{{index}}"
             disabled="{{isSaving || hasSaved}}"
-            aria-label="移除照片"
+            aria-label="移除第{{index + 1}}张照片"
             bindtap="removeImage"
           >
-            ×
+            <text aria-hidden="true">×</text>
           </button></view
         ></view
       >
@@ -75,25 +95,39 @@
         ><text>小小的瞬间，留给以后的自己。</text></view
       >
     </view>
+    <button
+      class="editor-sticker-entry"
+      bindtap="openStickerStudio"
+      disabled="{{isSaving || hasSaved || isChoosingImages}}"
+      aria-label="创作一张属于今天的贴纸，照片和贴纸合计最多三张"
+    >
+      <view class="editor-sticker-entry__icon"><t-icon name="edit" size="25px" /></view
+      ><view class="editor-sticker-entry__copy"
+        ><text>今天，也可以画着记</text><text>涂鸦、写字，创作一张自己的贴纸</text></view
+      ><view class="editor-sticker-entry__action"
+        >创作贴纸<t-icon name="chevron-right" size="15px"
+      /></view>
+    </button>
     <view class="editor-tools"
       ><button
         disabled="{{isSaving || hasSaved || images.length >= imageLimit}}"
         bindtap="chooseImages"
       >
-        <t-icon name="image-add" size="22px" /><text>照片 {{images.length}}/3</text></button
+        <t-icon name="image-add" size="22px" /><text>图片 {{images.length}}/3</text></button
       ><button disabled="{{isSaving || hasSaved}}" bindtap="openMoodPicker">
         <t-icon name="happy" size="22px" /><text>心情</text></button
       ><button disabled="{{isSaving || hasSaved}}" bindtap="openLocationPicker">
         <t-icon name="location" size="22px" /><text
           >{{hasLocation ? '已选地点' : '校园地点'}}</text
         ></button
-      ><button disabled="{{isSaving || hasSaved}}" bindtap="toggleOptions">
-        <t-icon name="more" size="23px" /><text>主题与分享</text>
+      ><button disabled="{{isSaving || hasSaved}}" bindtap="openCategoryPicker">
+        <t-icon name="book" size="23px" /><text>主题</text>
       </button></view
     >
     <view class="editor-place"
       ><view class="editor-place__row"
         ><t-icon name="location" size="18px" /><input
+          aria-label="日记地点名称，可选"
           value="{{placeName}}"
           maxlength="{{placeMaxLength}}"
           placeholder="地点名称（可选）"
@@ -111,7 +145,38 @@
         '也可以只写日记，稍后再添加校园位置。'}}</text
       ></view
     >
-    <view wx:if="{{editorStep === 'options'}}" class="editor-options">
+    <view wx:if="{{isCloudMode}}" class="editor-visibility">
+      <text class="editor-section-title">谁可以看这篇日记</text>
+      <view class="editor-options-grid"
+        ><button
+          wx:for="{{visibilityOptions}}"
+          wx:key="value"
+          class="{{visibility === item.value ? 'is-selected' : ''}}"
+          data-value="{{item.value}}"
+          aria-label="{{item.label + (visibility === item.value ? '，已选择' : '')}}"
+          disabled="{{isSaving || (hasSaved && !visibilitySavePending)}}"
+          bindtap="selectVisibility"
+        >
+          {{item.label}}
+        </button></view
+      >
+      <view wx:if="{{visibility === 'selected_friends'}}" class="editor-friends"
+        ><text wx:if="{{friendLoadError}}">{{friendLoadError}}</text
+        ><text wx:elif="{{friendChoices.length === 0}}">还没有好友，可以先保存为仅自己可见。</text
+        ><button
+          wx:for="{{friendChoices}}"
+          wx:key="relationshipId"
+          class="{{item.selected ? 'is-selected' : ''}}"
+          data-user-id="{{item.friend.userId}}"
+          aria-label="{{item.friend.displayName + (item.selected ? '，已选择' : '，未选择')}}"
+          disabled="{{isSaving || (hasSaved && !visibilitySavePending)}}"
+          bindtap="toggleFriendSelection"
+        >
+          {{item.selected ? '✓ ' : '＋ '}}{{item.friend.displayName}}
+        </button></view
+      >
+    </view>
+    <view class="editor-options">
       <text class="editor-section-title">给这页日记一个主题</text>
       <button
         class="editor-topic-choice"
@@ -128,40 +193,13 @@
       <input
         wx:if="{{category === 'custom'}}"
         class="custom-option-input"
+        aria-label="自定义日记主题名称"
         value="{{customCategory}}"
         maxlength="{{customLabelMaxLength}}"
         placeholder="写下主题名称"
         disabled="{{isSaving || hasSaved}}"
         bindinput="handleCustomCategoryInput"
       />
-      <block wx:if="{{isCloudMode}}"
-        ><text class="editor-section-title">谁可以看这篇日记</text
-        ><view class="editor-options-grid"
-          ><button
-            wx:for="{{visibilityOptions}}"
-            wx:key="value"
-            class="{{visibility === item.value ? 'is-selected' : ''}}"
-            data-value="{{item.value}}"
-            disabled="{{isSaving || hasSaved}}"
-            bindtap="selectVisibility"
-          >
-            {{item.label}}
-          </button></view
-        ><view wx:if="{{visibility === 'selected_friends'}}" class="editor-friends"
-          ><text wx:if="{{friendLoadError}}">{{friendLoadError}}</text
-          ><text wx:elif="{{friendChoices.length === 0}}">还没有好友，可以先保存为仅自己可见。</text
-          ><button
-            wx:for="{{friendChoices}}"
-            wx:key="relationshipId"
-            class="{{item.selected ? 'is-selected' : ''}}"
-            data-user-id="{{item.friend.userId}}"
-            disabled="{{isSaving || hasSaved}}"
-            bindtap="toggleFriendSelection"
-          >
-            {{item.selected ? '✓ ' : '＋ '}}{{item.friend.displayName}}
-          </button></view
-        ></block
-      >
     </view>
     <button
       wx:if="{{!text.length && images.length === 0 && !hasSaved}}"
@@ -171,7 +209,8 @@
     >
       今天不想多说，只记这个心情
     </button>
-    <view wx:if="{{formError}}" class="editor-error">{{formError}}</view
+    <view wx:if="{{formError && !visibilitySavePending}}" class="editor-error" role="alert"
+      >{{formError}}</view
     ><text wx:if="{{draftNotice}}" class="editor-draft-notice">{{draftNotice}}</text>
     <view class="editor-savebar"
       ><button
@@ -186,10 +225,11 @@
       ><button
         class="editor-save"
         loading="{{isSaving}}"
-        disabled="{{isSaving || hasSaved}}"
+        disabled="{{isSaving || isChoosingImages || (hasSaved && !visibilitySavePending)}}"
         bindtap="saveMemory"
       >
-        {{hasSaved ? '已保存' : (isSaving ? '正在保存…' : '收好这一页 ✓')}}
+        {{isChoosingImages ? '正在选择照片…' : isSaving ? '正在保存…' : visibilitySavePending ?
+        '重试可见范围' : hasSaved ? '已保存' : '收好这一页 ✓'}}
       </button></view
     >
   </block>

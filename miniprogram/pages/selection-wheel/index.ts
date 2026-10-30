@@ -96,6 +96,7 @@ Page({
     defaultCategory: 'campus-life',
     haptics: false,
     errorMessage: '',
+    isReady: false,
     isSubmitting: false,
   },
   onLoad(query: Record<string, string | undefined>) {
@@ -128,6 +129,7 @@ Page({
         throw new Error('选择入口无效，请返回后重试。');
       if (source === 'journal') createJournalTimestamp(this.data.dateKey, new Date().toISOString());
       this.applyRotation((-selectedIndex * 360) / options.length, false);
+      this.setData({ isReady: true });
     } catch (error: unknown) {
       this.setData({
         errorMessage: error instanceof Error ? error.message : '选择页暂时无法打开。',
@@ -172,7 +174,7 @@ Page({
     });
   },
   handleWheelTouchStart(event: WechatMiniprogram.TouchEvent) {
-    if (this.data.isSubmitting || this.data.errorMessage || event.touches.length !== 1) {
+    if (this.data.isSubmitting || !this.data.isReady || event.touches.length !== 1) {
       this.handleWheelTouchCancel();
       return;
     }
@@ -282,8 +284,8 @@ Page({
     );
   },
   confirmSelection() {
-    if (this.data.isSubmitting || this.data.errorMessage || !this.data.selectedValue) return;
-    this.setData({ isSubmitting: true });
+    if (this.data.isSubmitting || !this.data.isReady || !this.data.selectedValue) return;
+    this.setData({ isSubmitting: true, errorMessage: '' });
     try {
       const value = this.data.selectedValue;
       if (this.data.source === 'journal') {

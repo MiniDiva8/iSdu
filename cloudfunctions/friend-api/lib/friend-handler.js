@@ -73,7 +73,7 @@ function createFriendHandler(options) {
         const token = options.newToken();
         const tokenHash = options.hash(token);
         const expiresAt = new Date(Date.parse(now) + 24 * 60 * 60 * 1000).toISOString();
-        await options.store.createInvite({
+        const created = await options.store.createInvite({
           _id: options.newId('invite'),
           tokenHash,
           creatorUserId: user._id,
@@ -82,6 +82,7 @@ function createFriendHandler(options) {
           usedByUserId: null,
           createdAt: now,
         });
+        if (!created) throw new PublicError('RATE_LIMITED', '邀请创建过于频繁，请稍后再试');
         return {
           ok: true,
           data: {
